@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Navbar } from "@/components/navbar";
@@ -11,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Progress } from "@/components/ui/progress";
-import { Check, ChevronRight, Loader2, Upload as UploadIcon } from "lucide-react";
+import { Brain, Check, ChevronRight, Loader2, Upload as UploadIcon } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 const Upload = () => {
@@ -94,7 +93,13 @@ const Upload = () => {
       
       <div className="container py-8 max-w-5xl">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-1">Upload New Model</h1>
+          <div className="flex items-center">
+            <h1 className="text-3xl font-bold mb-1">Upload New Model</h1>
+            <div className="ml-3 px-2 py-1 rounded-md bg-gradient-to-r from-[hsl(var(--formiq-blue)/10)] to-[hsl(var(--formiq-purple)/10)] flex items-center">
+              <Brain className="h-4 w-4 text-primary mr-1" />
+              <span className="text-xs font-medium formiq-gradient-text">FormIQ Enhanced</span>
+            </div>
+          </div>
           <p className="text-muted-foreground">Let FormIQ analyze your model and provide AI-powered suggestions.</p>
         </div>
         
@@ -171,9 +176,33 @@ const Upload = () => {
                 )}
 
                 {analyzing && (
-                  <div className="mt-6 flex items-center">
-                    <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                    <span>FormIQ is analyzing your model...</span>
+                  <div className="mt-6">
+                    <div className="flex items-center mb-4">
+                      <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                      <span className="font-medium">FormIQ is analyzing your model...</span>
+                    </div>
+                    <div className="space-y-2 max-w-xl mx-auto">
+                      <div className="p-3 rounded-lg bg-muted/30 flex items-center">
+                        <Check className="h-4 w-4 text-emerald-500 mr-2" />
+                        <span className="text-sm">Analyzing mesh topology...</span>
+                      </div>
+                      <div className="p-3 rounded-lg bg-muted/30 flex items-center">
+                        <Check className="h-4 w-4 text-emerald-500 mr-2" />
+                        <span className="text-sm">Identifying key features...</span>
+                      </div>
+                      <div className="p-3 rounded-lg bg-muted/30 flex items-center animate-pulse">
+                        <div className="h-4 w-4 rounded-full border-2 border-primary border-t-transparent animate-spin mr-2"></div>
+                        <span className="text-sm">Calculating printability score...</span>
+                      </div>
+                      <div className="p-3 rounded-lg bg-muted/30 flex items-center opacity-50">
+                        <div className="h-4 w-4 mr-2"></div>
+                        <span className="text-sm">Generating optimal tags...</span>
+                      </div>
+                      <div className="p-3 rounded-lg bg-muted/30 flex items-center opacity-50">
+                        <div className="h-4 w-4 mr-2"></div>
+                        <span className="text-sm">Creating pricing recommendations...</span>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
@@ -203,7 +232,10 @@ const Upload = () => {
                 <div>
                   <div className="flex justify-between mb-2">
                     <Label>Tags</Label>
-                    <span className="text-xs text-muted-foreground">AI-generated + custom tags</span>
+                    <span className="text-xs text-muted-foreground flex items-center">
+                      <Brain className="h-3 w-3 text-primary mr-1" />
+                      AI-generated + custom tags
+                    </span>
                   </div>
                   
                   <div className="flex flex-wrap gap-2 mb-4">
@@ -260,7 +292,10 @@ const Upload = () => {
                     </div>
                     <div className="text-sm">
                       {priceOverridden ? (
-                        <span className="text-muted-foreground">AI suggested: ₹{suggestedPrice}</span>
+                        <span className="text-muted-foreground flex items-center">
+                          <Brain className="h-3 w-3 text-primary mr-1" />
+                          AI suggested: ₹{suggestedPrice}
+                        </span>
                       ) : (
                         <span className="flex items-center text-primary">
                           <Check className="mr-1 h-4 w-4" />
@@ -285,7 +320,9 @@ const Upload = () => {
                   </div>
                   
                   <p className="text-sm text-muted-foreground mt-2">
-                    AI pricing is based on similar models in our marketplace and considers complexity, detail, and market demand.
+                    <Brain className="h-3 w-3 text-primary mr-1 mt-0.5" />
+                    FormIQ pricing is based on similar models in our marketplace and considers complexity, 
+                    detail, and market demand.
                   </p>
                 </div>
                 
@@ -385,11 +422,9 @@ const Upload = () => {
                   </div>
                 </div>
                 
-                <div className="border rounded-xl p-4 bg-primary/5">
+                <div className="border rounded-xl p-4 bg-gradient-to-r from-primary/5 to-accent/5">
                   <div className="flex items-center space-x-2 mb-2">
-                    <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center">
-                      <div className="h-3 w-3 rounded-full bg-primary animate-pulse"></div>
-                    </div>
+                    <Brain className="h-5 w-5 text-primary" />
                     <h4 className="font-medium">FormIQ Analysis Results</h4>
                   </div>
                   

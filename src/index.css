@@ -107,6 +107,23 @@
   .dark .glassmorphism {
     @apply bg-black/10 border-white/10;
   }
+  
+  .formiq-card {
+    @apply relative overflow-hidden rounded-xl border bg-card p-6;
+  }
+  
+  .formiq-card::before {
+    content: "";
+    @apply absolute -top-1 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-formiq-blue/50 to-transparent;
+  }
+  
+  .dark .formiq-card::before {
+    @apply via-formiq-purple/50;
+  }
+  
+  .formiq-pulse {
+    @apply animate-pulse bg-gradient-to-r from-formiq-blue/20 to-formiq-purple/20;
+  }
 }
 
 @layer utilities {
@@ -126,5 +143,17 @@
     to {
       transform: rotate(360deg);
     }
+  }
+  
+  .formiq-gradient-text {
+    @apply bg-gradient-to-r from-[hsl(var(--formiq-blue))] to-[hsl(var(--formiq-purple))] bg-clip-text text-transparent;
+  }
+  
+  .formiq-icon-bg {
+    @apply flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-[hsl(var(--formiq-blue)/15)] to-[hsl(var(--formiq-purple)/15)];
+  }
+  
+  .formiq-glass {
+    @apply backdrop-blur-md bg-white/5 dark:bg-black/5 border border-white/10 dark:border-white/5 rounded-xl;
   }
 }

@@ -13,6 +13,7 @@ import Upload from "./pages/Upload";
 import PrintabilityReport from "./pages/PrintabilityReport";
 import BuyerInterface from "./pages/BuyerInterface";
 import VersionHistory from "./pages/VersionHistory";
+import FormIQ from "./pages/FormIQ";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/printability/:modelId" element={<PrintabilityReport />} />
             <Route path="/discover" element={<BuyerInterface />} />
             <Route path="/model/:modelId/history" element={<VersionHistory />} />
+            <Route path="/formiq" element={<FormIQ />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

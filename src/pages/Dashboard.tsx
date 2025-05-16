@@ -8,7 +8,21 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
-import { ArrowRight, Clock, Download, File, FileImage, Upload, Users } from "lucide-react";
+import { FormIQInsight } from "@/components/formiq/FormIQInsight";
+import { 
+  ArrowRight, 
+  Brain, 
+  Clock, 
+  Download, 
+  File, 
+  FileImage, 
+  Tag,
+  DollarSign,
+  Check,
+  TrendingUp,
+  Upload, 
+  Users 
+} from "lucide-react";
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("models");
@@ -60,6 +74,27 @@ const Dashboard = () => {
             </Link>
           </Button>
         </div>
+
+        {/* FormIQ Status Banner */}
+        <Card className="mb-8 bg-gradient-to-r from-[hsl(var(--formiq-blue)/10)] to-[hsl(var(--formiq-purple)/10)]">
+          <CardContent className="p-4 flex flex-col md:flex-row items-center justify-between">
+            <div className="flex items-center">
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mr-4">
+                <Brain className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-medium">FormIQ is enhancing your models</h3>
+                <p className="text-sm text-muted-foreground">AI-optimized tags, pricing, and printability analysis</p>
+              </div>
+            </div>
+            <Button variant="default" size="sm" className="mt-4 md:mt-0" asChild>
+              <Link to="/formiq">
+                View FormIQ Dashboard
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
 
         {/* Quick Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -253,37 +288,36 @@ const Dashboard = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ul className="space-y-2">
-                <li className="flex items-start space-x-2">
-                  <div className="rounded-full bg-primary/20 p-1 mt-0.5">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </div>
-                  <p className="text-sm">Increasing the polygon count in "Industrial Gear Assembly" could improve printability score by up to 12%.</p>
-                </li>
-                <li className="flex items-start space-x-2">
-                  <div className="rounded-full bg-primary/20 p-1 mt-0.5">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </div>
-                  <p className="text-sm">Consider adjusting your pricing strategy. Models similar to yours are priced 15% higher on average.</p>
-                </li>
-                <li className="flex items-start space-x-2">
-                  <div className="rounded-full bg-primary/20 p-1 mt-0.5">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </div>
-                  <p className="text-sm">Adding 'aerospace' and 'precision' to your model tags could increase discoverability by 32%.</p>
-                </li>
-              </ul>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormIQInsight 
+                  title="Printability Enhancement"
+                  content="Increasing the polygon count in 'Industrial Gear Assembly' could improve printability score by up to 12%."
+                  icon={<Check className="h-4 w-4 text-primary" />}
+                />
+                
+                <FormIQInsight 
+                  title="Pricing Optimization"
+                  content="Consider adjusting your pricing strategy. Models similar to yours are priced 15% higher on average."
+                  icon={<DollarSign className="h-4 w-4 text-primary" />}
+                />
+                
+                <FormIQInsight 
+                  title="Tag Recommendations"
+                  content="Adding 'aerospace' and 'precision' to your model tags could increase discoverability by 32%."
+                  icon={<Tag className="h-4 w-4 text-primary" />}
+                />
+                
+                <FormIQInsight 
+                  title="Market Opportunity"
+                  content="High demand detected for modular components in the manufacturing sector. Consider creating related models."
+                  icon={<TrendingUp className="h-4 w-4 text-primary" />}
+                />
+              </div>
             </CardContent>
             <CardFooter>
               <Button variant="default" className="w-full" asChild>
-                <Link to="#">
-                  View All AI Insights
+                <Link to="/formiq">
+                  View All FormIQ Insights
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>

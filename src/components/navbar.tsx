@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
+import { Brain } from "lucide-react";
 
 interface NavbarProps {
   transparent?: boolean;
@@ -49,6 +50,13 @@ export function Navbar({ transparent = false, className }: NavbarProps) {
           </Link>
           <Link to="/dashboard" className="text-foreground/80 hover:text-foreground transition-colors">
             Dashboard
+          </Link>
+          <Link 
+            to="/formiq" 
+            className="flex items-center space-x-1 text-foreground/80 hover:text-foreground transition-colors"
+          >
+            <Brain className="h-4 w-4 text-[#1EAEDB]" />
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#1EAEDB] to-[#8B5CF6]">FormIQ</span>
           </Link>
           <Link to="/#pricing" className="text-foreground/80 hover:text-foreground transition-colors">
             Pricing
