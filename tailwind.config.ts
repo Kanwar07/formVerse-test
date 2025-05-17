@@ -72,6 +72,10 @@ export default {
 					indigo: '#6366F1',
 					gray: '#64748B',
 					lightGray: '#E2E8F0'
+				},
+				formiq: {
+					blue: 'hsl(var(--formverse-blue))',
+					purple: 'hsl(var(--formverse-indigo))'
 				}
 			},
 			borderRadius: {

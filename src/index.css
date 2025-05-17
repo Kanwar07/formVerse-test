@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
 
 @tailwind base;
@@ -49,6 +50,10 @@
     --formverse-blue: 198 79% 49%;
     --formverse-indigo: 265 83% 65%;
     --formverse-teal: 187 85% 53%;
+    
+    /* FormIQ specific colors */
+    --formiq-blue: 198 79% 49%;
+    --formiq-purple: 265 83% 65%;
   }
 
   .dark {

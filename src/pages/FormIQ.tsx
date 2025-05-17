@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Switch } from "@/components/ui/switch";
 import { FormIQFeatureCard } from "@/components/formiq/FormIQFeatureCard";
 import { FormIQInsight } from "@/components/formiq/FormIQInsight";
 import { 
