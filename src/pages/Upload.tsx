@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
@@ -10,8 +11,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Progress } from "@/components/ui/progress";
-import { Brain, Check, ChevronRight, Loader2, Upload as UploadIcon } from "lucide-react";
+import { 
+  Brain, 
+  Check, 
+  ChevronRight, 
+  Loader2, 
+  Upload as UploadIcon, 
+  Info,
+  FileCheck, 
+  FileX,
+  Printer,
+  Settings
+} from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { FormIQInsight } from "@/components/formiq/FormIQInsight";
 
 const Upload = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -24,7 +37,16 @@ const Upload = () => {
   const [suggestedPrice, setSuggestedPrice] = useState(1999);
   const [actualPrice, setActualPrice] = useState(1999);
   const [priceOverridden, setPriceOverridden] = useState(false);
+  const [analysisComplete, setAnalysisComplete] = useState(false);
   const { toast } = useToast();
+
+  // FormIQ Analysis Results
+  const [printabilityScore, setPrintabilityScore] = useState(0);
+  const [materialRecommendations, setMaterialRecommendations] = useState<string[]>([]);
+  const [printingTechniques, setPrintingTechniques] = useState<string[]>([]);
+  const [designIssues, setDesignIssues] = useState<{issue: string, severity: string}[]>([]);
+  const [oemCompatibility, setOemCompatibility] = useState<{name: string, score: number}[]>([]);
+  const [marketDemand, setMarketDemand] = useState<{category: string, value: number}[]>([]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -43,7 +65,10 @@ const Upload = () => {
           
           // Simulate AI analysis
           setTimeout(() => {
-            setAnalyzing(false);
+            // Generate FormIQ analysis results
+            runFormIQAnalysis();
+            
+            // Set tags
             setAiGeneratedTags([
               "industrial", 
               "gear", 
@@ -52,11 +77,62 @@ const Upload = () => {
               "precision", 
               "manufacturing"
             ]);
+            
+            setAnalyzing(false);
+            setAnalysisComplete(true);
             setCurrentStep(2);
           }, 2500);
         }
       }, 200);
     }
+  };
+
+  // FormIQ Analysis simulation
+  const runFormIQAnalysis = () => {
+    // Simulate printability score calculation
+    const score = Math.floor(Math.random() * 25) + 75; // 75-100 range
+    setPrintabilityScore(score);
+
+    // Simulate material recommendations
+    setMaterialRecommendations([
+      "PLA - Good for detailed features", 
+      "PETG - Better durability", 
+      "ABS - Heat resistant option"
+    ]);
+
+    // Simulate printing techniques
+    setPrintingTechniques([
+      "FDM - Standard printing", 
+      "SLA - For high precision", 
+      "SLS - For complex geometry"
+    ]);
+
+    // Simulate design issues detection
+    setDesignIssues([
+      { issue: "Thin walls in section A-2", severity: "Medium" },
+      { issue: "Sharp interior corners", severity: "Low" },
+      { issue: "Unsupported overhangs", severity: "High" }
+    ]);
+
+    // Simulate OEM compatibility
+    setOemCompatibility([
+      { name: "Prusa", score: 95 },
+      { name: "Creality", score: 88 },
+      { name: "Ultimaker", score: 92 },
+      { name: "Anycubic", score: 86 }
+    ]);
+
+    // Simulate market demand analysis
+    setMarketDemand([
+      { category: "Engineering", value: 85 },
+      { category: "Mechanical Parts", value: 78 },
+      { category: "Industrial Equipment", value: 92 }
+    ]);
+
+    // Adjust suggested price based on analysis
+    const newPrice = Math.floor((1500 + (score * 25)) / 100) * 100; // Base price adjusted by score
+    setSuggestedPrice(newPrice);
+    setActualPrice(newPrice);
   };
 
   const handleAddTag = () => {
@@ -176,12 +252,12 @@ const Upload = () => {
                 )}
 
                 {analyzing && (
-                  <div className="mt-6">
+                  <div className="mt-6 w-full max-w-xl">
                     <div className="flex items-center mb-4">
-                      <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                      <Brain className="h-5 w-5 text-primary animate-pulse mr-2" />
                       <span className="font-medium">FormIQ is analyzing your model...</span>
                     </div>
-                    <div className="space-y-2 max-w-xl mx-auto">
+                    <div className="space-y-2">
                       <div className="p-3 rounded-lg bg-muted/30 flex items-center">
                         <Check className="h-4 w-4 text-emerald-500 mr-2" />
                         <span className="text-sm">Analyzing mesh topology...</span>
@@ -203,6 +279,97 @@ const Upload = () => {
                         <span className="text-sm">Creating pricing recommendations...</span>
                       </div>
                     </div>
+                  </div>
+                )}
+
+                {/* FormIQ Analysis Results */}
+                {analysisComplete && (
+                  <div className="mt-6 w-full">
+                    <div className="flex items-center mb-4">
+                      <Brain className="h-5 w-5 text-primary mr-2" />
+                      <span className="font-medium">FormIQ Analysis Results</span>
+                    </div>
+                    
+                    <Card className="mb-4 overflow-hidden">
+                      <div className="p-4 bg-gradient-to-r from-primary/10 to-accent/10 flex items-center justify-between">
+                        <h3 className="font-medium">Printability Score</h3>
+                        <div className="flex items-center">
+                          <span className={`text-lg font-bold ${printabilityScore >= 90 ? 'text-emerald-500' : printabilityScore >= 75 ? 'text-amber-500' : 'text-red-500'}`}>
+                            {printabilityScore}/100
+                          </span>
+                        </div>
+                      </div>
+                      <CardContent className="pt-4">
+                        <Progress 
+                          value={printabilityScore} 
+                          className="h-2 mb-4"
+                          indicatorClassName={`${printabilityScore >= 90 ? 'bg-emerald-500' : printabilityScore >= 75 ? 'bg-amber-500' : 'bg-red-500'}`}
+                        />
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div className="p-3 rounded-lg bg-muted/30">
+                            <h4 className="text-sm font-medium mb-2 flex items-center">
+                              <FileCheck className="h-4 w-4 mr-2 text-emerald-500" />
+                              OEM Compatibility
+                            </h4>
+                            <div className="space-y-2">
+                              {oemCompatibility.map((oem, index) => (
+                                <div key={index} className="flex justify-between text-xs">
+                                  <span>{oem.name}</span>
+                                  <span className={`${oem.score >= 90 ? 'text-emerald-500' : 'text-amber-500'}`}>
+                                    {oem.score}%
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          <div className="p-3 rounded-lg bg-muted/30">
+                            <h4 className="text-sm font-medium mb-2 flex items-center">
+                              <Settings className="h-4 w-4 mr-2 text-primary" />
+                              Material Recommendations
+                            </h4>
+                            <ul className="text-xs space-y-1">
+                              {materialRecommendations.map((material, index) => (
+                                <li key={index} className="flex items-center">
+                                  <span className="w-2 h-2 rounded-full bg-primary/70 mr-2"></span>
+                                  {material}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                          
+                          <div className="p-3 rounded-lg bg-muted/30">
+                            <h4 className="text-sm font-medium mb-2 flex items-center">
+                              <FileX className="h-4 w-4 mr-2 text-red-500" />
+                              Design Issues
+                            </h4>
+                            <ul className="text-xs space-y-1">
+                              {designIssues.map((issue, index) => (
+                                <li key={index} className="flex justify-between">
+                                  <span>{issue.issue}</span>
+                                  <Badge variant={issue.severity === "High" ? "destructive" : issue.severity === "Medium" ? "default" : "outline"} className="text-[10px] py-0 h-4">
+                                    {issue.severity}
+                                  </Badge>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                        
+                        <div className="flex justify-end mt-4">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => setCurrentStep(2)}
+                            className="flex items-center"
+                          >
+                            Continue with analysis
+                            <ChevronRight className="ml-2 h-4 w-4" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
                   </div>
                 )}
               </div>
@@ -227,6 +394,39 @@ const Upload = () => {
                     placeholder="Describe your model, its features, and potential use cases..." 
                     className="min-h-[120px]"
                   />
+                </div>
+                
+                {/* FormIQ Insights */}
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <Label>FormIQ Insights</Label>
+                    <span className="text-xs flex items-center">
+                      <Brain className="h-3 w-3 text-primary mr-1" />
+                      AI-generated insights
+                    </span>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormIQInsight
+                      title="Market Analysis"
+                      content="This model has high demand in the engineering and industrial sectors."
+                      icon={<Info className="h-4 w-4 text-primary" />}
+                      metrics={[
+                        { label: "Market Demand", value: "High" },
+                        { label: "Target Industries", value: "Engineering, Manufacturing" }
+                      ]}
+                    />
+                    
+                    <FormIQInsight
+                      title="Printing Techniques"
+                      content="Optimal results with FDM printing using 0.1mm layer height."
+                      icon={<Printer className="h-4 w-4 text-primary" />}
+                      metrics={[
+                        { label: "Recommended Technique", value: "FDM" },
+                        { label: "Alternative", value: "SLA for detail" }
+                      ]}
+                    />
+                  </div>
                 </div>
                 
                 <div>
@@ -268,7 +468,7 @@ const Upload = () => {
                 </div>
                 
                 <div className="flex justify-between">
-                  <Button variant="outline">Back</Button>
+                  <Button variant="outline" onClick={() => setCurrentStep(1)}>Back</Button>
                   <Button onClick={() => setCurrentStep(3)}>
                     Continue
                     <ChevronRight className="ml-2 h-4 w-4" />
@@ -320,7 +520,7 @@ const Upload = () => {
                   </div>
                   
                   <p className="text-sm text-muted-foreground mt-2">
-                    <Brain className="h-3 w-3 text-primary mr-1 mt-0.5" />
+                    <Brain className="h-3 w-3 text-primary mr-1 mt-0.5 inline" />
                     FormIQ pricing is based on similar models in our marketplace and considers complexity, 
                     detail, and market demand.
                   </p>
@@ -432,17 +632,19 @@ const Upload = () => {
                     <div>
                       <div className="flex justify-between items-center mb-1">
                         <span className="text-sm">Printability Score</span>
-                        <span className="text-sm font-medium">92/100</span>
+                        <span className="text-sm font-medium">{printabilityScore}/100</span>
                       </div>
-                      <Progress value={92} className="h-2" />
+                      <Progress value={printabilityScore} className="h-2" />
                     </div>
                     
                     <div className="text-sm">
                       <p className="font-medium">AI Recommendations:</p>
                       <ul className="list-disc list-inside space-y-1 text-muted-foreground ml-2 mt-1">
-                        <li>Model is optimized for FDM printing</li>
-                        <li>Compatible with ABS, PLA, and PETG materials</li>
-                        <li>Consider thickening thin walls at highlighted areas</li>
+                        <li>Model is optimized for {printingTechniques[0]?.split(" - ")[0] || "FDM"} printing</li>
+                        <li>Compatible with {materialRecommendations.slice(0, 2).map(m => m.split(" - ")[0]).join(", ")} materials</li>
+                        {designIssues.length > 0 && (
+                          <li>Consider fixing {designIssues.filter(i => i.severity === "High").length} high-priority design issues</li>
+                        )}
                       </ul>
                     </div>
                   </div>
