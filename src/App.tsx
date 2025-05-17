@@ -15,6 +15,8 @@ import BuyerInterface from "./pages/BuyerInterface";
 import VersionHistory from "./pages/VersionHistory";
 import FormIQ from "./pages/FormIQ";
 import NotFound from "./pages/NotFound";
+import CreatorProfile from "./pages/CreatorProfile";
+import Creators from "./pages/Creators";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +35,8 @@ const App = () => (
             <Route path="/discover" element={<BuyerInterface />} />
             <Route path="/model/:modelId/history" element={<VersionHistory />} />
             <Route path="/formiq" element={<FormIQ />} />
+            <Route path="/creator/:username" element={<CreatorProfile />} />
+            <Route path="/creators" element={<Creators />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

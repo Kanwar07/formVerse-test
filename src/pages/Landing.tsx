@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -7,6 +6,7 @@ import { Footer } from "@/components/footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Check, Code, Database, FileImage, Upload } from "lucide-react";
+import { CreatorLeaderboard } from "@/components/CreatorLeaderboard";
 
 const Landing = () => {
   const [activeTab, setActiveTab] = useState("creator");
@@ -199,6 +199,26 @@ const Landing = () => {
               </div>
             </TabsContent>
           </Tabs>
+        </div>
+      </section>
+
+      {/* Creator Leaderboard Section */}
+      <section className="py-20">
+        <div className="container">
+          <div className="text-center max-w-2xl mx-auto mb-16">
+            <h2 className="text-3xl font-bold mb-4">Top CAD Creators</h2>
+            <p className="text-muted-foreground">
+              Discover and follow talented designers who are revolutionizing the CAD marketplace.
+            </p>
+          </div>
+          
+          <CreatorLeaderboard className="max-w-4xl mx-auto" />
+          
+          <div className="text-center mt-8">
+            <Button variant="outline" asChild>
+              <Link to="/creators">View All Creators</Link>
+            </Button>
+          </div>
         </div>
       </section>
 
