@@ -22,26 +22,16 @@ export function Navbar({ transparent = false, className }: NavbarProps) {
       <div className="container flex h-16 items-center justify-between">
         <Link to="/" className="flex items-center space-x-2">
           <div className="relative h-8 w-8">
-            {/* Updated FormVerse logo - 3D cube with blue to purple gradient */}
-            <svg width="32" height="32" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M20 25L50 5L80 25V75L50 95L20 75V25Z" fill="url(#logo-gradient)" />
-              <path d="M50 50V95L20 75V25L50 5" stroke="url(#logo-stroke)" strokeWidth="3" fill="none" />
-              <path d="M50 50H80V75L50 95" stroke="url(#logo-stroke)" strokeWidth="3" fill="none" />
-              <defs>
-                <linearGradient id="logo-gradient" x1="20" y1="25" x2="80" y2="75" gradientUnits="userSpaceOnUse">
-                  <stop offset="0%" stopColor="#1EAEDB" />
-                  <stop offset="100%" stopColor="#8B5CF6" />
-                </linearGradient>
-                <linearGradient id="logo-stroke" x1="20" y1="25" x2="80" y2="75" gradientUnits="userSpaceOnUse">
-                  <stop offset="0%" stopColor="#1EAEDB" />
-                  <stop offset="100%" stopColor="#8B5CF6" />
-                </linearGradient>
-              </defs>
-            </svg>
+            {/* Updated FormVerse logo with blue to purple gradient */}
+            <img 
+              src="/lovable-uploads/9ce09c17-cfd4-43bc-a961-0bd805bee565.png" 
+              alt="FormVerse Logo" 
+              className="h-8 w-8"
+            />
           </div>
           <span className="font-semibold text-lg">
             <span className="text-foreground">FORM</span>
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#1EAEDB] to-[#8B5CF6]">VERSE</span>
+            <span className="text-[#9b87f5]">VERSE</span>
           </span>
         </Link>
         <div className="hidden md:flex items-center space-x-8">
@@ -55,8 +45,8 @@ export function Navbar({ transparent = false, className }: NavbarProps) {
             to="/formiq" 
             className="flex items-center space-x-1 text-foreground/80 hover:text-foreground transition-colors"
           >
-            <Brain className="h-4 w-4 text-[#1EAEDB]" />
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#1EAEDB] to-[#8B5CF6]">FormIQ</span>
+            <Brain className="h-4 w-4 text-[#9b87f5]" />
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#7E69AB] to-[#9b87f5]">FormIQ</span>
           </Link>
           <Link to="/#pricing" className="text-foreground/80 hover:text-foreground transition-colors">
             Pricing
@@ -70,7 +60,7 @@ export function Navbar({ transparent = false, className }: NavbarProps) {
           <Button variant="outline" asChild>
             <Link to="/dashboard">Log In</Link>
           </Button>
-          <Button asChild>
+          <Button asChild className="bg-[#9b87f5] hover:bg-[#7E69AB]">
             <Link to="/dashboard">Get Started</Link>
           </Button>
         </div>

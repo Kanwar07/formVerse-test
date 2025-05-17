@@ -43,8 +43,9 @@ export const FormIQAnalyzer = ({
       {analysisComplete && (
         <div className="mt-6 w-full">
           <div className="flex items-center mb-4">
-            <Brain className="h-5 w-5 text-primary mr-2" />
-            <span className="font-medium">FormIQ Analysis Results</span>
+            <Brain className="h-5 w-5 text-[#9b87f5] mr-2" />
+            <span className="font-medium bg-clip-text text-transparent bg-gradient-to-r from-[#7E69AB] to-[#9b87f5]">FormIQ Analysis Results</span>
+            <span className="ml-2 text-sm text-muted-foreground">(The Brain of FormVerse)</span>
           </div>
           
           <PrintabilityCard 
