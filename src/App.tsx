@@ -17,6 +17,7 @@ import FormIQ from "./pages/FormIQ";
 import NotFound from "./pages/NotFound";
 import CreatorProfile from "./pages/CreatorProfile";
 import Creators from "./pages/Creators";
+import Pricing from "./pages/Pricing";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +38,7 @@ const App = () => (
             <Route path="/formiq" element={<FormIQ />} />
             <Route path="/creator/:username" element={<CreatorProfile />} />
             <Route path="/creators" element={<Creators />} />
+            <Route path="/pricing" element={<Pricing />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

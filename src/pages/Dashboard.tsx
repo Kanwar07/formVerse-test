@@ -21,7 +21,8 @@ import {
   Check,
   TrendingUp,
   Upload, 
-  Users 
+  Users,
+  BadgeCheck
 } from "lucide-react";
 
 const Dashboard = () => {
@@ -67,13 +68,44 @@ const Dashboard = () => {
             <h1 className="text-3xl font-bold mb-1">Creator Dashboard</h1>
             <p className="text-muted-foreground">Manage your models, track performance, and get AI insights.</p>
           </div>
-          <Button className="mt-4 md:mt-0" asChild>
-            <Link to="/upload">
-              <Upload className="mr-2 h-4 w-4" />
-              Upload New Model
-            </Link>
-          </Button>
+          <div className="flex flex-col md:flex-row gap-2 mt-4 md:mt-0">
+            <Button asChild variant="outline">
+              <Link to="/pricing">
+                <BadgeCheck className="mr-2 h-4 w-4" />
+                Upgrade Plan
+              </Link>
+            </Button>
+            <Button className="mt-2 md:mt-0" asChild>
+              <Link to="/upload">
+                <Upload className="mr-2 h-4 w-4" />
+                Upload New Model
+              </Link>
+            </Button>
+          </div>
         </div>
+
+        {/* Current Plan Banner */}
+        <Card className="mb-8 bg-gradient-to-r from-[hsl(var(--primary)/5)] to-[hsl(var(--accent)/5)]">
+          <CardContent className="p-4 flex flex-col md:flex-row items-center justify-between">
+            <div className="flex items-center">
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mr-4">
+                <BadgeCheck className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-medium">Free Creator Plan</h3>
+                <p className="text-sm text-muted-foreground">5/5 models uploaded • Basic FormIQ features</p>
+              </div>
+            </div>
+            <div className="flex gap-2 mt-4 md:mt-0">
+              <Button variant="outline" size="sm">View Usage</Button>
+              <Button size="sm" asChild>
+                <Link to="/pricing">
+                  Upgrade to Pro
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* FormIQ Status Banner */}
         <Card className="mb-8 bg-gradient-to-r from-[hsl(var(--formiq-blue)/10)] to-[hsl(var(--formiq-purple)/10)]">
