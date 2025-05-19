@@ -2,45 +2,82 @@
 import { useState, useEffect } from "react";
 import { AnalysisProgress } from "./AnalysisProgress";
 import { PrintabilityCard } from "./PrintabilityCard";
-
-interface DesignIssue {
-  issue: string;
-  severity: string;
-}
-
-interface OemCompatibility {
-  name: string;
-  score: number;
-}
+import { Brain } from "lucide-react";
+import { analyzeModel, FormIQAnalysisResult } from "@/services/formiq";
 
 interface FormIQAnalyzerProps {
   analyzing: boolean;
   analysisComplete: boolean;
+  modelPath?: string;
+  modelName?: string;
   printabilityScore: number;
   materialRecommendations: string[];
   printingTechniques: string[];
-  designIssues: DesignIssue[];
-  oemCompatibility: OemCompatibility[];
+  designIssues: {issue: string; severity: string}[];
+  oemCompatibility: {name: string; score: number}[];
   onContinue: () => void;
+  onAnalysisComplete?: (result: FormIQAnalysisResult) => void;
 }
 
 export const FormIQAnalyzer = ({ 
   analyzing,
   analysisComplete,
+  modelPath,
+  modelName,
   printabilityScore,
   materialRecommendations,
   printingTechniques,
   designIssues,
   oemCompatibility,
-  onContinue
+  onContinue,
+  onAnalysisComplete
 }: FormIQAnalyzerProps) => {
-  if (!analyzing && !analysisComplete) return null;
+  const [isAnalyzing, setIsAnalyzing] = useState(analyzing);
+  const [analysisFinished, setAnalysisFinished] = useState(analysisComplete);
+  const [result, setResult] = useState<FormIQAnalysisResult>({
+    printabilityScore,
+    materialRecommendations,
+    printingTechniques,
+    designIssues,
+    oemCompatibility
+  });
+
+  useEffect(() => {
+    setIsAnalyzing(analyzing);
+    setAnalysisFinished(analysisComplete);
+  }, [analyzing, analysisComplete]);
+
+  useEffect(() => {
+    const runAnalysis = async () => {
+      if (isAnalyzing && modelPath && modelName) {
+        try {
+          const analysisResult = await analyzeModel(modelPath, modelName);
+          setResult(analysisResult);
+          setIsAnalyzing(false);
+          setAnalysisFinished(true);
+          
+          if (onAnalysisComplete) {
+            onAnalysisComplete(analysisResult);
+          }
+        } catch (error) {
+          console.error("Error analyzing model:", error);
+          setIsAnalyzing(false);
+        }
+      }
+    };
+
+    if (isAnalyzing && modelPath && modelName) {
+      runAnalysis();
+    }
+  }, [isAnalyzing, modelPath, modelName, onAnalysisComplete]);
+
+  if (!isAnalyzing && !analysisFinished) return null;
 
   return (
     <>
-      {analyzing && <AnalysisProgress />}
+      {isAnalyzing && <AnalysisProgress />}
       
-      {analysisComplete && (
+      {analysisFinished && (
         <div className="mt-6 w-full">
           <div className="flex items-center mb-4">
             <Brain className="h-5 w-5 text-[#9b87f5] mr-2" />
@@ -49,10 +86,10 @@ export const FormIQAnalyzer = ({
           </div>
           
           <PrintabilityCard 
-            printabilityScore={printabilityScore}
-            oemCompatibility={oemCompatibility}
-            materialRecommendations={materialRecommendations}
-            designIssues={designIssues}
+            printabilityScore={result.printabilityScore}
+            oemCompatibility={result.oemCompatibility}
+            materialRecommendations={result.materialRecommendations}
+            designIssues={result.designIssues}
             onContinue={onContinue}
           />
         </div>
@@ -60,6 +97,3 @@ export const FormIQAnalyzer = ({
     </>
   );
 };
-
-// Add missing import
-import { Brain } from "lucide-react";
