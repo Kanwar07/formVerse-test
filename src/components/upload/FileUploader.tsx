@@ -57,13 +57,13 @@ export const FileUploader = ({
     try {
       // Simulate upload progress
       const progressInterval = setInterval(() => {
-        setUploadProgress((prev) => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return prev;
-          }
-          return prev + Math.floor(Math.random() * 5) + 1;
-        });
+        // Fix: Update the progress directly with a number instead of using a function
+        const newProgress = Math.min(uploadProgress + Math.floor(Math.random() * 5) + 1, 90);
+        setUploadProgress(newProgress);
+        
+        if (newProgress >= 90) {
+          clearInterval(progressInterval);
+        }
       }, 200);
       
       // Get current user
