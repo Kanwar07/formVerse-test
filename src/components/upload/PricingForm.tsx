@@ -10,16 +10,26 @@ import { Brain, Check, ChevronRight } from "lucide-react";
 interface PricingFormProps {
   suggestedPrice: number;
   onBack: () => void;
-  onContinue: () => void;
+  onContinue: (price: number, license: string) => void;
 }
 
 export const PricingForm = ({ suggestedPrice, onBack, onContinue }: PricingFormProps) => {
   const [actualPrice, setActualPrice] = useState(suggestedPrice);
   const [priceOverridden, setPriceOverridden] = useState(false);
+  const [licenseType, setLicenseType] = useState("commercial");
+  const [additionalTerms, setAdditionalTerms] = useState("");
 
   const handlePriceChange = (value: number[]) => {
     setActualPrice(value[0]);
     setPriceOverridden(value[0] !== suggestedPrice);
+  };
+
+  const handleLicenseSelect = (license: string) => {
+    setLicenseType(license);
+  };
+
+  const handleSubmit = () => {
+    onContinue(actualPrice, licenseType);
   };
 
   return (
@@ -69,16 +79,25 @@ export const PricingForm = ({ suggestedPrice, onBack, onContinue }: PricingFormP
       <div>
         <Label>License Type</Label>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
-          <div className="border rounded-md p-4 cursor-pointer hover:border-primary">
+          <div 
+            className={`border rounded-md p-4 cursor-pointer hover:border-primary ${licenseType === 'standard' ? 'bg-primary/5 border-primary' : ''}`}
+            onClick={() => handleLicenseSelect('standard')}
+          >
             <h4 className="font-medium">Standard</h4>
             <p className="text-sm text-muted-foreground">Personal and small business use</p>
           </div>
-          <div className="border rounded-md p-4 cursor-pointer hover:border-primary bg-primary/5 border-primary">
+          <div 
+            className={`border rounded-md p-4 cursor-pointer hover:border-primary ${licenseType === 'commercial' ? 'bg-primary/5 border-primary' : ''}`}
+            onClick={() => handleLicenseSelect('commercial')}
+          >
             <h4 className="font-medium">Commercial</h4>
             <p className="text-sm text-muted-foreground">Unlimited commercial production</p>
             <Badge variant="secondary" className="mt-2 bg-primary/10 text-primary text-xs">AI Recommended</Badge>
           </div>
-          <div className="border rounded-md p-4 cursor-pointer hover:border-primary">
+          <div 
+            className={`border rounded-md p-4 cursor-pointer hover:border-primary ${licenseType === 'extended' ? 'bg-primary/5 border-primary' : ''}`}
+            onClick={() => handleLicenseSelect('extended')}
+          >
             <h4 className="font-medium">Extended</h4>
             <p className="text-sm text-muted-foreground">Includes source files & modifications</p>
           </div>
@@ -90,12 +109,14 @@ export const PricingForm = ({ suggestedPrice, onBack, onContinue }: PricingFormP
         <Textarea 
           placeholder="Any additional license terms or restrictions..."
           className="mt-2 min-h-[80px]"
+          value={additionalTerms}
+          onChange={(e) => setAdditionalTerms(e.target.value)}
         />
       </div>
       
       <div className="flex justify-between">
         <Button variant="outline" onClick={onBack}>Back</Button>
-        <Button onClick={onContinue}>
+        <Button onClick={handleSubmit}>
           Continue
           <ChevronRight className="ml-2 h-4 w-4" />
         </Button>

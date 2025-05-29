@@ -12,10 +12,20 @@ import { Info, Printer } from "lucide-react";
 interface DetailsFormProps {
   aiGeneratedTags: string[];
   onBack: () => void;
-  onContinue: () => void;
+  onContinue: (name: string, description: string, tags: string[]) => void;
+  initialName?: string;
+  initialDescription?: string;
 }
 
-export const DetailsForm = ({ aiGeneratedTags, onBack, onContinue }: DetailsFormProps) => {
+export const DetailsForm = ({ 
+  aiGeneratedTags, 
+  onBack, 
+  onContinue,
+  initialName = "",
+  initialDescription = ""
+}: DetailsFormProps) => {
+  const [name, setName] = useState(initialName);
+  const [description, setDescription] = useState(initialDescription);
   const [customTags, setCustomTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState("");
 
@@ -30,11 +40,20 @@ export const DetailsForm = ({ aiGeneratedTags, onBack, onContinue }: DetailsForm
     setCustomTags(customTags.filter(t => t !== tag));
   };
 
+  const handleSubmit = () => {
+    onContinue(name, description, customTags);
+  };
+
   return (
     <div className="space-y-6">
       <div>
         <Label htmlFor="model-name">Model Name</Label>
-        <Input id="model-name" placeholder="Enter a descriptive name for your model" />
+        <Input 
+          id="model-name" 
+          placeholder="Enter a descriptive name for your model"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
       </div>
       
       <div>
@@ -43,6 +62,8 @@ export const DetailsForm = ({ aiGeneratedTags, onBack, onContinue }: DetailsForm
           id="model-description" 
           placeholder="Describe your model, its features, and potential use cases..." 
           className="min-h-[120px]"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
         />
       </div>
       
@@ -119,7 +140,7 @@ export const DetailsForm = ({ aiGeneratedTags, onBack, onContinue }: DetailsForm
       
       <div className="flex justify-between">
         <Button variant="outline" onClick={onBack}>Back</Button>
-        <Button onClick={onContinue}>
+        <Button onClick={handleSubmit}>
           Continue
           <ChevronRight className="ml-2 h-4 w-4" />
         </Button>

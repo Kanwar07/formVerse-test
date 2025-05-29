@@ -1,9 +1,14 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { useToast } from "@/components/ui/use-toast";
+import { Brain } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
+import { createModelRecord, uploadThumbnail } from "@/lib/supabase";
+import { FormIQAnalysisResult, saveAnalysis } from "@/services/formiq";
 
 // Import refactored components
 import { FileUploader } from "@/components/upload/FileUploader";
@@ -18,11 +23,18 @@ const Upload = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [analyzing, setAnalyzing] = useState(false);
   const [modelFile, setModelFile] = useState<File | null>(null);
+  const [modelPath, setModelPath] = useState<string | undefined>(undefined);
+  const [modelName, setModelName] = useState<string>("");
+  const [modelDescription, setModelDescription] = useState<string>("");
   const [aiGeneratedTags, setAiGeneratedTags] = useState<string[]>([]);
+  const [customTags, setCustomTags] = useState<string[]>([]);
   const [suggestedPrice, setSuggestedPrice] = useState(1999);
   const [actualPrice, setActualPrice] = useState(1999);
   const [analysisComplete, setAnalysisComplete] = useState(false);
+  const [licenseType, setLicenseType] = useState<string>("commercial");
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { user, loading } = useAuth();
 
   // FormIQ Analysis Results
   const [printabilityScore, setPrintabilityScore] = useState(0);
@@ -30,102 +42,122 @@ const Upload = () => {
   const [printingTechniques, setPrintingTechniques] = useState<string[]>([]);
   const [designIssues, setDesignIssues] = useState<{issue: string, severity: string}[]>([]);
   const [oemCompatibility, setOemCompatibility] = useState<{name: string, score: number}[]>([]);
-  const [marketDemand, setMarketDemand] = useState<{category: string, value: number}[]>([]);
 
-  const handleFileSelected = (file: File) => {
+  // Check if user is authenticated
+  useEffect(() => {
+    if (!loading && !user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to upload models",
+        variant: "destructive"
+      });
+      navigate("/signin");
+    }
+  }, [user, loading, navigate, toast]);
+
+  const handleFileSelected = (file: File, filePath: string) => {
     setModelFile(file);
-    
-    // Simulate upload progress
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += 5;
-      setUploadProgress(progress);
-      
-      if (progress >= 100) {
-        clearInterval(interval);
-        setAnalyzing(true);
-        
-        // Simulate AI analysis
-        setTimeout(() => {
-          // Generate FormIQ analysis results
-          runFormIQAnalysis();
-          
-          // Set tags
-          setAiGeneratedTags([
-            "industrial", 
-            "gear", 
-            "mechanical", 
-            "engineering", 
-            "precision", 
-            "manufacturing"
-          ]);
-          
-          setAnalyzing(false);
-          setAnalysisComplete(true);
-          setCurrentStep(2);
-        }, 2500);
-      }
-    }, 200);
+    setModelPath(filePath);
+    setModelName(file.name.split('.')[0]);
+    setAnalyzing(true);
   };
 
-  // FormIQ Analysis simulation
-  const runFormIQAnalysis = () => {
-    // Simulate printability score calculation
-    const score = Math.floor(Math.random() * 25) + 75; // 75-100 range
-    setPrintabilityScore(score);
-
-    // Simulate material recommendations
-    setMaterialRecommendations([
-      "PLA - Good for detailed features", 
-      "PETG - Better durability", 
-      "ABS - Heat resistant option"
+  // Handle FormIQ analysis completion
+  const handleAnalysisComplete = (result: FormIQAnalysisResult) => {
+    setPrintabilityScore(result.printabilityScore);
+    setMaterialRecommendations(result.materialRecommendations);
+    setPrintingTechniques(result.printingTechniques);
+    setDesignIssues(result.designIssues);
+    setOemCompatibility(result.oemCompatibility);
+    
+    // Generate tags based on analysis
+    setAiGeneratedTags([
+      "industrial", 
+      "gear", 
+      "mechanical", 
+      "engineering", 
+      "precision", 
+      "manufacturing"
     ]);
-
-    // Simulate printing techniques
-    setPrintingTechniques([
-      "FDM - Standard printing", 
-      "SLA - For high precision", 
-      "SLS - For complex geometry"
-    ]);
-
-    // Simulate design issues detection
-    setDesignIssues([
-      { issue: "Thin walls in section A-2", severity: "Medium" },
-      { issue: "Sharp interior corners", severity: "Low" },
-      { issue: "Unsupported overhangs", severity: "High" }
-    ]);
-
-    // Simulate OEM compatibility
-    setOemCompatibility([
-      { name: "Prusa", score: 95 },
-      { name: "Creality", score: 88 },
-      { name: "Ultimaker", score: 92 },
-      { name: "Anycubic", score: 86 }
-    ]);
-
-    // Simulate market demand analysis
-    setMarketDemand([
-      { category: "Engineering", value: 85 },
-      { category: "Mechanical Parts", value: 78 },
-      { category: "Industrial Equipment", value: 92 }
-    ]);
-
-    // Adjust suggested price based on analysis
-    const newPrice = Math.floor((1500 + (score * 25)) / 100) * 100; // Base price adjusted by score
+    
+    // Set suggested price based on analysis
+    const newPrice = Math.floor((1500 + (result.printabilityScore * 25)) / 100) * 100;
     setSuggestedPrice(newPrice);
     setActualPrice(newPrice);
+    
+    setAnalyzing(false);
+    setAnalysisComplete(true);
+    setCurrentStep(2);
   };
 
-  const handleSubmit = () => {
-    toast({
-      title: "Model uploaded successfully!",
-      description: "Your model has been uploaded and is now being reviewed.",
-    });
-    
-    // Redirect to dashboard after successful upload
-    setTimeout(() => {
-      window.location.href = "/dashboard";
-    }, 2000);
+  // Handle model details submission
+  const handleDetailsSubmit = (name: string, description: string, tags: string[]) => {
+    setModelName(name);
+    setModelDescription(description);
+    setCustomTags(tags);
+    setCurrentStep(3);
+  };
+
+  // Handle pricing submission
+  const handlePricingSubmit = (price: number, license: string) => {
+    setActualPrice(price);
+    setLicenseType(license);
+    setCurrentStep(4);
+  };
+
+  // Handle final submission
+  const handleSubmit = async () => {
+    if (!user || !modelPath) {
+      toast({
+        title: "Error",
+        description: "Missing user information or model file",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      // Create model record in database
+      const { model, error } = await createModelRecord({
+        name: modelName,
+        description: modelDescription,
+        file_path: modelPath,
+        tags: [...aiGeneratedTags, ...customTags],
+        price: actualPrice,
+        printability_score: printabilityScore,
+        user_id: user.id
+      });
+
+      if (error || !model) {
+        throw new Error(error?.message || "Failed to create model record");
+      }
+
+      // Save FormIQ analysis
+      await saveAnalysis(model.id, {
+        printabilityScore,
+        materialRecommendations,
+        printingTechniques,
+        designIssues,
+        oemCompatibility
+      });
+
+      toast({
+        title: "Model uploaded successfully!",
+        description: "Your model has been uploaded and is now being reviewed.",
+      });
+      
+      // Redirect to dashboard after successful upload
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 2000);
+    } catch (error) {
+      console.error("Error publishing model:", error);
+      toast({
+        title: "Upload failed",
+        description: "An error occurred while publishing your model. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
@@ -155,17 +187,21 @@ const Upload = () => {
                 <FileUploader 
                   onFileSelected={handleFileSelected} 
                   uploadProgress={uploadProgress} 
+                  setUploadProgress={setUploadProgress}
                 />
                 
                 <FormIQAnalyzer 
                   analyzing={analyzing}
                   analysisComplete={analysisComplete}
+                  modelPath={modelPath}
+                  modelName={modelName}
                   printabilityScore={printabilityScore}
                   materialRecommendations={materialRecommendations}
                   printingTechniques={printingTechniques}
                   designIssues={designIssues}
                   oemCompatibility={oemCompatibility}
                   onContinue={() => setCurrentStep(2)}
+                  onAnalysisComplete={handleAnalysisComplete}
                 />
               </div>
             </CardContent>
@@ -179,7 +215,11 @@ const Upload = () => {
               <DetailsForm 
                 aiGeneratedTags={aiGeneratedTags}
                 onBack={() => setCurrentStep(1)}
-                onContinue={() => setCurrentStep(3)}
+                onContinue={(name, description, tags) => {
+                  handleDetailsSubmit(name, description, tags);
+                }}
+                initialName={modelName}
+                initialDescription={modelDescription}
               />
             </CardContent>
           </Card>
@@ -192,7 +232,9 @@ const Upload = () => {
               <PricingForm 
                 suggestedPrice={suggestedPrice}
                 onBack={() => setCurrentStep(2)}
-                onContinue={() => setCurrentStep(4)}
+                onContinue={(price, license) => {
+                  handlePricingSubmit(price, license);
+                }}
               />
             </CardContent>
           </Card>
@@ -224,6 +266,3 @@ const Upload = () => {
 };
 
 export default Upload;
-
-// Add missing import
-import { Brain } from "lucide-react";
