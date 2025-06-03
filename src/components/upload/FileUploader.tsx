@@ -58,11 +58,12 @@ export const FileUploader = ({
       // Simulate upload progress
       const progressInterval = setInterval(() => {
         setUploadProgress((prev) => {
-          if (prev >= 90) {
+          const newProgress = prev + Math.floor(Math.random() * 5) + 1;
+          if (newProgress >= 90) {
             clearInterval(progressInterval);
             return prev;
           }
-          return prev + Math.floor(Math.random() * 5) + 1;
+          return newProgress;
         });
       }, 200);
       
