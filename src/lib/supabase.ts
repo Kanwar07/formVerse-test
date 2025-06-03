@@ -4,14 +4,44 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Missing Supabase environment variables');
+// Check if Supabase is configured
+export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey);
+
+if (!isSupabaseConfigured) {
+  console.warn('Supabase environment variables not found. Some features will be disabled.');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Create a mock client for when Supabase is not configured
+const createMockClient = () => ({
+  auth: {
+    signUp: async () => ({ data: null, error: { message: 'Supabase not configured' } }),
+    signInWithPassword: async () => ({ data: null, error: { message: 'Supabase not configured' } }),
+    signOut: async () => ({ error: { message: 'Supabase not configured' } }),
+    getUser: async () => ({ data: { user: null }, error: { message: 'Supabase not configured' } }),
+    onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } })
+  },
+  from: () => ({
+    select: () => ({ eq: () => ({ single: async () => ({ data: null, error: { message: 'Supabase not configured' } }) }) }),
+    insert: () => ({ select: () => ({ single: async () => ({ data: null, error: { message: 'Supabase not configured' } }) }) }),
+    update: () => ({ eq: async () => ({ data: null, error: { message: 'Supabase not configured' } }) })
+  }),
+  storage: {
+    from: () => ({
+      upload: async () => ({ data: null, error: { message: 'Supabase not configured' } }),
+      getPublicUrl: () => ({ data: { publicUrl: '' } })
+    })
+  }
+});
+
+export const supabase = isSupabaseConfigured 
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : createMockClient() as any;
 
 // Auth helper functions
 export const signUp = async (email: string, password: string) => {
+  if (!isSupabaseConfigured) {
+    return { data: null, error: { message: 'Please connect to Supabase to enable authentication' } };
+  }
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -20,6 +50,9 @@ export const signUp = async (email: string, password: string) => {
 };
 
 export const signIn = async (email: string, password: string) => {
+  if (!isSupabaseConfigured) {
+    return { data: null, error: { message: 'Please connect to Supabase to enable authentication' } };
+  }
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
@@ -28,17 +61,26 @@ export const signIn = async (email: string, password: string) => {
 };
 
 export const signOut = async () => {
+  if (!isSupabaseConfigured) {
+    return { error: { message: 'Please connect to Supabase to enable authentication' } };
+  }
   const { error } = await supabase.auth.signOut();
   return { error };
 };
 
 export const getCurrentUser = async () => {
+  if (!isSupabaseConfigured) {
+    return { user: null, error: { message: 'Please connect to Supabase to enable authentication' } };
+  }
   const { data, error } = await supabase.auth.getUser();
   return { user: data.user, error };
 };
 
 // Profile helper functions
 export const getProfile = async (userId: string) => {
+  if (!isSupabaseConfigured) {
+    return { profile: null, error: { message: 'Please connect to Supabase to enable profiles' } };
+  }
   const { data, error } = await supabase
     .from('profiles')
     .select('*')
@@ -49,6 +91,9 @@ export const getProfile = async (userId: string) => {
 };
 
 export const updateProfile = async (userId: string, updates: any) => {
+  if (!isSupabaseConfigured) {
+    return { data: null, error: { message: 'Please connect to Supabase to enable profiles' } };
+  }
   const { data, error } = await supabase
     .from('profiles')
     .update(updates)
@@ -59,6 +104,9 @@ export const updateProfile = async (userId: string, updates: any) => {
 
 // Model helper functions
 export const uploadModel = async (file: File, userId: string) => {
+  if (!isSupabaseConfigured) {
+    return { path: null, error: { message: 'Please connect to Supabase to enable file uploads' } };
+  }
   const fileExt = file.name.split('.').pop();
   const fileName = `${userId}/${crypto.randomUUID()}.${fileExt}`;
   const filePath = `models/${fileName}`;
@@ -80,6 +128,9 @@ export const createModelRecord = async (modelData: {
   printability_score: number;
   user_id: string;
 }) => {
+  if (!isSupabaseConfigured) {
+    return { model: null, error: { message: 'Please connect to Supabase to enable data storage' } };
+  }
   const { data, error } = await supabase
     .from('models')
     .insert(modelData)
@@ -90,6 +141,9 @@ export const createModelRecord = async (modelData: {
 };
 
 export const getModels = async () => {
+  if (!isSupabaseConfigured) {
+    return { models: [], error: { message: 'Please connect to Supabase to load models' } };
+  }
   const { data, error } = await supabase
     .from('models')
     .select('*, profiles(*)');
@@ -98,6 +152,9 @@ export const getModels = async () => {
 };
 
 export const getModelById = async (modelId: string) => {
+  if (!isSupabaseConfigured) {
+    return { model: null, error: { message: 'Please connect to Supabase to load models' } };
+  }
   const { data, error } = await supabase
     .from('models')
     .select('*, profiles(*)')
@@ -108,6 +165,9 @@ export const getModelById = async (modelId: string) => {
 };
 
 export const getUserModels = async (userId: string) => {
+  if (!isSupabaseConfigured) {
+    return { models: [], error: { message: 'Please connect to Supabase to load user models' } };
+  }
   const { data, error } = await supabase
     .from('models')
     .select('*')
@@ -124,6 +184,9 @@ export const saveFormIQAnalysis = async (modelId: string, analysisData: {
   design_issues: Array<{issue: string, severity: string}>;
   oem_compatibility: Array<{name: string, score: number}>; 
 }) => {
+  if (!isSupabaseConfigured) {
+    return { analysis: null, error: { message: 'Please connect to Supabase to save analysis results' } };
+  }
   const { data, error } = await supabase
     .from('formiq_analyses')
     .insert({
@@ -137,6 +200,9 @@ export const saveFormIQAnalysis = async (modelId: string, analysisData: {
 };
 
 export const getFormIQAnalysis = async (modelId: string) => {
+  if (!isSupabaseConfigured) {
+    return { analysis: null, error: { message: 'Please connect to Supabase to load analysis results' } };
+  }
   const { data, error } = await supabase
     .from('formiq_analyses')
     .select('*')
@@ -148,6 +214,9 @@ export const getFormIQAnalysis = async (modelId: string) => {
 
 // File upload helpers
 export const uploadThumbnail = async (file: File, userId: string) => {
+  if (!isSupabaseConfigured) {
+    return { path: null, error: { message: 'Please connect to Supabase to enable image uploads' } };
+  }
   const fileExt = file.name.split('.').pop();
   const fileName = `${userId}/${crypto.randomUUID()}.${fileExt}`;
   const filePath = `thumbnails/${fileName}`;
@@ -160,6 +229,9 @@ export const uploadThumbnail = async (file: File, userId: string) => {
 };
 
 export const getPublicUrl = (bucket: string, path: string) => {
+  if (!isSupabaseConfigured || !path) {
+    return '';
+  }
   const { data } = supabase.storage.from(bucket).getPublicUrl(path);
   return data.publicUrl;
 };
