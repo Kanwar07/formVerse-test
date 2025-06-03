@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Navbar } from "@/components/navbar";
@@ -200,7 +199,7 @@ const BuyerInterface = () => {
                     <CardFooter className="pt-0 pb-4 flex justify-between items-center">
                       <div className="font-medium">₹{model.price}</div>
                       <Button size="sm" asChild>
-                        <Link to={`/printability/${model.id}`}>
+                        <Link to={`/model/${model.id}`}>
                           View Details
                         </Link>
                       </Button>

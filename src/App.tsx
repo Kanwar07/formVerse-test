@@ -13,6 +13,7 @@ import Dashboard from "./pages/Dashboard";
 import Upload from "./pages/Upload";
 import PrintabilityReport from "./pages/PrintabilityReport";
 import BuyerInterface from "./pages/BuyerInterface";
+import ModelDetails from "./pages/ModelDetails";
 import VersionHistory from "./pages/VersionHistory";
 import FormIQ from "./pages/FormIQ";
 import NotFound from "./pages/NotFound";
@@ -38,6 +39,7 @@ const App = () => (
               <Route path="/upload" element={<Upload />} />
               <Route path="/printability/:modelId" element={<PrintabilityReport />} />
               <Route path="/discover" element={<BuyerInterface />} />
+              <Route path="/model/:modelId" element={<ModelDetails />} />
               <Route path="/model/:modelId/history" element={<VersionHistory />} />
               <Route path="/formiq" element={<FormIQ />} />
               <Route path="/creator/:username" element={<CreatorProfile />} />
