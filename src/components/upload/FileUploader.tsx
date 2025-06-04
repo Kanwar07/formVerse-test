@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { UploadIcon } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 interface FileUploaderProps {
   onFileSelected: (file: File, filePath: string) => void;
@@ -54,15 +54,14 @@ export const FileUploader = ({
     
     try {
       // Simulate upload progress
+      let currentProgress = 0;
       const progressInterval = setInterval(() => {
-        setUploadProgress((prev) => {
-          const newProgress = prev + Math.floor(Math.random() * 5) + 1;
-          if (newProgress >= 90) {
-            clearInterval(progressInterval);
-            return prev;
-          }
-          return newProgress;
-        });
+        currentProgress = currentProgress + Math.floor(Math.random() * 5) + 1;
+        if (currentProgress >= 90) {
+          clearInterval(progressInterval);
+          return;
+        }
+        setUploadProgress(currentProgress);
       }, 200);
       
       // Simulate file upload delay
