@@ -5,8 +5,6 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { UploadIcon } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { uploadModel } from "@/lib/supabase";
-import { getCurrentUser } from "@/lib/supabase";
 
 interface FileUploaderProps {
   onFileSelected: (file: File, filePath: string) => void;
@@ -67,43 +65,19 @@ export const FileUploader = ({
         });
       }, 200);
       
-      // Get current user
-      const { user, error: userError } = await getCurrentUser();
-      
-      if (userError || !user) {
-        toast({
-          title: "Authentication error",
-          description: "Please log in to upload models.",
-          variant: "destructive"
-        });
-        setUploading(false);
-        clearInterval(progressInterval);
-        return;
-      }
-      
-      // Upload file to Supabase storage
-      const { path, error } = await uploadModel(file, user.id);
-      
-      clearInterval(progressInterval);
-      
-      if (error) {
-        toast({
-          title: "Upload failed",
-          description: error.message,
-          variant: "destructive"
-        });
-        setUploadProgress(0);
-        setUploading(false);
-        return;
-      }
-      
-      setUploadProgress(100);
-      
+      // Simulate file upload delay
       setTimeout(() => {
-        if (path) {
-          onFileSelected(file, path);
-        }
-      }, 500);
+        clearInterval(progressInterval);
+        setUploadProgress(100);
+        
+        // Create a mock file path for demo purposes
+        const mockFilePath = `uploads/${crypto.randomUUID()}.${file.name.split('.').pop()}`;
+        
+        setTimeout(() => {
+          onFileSelected(file, mockFilePath);
+        }, 500);
+      }, 2000);
+      
     } catch (error) {
       toast({
         title: "Upload failed",

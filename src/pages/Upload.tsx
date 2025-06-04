@@ -1,14 +1,12 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { useToast } from "@/components/ui/use-toast";
 import { Brain } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
-import { createModelRecord, uploadThumbnail } from "@/lib/supabase";
-import { FormIQAnalysisResult, saveAnalysis } from "@/services/formiq";
+import { FormIQAnalysisResult } from "@/services/formiq";
 
 // Import refactored components
 import { FileUploader } from "@/components/upload/FileUploader";
@@ -34,7 +32,6 @@ const Upload = () => {
   const [licenseType, setLicenseType] = useState<string>("commercial");
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { user, loading } = useAuth();
 
   // FormIQ Analysis Results
   const [printabilityScore, setPrintabilityScore] = useState(0);
@@ -42,18 +39,6 @@ const Upload = () => {
   const [printingTechniques, setPrintingTechniques] = useState<string[]>([]);
   const [designIssues, setDesignIssues] = useState<{issue: string, severity: string}[]>([]);
   const [oemCompatibility, setOemCompatibility] = useState<{name: string, score: number}[]>([]);
-
-  // Check if user is authenticated
-  useEffect(() => {
-    if (!loading && !user) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to upload models",
-        variant: "destructive"
-      });
-      navigate("/signin");
-    }
-  }, [user, loading, navigate, toast]);
 
   const handleFileSelected = (file: File, filePath: string) => {
     setModelFile(file);
@@ -107,48 +92,25 @@ const Upload = () => {
 
   // Handle final submission
   const handleSubmit = async () => {
-    if (!user || !modelPath) {
+    if (!modelPath) {
       toast({
         title: "Error",
-        description: "Missing user information or model file",
+        description: "Missing model file",
         variant: "destructive"
       });
       return;
     }
 
     try {
-      // Create model record in database
-      const { model, error } = await createModelRecord({
-        name: modelName,
-        description: modelDescription,
-        file_path: modelPath,
-        tags: [...aiGeneratedTags, ...customTags],
-        price: actualPrice,
-        printability_score: printabilityScore,
-        user_id: user.id
-      });
-
-      if (error || !model) {
-        throw new Error(error?.message || "Failed to create model record");
-      }
-
-      // Save FormIQ analysis
-      await saveAnalysis(model.id, {
-        printabilityScore,
-        materialRecommendations,
-        printingTechniques,
-        designIssues,
-        oemCompatibility
-      });
-
+      // For now, just simulate successful upload without database storage
       toast({
         title: "Model uploaded successfully!",
-        description: "Your model has been uploaded and is now being reviewed.",
+        description: "Your model has been uploaded and is ready for review.",
       });
       
-      // Redirect to dashboard after successful upload
+      // Redirect to discover page after successful upload
       setTimeout(() => {
-        navigate("/dashboard");
+        navigate("/discover");
       }, 2000);
     } catch (error) {
       console.error("Error publishing model:", error);
