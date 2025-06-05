@@ -1,415 +1,355 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Search } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Slider } from "@/components/ui/slider";
+import { useNavigate } from "react-router-dom";
+import { EngagementGate } from "@/components/buyer/EngagementGate";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Check,
-  ChevronDown,
-  Download,
-  Filter,
-  Loader2,
-  Search,
-  SlidersHorizontal,
-  Tag
-} from "lucide-react";
+import { Eye, Download, Clock, Users } from "lucide-react";
 
 const BuyerInterface = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
-  const [aiPrompt, setAiPrompt] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
-  const [activeTab, setActiveTab] = useState("browse");
-  
-  // Mock data for models
-  const mockModels = [
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedPriceRange, setSelectedPriceRange] = useState("all");
+  const navigate = useNavigate();
+
+  // Mock data for 3D models
+  const [models, setModels] = useState([
     {
-      id: "model-1",
+      id: "1",
       name: "Industrial Gear Assembly",
-      thumbnail: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=1226&ixlib=rb-4.0.3",
+      description: "A complex gear system for heavy machinery.",
+      image: "https://images.unsplash.com/photo-1483058712412-4245e9b90334?auto=format&fit=crop&q=80&w=2070&ixlib=rb-4.0.3",
+      category: "Industrial",
       price: 1999,
-      creator: "MechDesigns",
-      printabilityScore: 95,
-      tags: ["industrial", "mechanical", "gear", "assembly"],
-      licenseType: "Commercial"
+      creator: "FormVerse Designs",
+      downloads: 325,
+      uploadDate: "2 days ago",
+      isFeatured: true,
+      isNew: true,
+      printabilityScore: 92
     },
     {
-      id: "model-2",
-      name: "Modular Housing Frame",
-      thumbnail: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?auto=format&fit=crop&q=80&w=2072&ixlib=rb-4.0.3",
-      price: 2499,
-      creator: "ArchitectCAD",
-      printabilityScore: 88,
-      tags: ["housing", "architectural", "modular", "frame"],
-      licenseType: "Standard"
+      id: "2",
+      name: "Futuristic Desk Organizer",
+      description: "A sleek and modern organizer for your workspace.",
+      image: "https://images.unsplash.com/photo-1518791841217-8f162f1e1131?auto=format&fit=crop&q=80&w=2070&ixlib=rb-4.0.3",
+      category: "Art & Design",
+      price: 499,
+      creator: "Studio Ghiberti",
+      downloads: 580,
+      uploadDate: "5 days ago",
+      isFeatured: false,
+      isNew: false,
+      printabilityScore: 88
     },
     {
-      id: "model-3",
-      name: "Medical Device Enclosure",
-      thumbnail: "https://images.unsplash.com/photo-1483058712412-4245e9b90334?auto=format&fit=crop&q=80&w=2070&ixlib=rb-4.0.3",
-      price: 3999,
-      creator: "MedTech3D",
-      printabilityScore: 96,
-      tags: ["medical", "enclosure", "precision", "device"],
-      licenseType: "Extended"
+      id: "3",
+      name: "Ergonomic Phone Stand",
+      description: "An adjustable stand for comfortable phone viewing.",
+      image: "https://images.unsplash.com/photo-1505740420928-5e560ba3e51c?auto=format&fit=crop&q=80&w=2070&ixlib=rb-4.0.3",
+      category: "Electronics",
+      price: 299,
+      creator: "PixelPrint",
+      downloads: 812,
+      uploadDate: "1 week ago",
+      isFeatured: false,
+      isNew: false,
+      printabilityScore: 95
     },
     {
-      id: "model-4",
-      name: "Automotive Dashboard Component",
-      thumbnail: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?auto=format&fit=crop&q=80&w=1470&ixlib=rb-4.0.3",
-      price: 2799,
-      creator: "AutoCAD Pro",
-      printabilityScore: 91,
-      tags: ["automotive", "dashboard", "interior", "component"],
-      licenseType: "Commercial"
+      id: "4",
+      name: "Modular Tool Holder",
+      description: "A customizable holder for organizing your tools.",
+      image: "https://images.unsplash.com/photo-1542291726-7a3494492f1c?auto=format&fit=crop&q=80&w=2070&ixlib=rb-4.0.3",
+      category: "Tools",
+      price: 0,
+      creator: "MakerSpace",
+      downloads: 1245,
+      uploadDate: "2 weeks ago",
+      isFeatured: true,
+      isNew: false,
+      printabilityScore: 90
     },
     {
-      id: "model-5",
-      name: "Robotic Arm Joint",
-      thumbnail: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=80&w=2072&ixlib=rb-4.0.3",
-      price: 1499,
-      creator: "RoboDesigns",
-      printabilityScore: 93,
-      tags: ["robotics", "joint", "mechanical", "precision"],
-      licenseType: "Standard"
-    },
-    {
-      id: "model-6",
-      name: "Drone Propeller Guard",
-      thumbnail: "https://images.unsplash.com/photo-1531297484001-80022131f5a1?auto=format&fit=crop&q=80&w=2420&ixlib=rb-4.0.3",
-      price: 899,
-      creator: "DroneWorks",
-      printabilityScore: 87,
-      tags: ["drone", "propeller", "protection", "lightweight"],
-      licenseType: "Standard"
+      id: "5",
+      name: "Fantasy Castle Miniature",
+      description: "A detailed miniature of a fantasy castle for gaming.",
+      image: "https://images.unsplash.com/photo-1589652717521-10c0d34a3762?auto=format&fit=crop&q=80&w=2070&ixlib=rb-4.0.3",
+      category: "Gaming",
+      price: 799,
+      creator: "DragonForge",
+      downloads: 678,
+      uploadDate: "1 month ago",
+      isFeatured: false,
+      isNew: false,
+      printabilityScore: 85
     }
-  ];
-  
-  const handleAiSearch = () => {
-    if (!aiPrompt) return;
+  ]);
+
+  // Filter models based on search query, category, and price range
+  const filteredModels = models.filter((model) => {
+    const searchMatch =
+      model.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      model.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      model.creator.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const categoryMatch =
+      selectedCategory === "all" || model.category === selectedCategory;
+
+    let priceMatch = true;
+    if (selectedPriceRange === "free") {
+      priceMatch = model.price === 0;
+    } else if (selectedPriceRange === "under-500") {
+      priceMatch = model.price > 0 && model.price <= 500;
+    } else if (selectedPriceRange === "500-2000") {
+      priceMatch = model.price > 500 && model.price <= 2000;
+    } else if (selectedPriceRange === "above-2000") {
+      priceMatch = model.price > 2000;
+    }
+
+    return searchMatch && categoryMatch && priceMatch;
+  });
+
+  // Track user interactions
+  const trackInteraction = (action: string, modelId: string, metadata?: any) => {
+    const interaction = {
+      action,
+      modelId,
+      timestamp: new Date().toISOString(),
+      userAgent: navigator.userAgent,
+      sessionId: sessionStorage.getItem('session_id') || Date.now().toString(),
+      ...metadata
+    };
+
+    // Store interaction data
+    const existingInteractions = JSON.parse(localStorage.getItem('user_interactions') || '[]');
+    existingInteractions.push(interaction);
+    localStorage.setItem('user_interactions', JSON.stringify(existingInteractions));
+
+    console.log('Tracked interaction:', interaction);
+  };
+
+  const handleCardClick = (model: any) => {
+    trackInteraction('model_click', model.id, {
+      modelName: model.name,
+      category: model.category,
+      timeOnPage: Date.now() - (parseInt(sessionStorage.getItem('page_load_time') || '0'))
+    });
+    navigate(`/model/${model.id}`);
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    if (value) {
+      trackInteraction('search', 'search_query', { query: value });
+    }
+  };
+
+  const handleFilterChange = (filterType: string, value: string) => {
+    trackInteraction('filter_change', 'filter', { filterType, value });
     
-    setIsSearching(true);
-    
-    // Simulate AI search delay
-    setTimeout(() => {
-      setIsSearching(false);
-      setActiveTab("browse"); // Switch to browse tab to show "results"
-    }, 1500);
+    if (filterType === 'category') {
+      setSelectedCategory(value);
+    } else if (filterType === 'price') {
+      setSelectedPriceRange(value);
+    }
   };
-  
-  const handleFilterChange = (values: number[]) => {
-    setPriceRange([values[0], values[1]]);
-  };
-  
-  // Get score color class based on score value
-  const getScoreColorClass = (score: number) => {
-    if (score >= 90) return "text-green-600";
-    if (score >= 80) return "text-amber-600";
-    return "text-red-600";
-  };
+
+  // Track page load
+  React.useEffect(() => {
+    sessionStorage.setItem('page_load_time', Date.now().toString());
+    trackInteraction('page_load', 'buyer_interface');
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-muted/30">
       <Navbar />
       
       <div className="container py-8">
+        {/* Hero Section */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-1">Discover CAD Models</h1>
-          <p className="text-muted-foreground">Find printable, verified 3D models for your manufacturing needs</p>
+          <h1 className="text-4xl font-bold mb-2">Discover 3D Models</h1>
+          <p className="text-muted-foreground">
+            Find high-quality, print-ready 3D models with AI-powered recommendations and detailed metadata.
+          </p>
         </div>
-        
-        <div className="mb-8">
-          <Tabs defaultValue="browse" className="w-full" onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="browse">Browse & Filter</TabsTrigger>
-              <TabsTrigger value="ai-search">AI Prompt Search</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="browse" className="space-y-4 pt-6">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                  <Input
-                    placeholder="Search models, categories, or designers..."
-                    className="pl-10"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+
+        {/* Search and Filters */}
+        <div className="mb-8 space-y-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input
+              placeholder="Search models, tags, or creators..."
+              className="pl-10"
+              value={searchQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
+            />
+          </div>
+          
+          <div className="flex flex-wrap gap-4">
+            <Select value={selectedCategory} onValueChange={(value) => handleFilterChange('category', value)}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="All Categories" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                <SelectItem value="automotive">Automotive</SelectItem>
+                <SelectItem value="electronics">Electronics</SelectItem>
+                <SelectItem value="tools">Tools & Accessories</SelectItem>
+                <SelectItem value="art">Art & Design</SelectItem>
+                <SelectItem value="gaming">Gaming</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={selectedPriceRange} onValueChange={(value) => handleFilterChange('price', value)}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Price Range" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Prices</SelectItem>
+                <SelectItem value="free">Free</SelectItem>
+                <SelectItem value="under-500">Under ₹500</SelectItem>
+                <SelectItem value="500-2000">₹500 - ₹2000</SelectItem>
+                <SelectItem value="above-2000">Above ₹2000</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Models Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {filteredModels.map((model) => (
+            <Card key={model.id} className="group hover:shadow-lg transition-all duration-200">
+              <div className="relative">
+                {/* Watermarked Preview */}
+                <div className="relative overflow-hidden rounded-t-lg">
+                  <img 
+                    src={model.image} 
+                    alt={model.name}
+                    className="w-full h-48 object-cover transition-transform group-hover:scale-105"
                   />
-                </div>
-                <Button variant="outline">
-                  <Filter className="mr-2 h-4 w-4" />
-                  Filters
-                </Button>
-                <Button variant="outline">
-                  <SlidersHorizontal className="mr-2 h-4 w-4" />
-                  Sort
-                </Button>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-6">
-                {mockModels.map((model) => (
-                  <Card key={model.id} className="overflow-hidden flex flex-col">
-                    <div className="relative">
-                      <img 
-                        src={model.thumbnail} 
-                        alt={model.name} 
-                        className="w-full aspect-video object-cover"
-                      />
-                      <div className="absolute top-2 right-2">
-                        <Badge>
-                          {model.licenseType}
-                        </Badge>
-                      </div>
-                    </div>
-                    
-                    <CardContent className="pt-4 flex-grow">
-                      <h3 className="font-medium mb-1 line-clamp-1">{model.name}</h3>
-                      <p className="text-sm text-muted-foreground mb-2">By {model.creator}</p>
-                      
-                      <div className="flex items-center mb-3">
-                        <div className="mr-2 text-xs">
-                          <span className="text-muted-foreground">Printability:</span>
-                        </div>
-                        <Progress value={model.printabilityScore} className="h-1.5 flex-grow" />
-                        <span className={`ml-2 text-xs font-medium ${getScoreColorClass(model.printabilityScore)}`}>
-                          {model.printabilityScore}
-                        </span>
-                      </div>
-                      
-                      <div className="flex flex-wrap gap-1 mb-2">
-                        {model.tags.slice(0, 3).map((tag, index) => (
-                          <Badge key={index} variant="secondary" className="text-xs">
-                            {tag}
-                          </Badge>
-                        ))}
-                        {model.tags.length > 3 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{model.tags.length - 3}
-                          </Badge>
-                        )}
-                      </div>
-                    </CardContent>
-                    
-                    <CardFooter className="pt-0 pb-4 flex justify-between items-center">
-                      <div className="font-medium">₹{model.price}</div>
-                      <Button size="sm" asChild>
-                        <Link to={`/model/${model.id}`}>
-                          View Details
-                        </Link>
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                ))}
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="ai-search" className="pt-6">
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-center justify-center mb-6">
-                    <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
-                      <div className="h-5 w-5 rounded-full bg-primary animate-pulse"></div>
-                    </div>
+                  {/* Watermark overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                  <div className="absolute bottom-2 right-2 text-white/70 text-xs font-mono">
+                    FormVerse Preview
                   </div>
                   
-                  <h3 className="text-center text-xl font-medium mb-2">FormIQ AI Model Search</h3>
-                  <p className="text-center text-muted-foreground mb-6 max-w-2xl mx-auto">
-                    Describe what you're looking for in natural language. Our AI will find the best matches based on 
-                    functionality, material compatibility, and printability.
-                  </p>
-                  
-                  <div className="relative mb-4 max-w-2xl mx-auto">
-                    <Textarea 
-                      placeholder="Example: 'I need a durable industrial gear assembly compatible with ABS that can withstand high temperatures'"
-                      className="min-h-[120px] pr-12"
-                      value={aiPrompt}
-                      onChange={(e) => setAiPrompt(e.target.value)}
-                    />
+                  {/* Engagement tracking on hover */}
+                  <div 
+                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-black/10 flex items-center justify-center"
+                    onMouseEnter={() => trackInteraction('model_hover', model.id, { modelName: model.name })}
+                  >
                     <Button 
-                      className="absolute right-2 bottom-2" 
+                      variant="secondary" 
                       size="sm"
-                      onClick={handleAiSearch}
-                      disabled={isSearching || !aiPrompt}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        trackInteraction('preview_click', model.id);
+                      }}
                     >
-                      {isSearching ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Search className="h-4 w-4" />
-                      )}
+                      <Eye className="h-4 w-4 mr-1" />
+                      Quick Preview
                     </Button>
                   </div>
+                </div>
+
+                {/* Model badges */}
+                <div className="absolute top-2 left-2 flex flex-col gap-1">
+                  {model.isFeatured && (
+                    <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white">
+                      Featured
+                    </Badge>
+                  )}
+                  {model.isNew && (
+                    <Badge variant="secondary">New</Badge>
+                  )}
+                </div>
+              </div>
+
+              <CardContent className="p-4">
+                <div className="space-y-2">
+                  <h3 className="font-semibold line-clamp-2">{model.name}</h3>
+                  <p className="text-sm text-muted-foreground line-clamp-2">{model.description}</p>
                   
-                  <div className="space-y-3 max-w-2xl mx-auto">
-                    <p className="text-sm font-medium">Try these example prompts:</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      <Button variant="outline" size="sm" className="justify-start" onClick={() => setAiPrompt("I need a medical device enclosure that's sterilizable and biocompatible")}>
-                        Medical device enclosure, sterilizable
-                      </Button>
-                      <Button variant="outline" size="sm" className="justify-start" onClick={() => setAiPrompt("Looking for automotive parts that can withstand high vibration environments")}>
-                        Automotive parts, vibration resistant
-                      </Button>
-                      <Button variant="outline" size="sm" className="justify-start" onClick={() => setAiPrompt("Drone components that are lightweight but durable for outdoor use")}>
-                        Lightweight drone components
-                      </Button>
-                      <Button variant="outline" size="sm" className="justify-start" onClick={() => setAiPrompt("Industrial connectors compatible with high temperature environments")}>
-                        High-temp industrial connectors
+                  {/* Metadata badges */}
+                  <div className="flex flex-wrap gap-1">
+                    <Badge variant="outline" className="text-xs">
+                      {model.category}
+                    </Badge>
+                    {model.printabilityScore && (
+                      <Badge variant="outline" className="text-xs">
+                        {model.printabilityScore}/100 Print Score
+                      </Badge>
+                    )}
+                  </div>
+
+                  {/* Creator and stats */}
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>by {model.creator}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="flex items-center gap-1">
+                        <Download className="h-3 w-3" />
+                        {model.downloads || 0}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {model.uploadDate}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Price and actions */}
+                  <div className="flex items-center justify-between pt-2">
+                    <span className="font-semibold">
+                      {model.price === 0 ? 'Free' : `₹${model.price}`}
+                    </span>
+                    <div className="flex gap-1">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCardClick(model);
+                        }}
+                      >
+                        View Details
                       </Button>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </div>
-        
-        {/* Filter Section */}
-        <div className="mb-8">
-          <div className="bg-card rounded-lg border p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-medium">Refine Results</h3>
-              <Button variant="ghost" size="sm">
-                Clear All
-              </Button>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div>
-                <Label className="text-sm font-medium">Price Range</Label>
-                <div className="mt-4 px-2">
-                  <Slider
-                    defaultValue={[0, 10000]}
-                    max={10000}
-                    step={100}
-                    onValueChange={handleFilterChange}
+
+                  {/* Engagement Gate for downloads */}
+                  <EngagementGate
+                    modelId={model.id}
+                    modelName={model.name}
+                    previewImage={model.image}
+                    onEngagement={(data) => {
+                      trackInteraction('engagement_gate', model.id, data);
+                    }}
                   />
-                  <div className="flex justify-between text-xs text-muted-foreground mt-2">
-                    <span>₹{priceRange[0]}</span>
-                    <span>₹{priceRange[1]}</span>
-                  </div>
                 </div>
-              </div>
-              
-              <div>
-                <Label className="text-sm font-medium">License Type</Label>
-                <div className="mt-4 space-y-2">
-                  <div className="flex items-center">
-                    <Checkbox id="license-standard" />
-                    <label htmlFor="license-standard" className="ml-2 text-sm">Standard</label>
-                  </div>
-                  <div className="flex items-center">
-                    <Checkbox id="license-commercial" />
-                    <label htmlFor="license-commercial" className="ml-2 text-sm">Commercial</label>
-                  </div>
-                  <div className="flex items-center">
-                    <Checkbox id="license-extended" />
-                    <label htmlFor="license-extended" className="ml-2 text-sm">Extended</label>
-                  </div>
-                </div>
-              </div>
-              
-              <div>
-                <Label className="text-sm font-medium">Printability Score</Label>
-                <div className="mt-4 space-y-2">
-                  <div className="flex items-center">
-                    <Checkbox id="score-90" />
-                    <label htmlFor="score-90" className="ml-2 text-sm">90+ (Excellent)</label>
-                  </div>
-                  <div className="flex items-center">
-                    <Checkbox id="score-80" />
-                    <label htmlFor="score-80" className="ml-2 text-sm">80+ (Good)</label>
-                  </div>
-                  <div className="flex items-center">
-                    <Checkbox id="score-70" />
-                    <label htmlFor="score-70" className="ml-2 text-sm">70+ (Average)</label>
-                  </div>
-                </div>
-              </div>
-              
-              <div>
-                <Label className="text-sm font-medium">Categories</Label>
-                <div className="mt-4 space-y-2">
-                  <div className="flex items-center">
-                    <Checkbox id="cat-industrial" />
-                    <label htmlFor="cat-industrial" className="ml-2 text-sm">Industrial</label>
-                  </div>
-                  <div className="flex items-center">
-                    <Checkbox id="cat-medical" />
-                    <label htmlFor="cat-medical" className="ml-2 text-sm">Medical</label>
-                  </div>
-                  <div className="flex items-center">
-                    <Checkbox id="cat-automotive" />
-                    <label htmlFor="cat-automotive" className="ml-2 text-sm">Automotive</label>
-                  </div>
-                  <div className="flex items-center">
-                    <Button variant="link" className="h-6 p-0">View all categories</Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
-        
-        {/* Popular Tags */}
-        <div className="mb-8">
-          <div className="flex items-center mb-4">
-            <Tag className="h-4 w-4 mr-2" />
-            <h3 className="font-medium">Popular Tags</h3>
+
+        {/* Load more button */}
+        {filteredModels.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">No models found matching your criteria.</p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm">industrial</Button>
-            <Button variant="outline" size="sm">mechanical</Button>
-            <Button variant="outline" size="sm">medical</Button>
-            <Button variant="outline" size="sm">automotive</Button>
-            <Button variant="outline" size="sm">consumer</Button>
-            <Button variant="outline" size="sm">electronics</Button>
-            <Button variant="outline" size="sm">aerospace</Button>
-            <Button variant="outline" size="sm">robotics</Button>
-            <Button variant="outline" size="sm">architectural</Button>
-            <Button variant="outline" size="sm">precision</Button>
-            <Button variant="outline" size="sm" className="flex items-center">
-              More tags
-              <ChevronDown className="ml-1 h-3 w-3" />
-            </Button>
-          </div>
-        </div>
+        )}
       </div>
-      
+
       <div className="mt-auto">
         <Footer />
       </div>
     </div>
   );
 };
-
-// Define the Checkbox component since we need it
-const Label = ({ className, children }: { className?: string, children: React.ReactNode }) => (
-  <div className={className}>{children}</div>
-);
-
-const Checkbox = ({ id }: { id: string }) => (
-  <div className="h-4 w-4 border rounded flex items-center justify-center">
-    <Check className="h-3 w-3 text-primary hidden peer-checked:block" />
-  </div>
-);
-
-const Textarea = ({ placeholder, className, value, onChange }: { 
-  placeholder: string, 
-  className?: string,
-  value: string,
-  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void
-}) => (
-  <textarea 
-    placeholder={placeholder} 
-    className={`w-full border rounded-md p-2 ${className}`}
-    value={value}
-    onChange={onChange}
-  ></textarea>
-);
 
 export default BuyerInterface;

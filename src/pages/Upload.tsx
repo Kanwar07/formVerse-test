@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Navbar } from "@/components/navbar";
@@ -13,6 +12,7 @@ import { FileUploader } from "@/components/upload/FileUploader";
 import { FormIQAnalyzer } from "@/components/upload/FormIQAnalyzer";
 import { Stepper } from "@/components/upload/Stepper";
 import { DetailsForm } from "@/components/upload/DetailsForm";
+import { MetadataForm, ModelMetadata } from "@/components/upload/MetadataForm";
 import { PricingForm } from "@/components/upload/PricingForm";
 import { ReviewForm } from "@/components/upload/ReviewForm";
 
@@ -24,6 +24,7 @@ const Upload = () => {
   const [modelPath, setModelPath] = useState<string | undefined>(undefined);
   const [modelName, setModelName] = useState<string>("");
   const [modelDescription, setModelDescription] = useState<string>("");
+  const [modelMetadata, setModelMetadata] = useState<ModelMetadata | null>(null);
   const [aiGeneratedTags, setAiGeneratedTags] = useState<string[]>([]);
   const [customTags, setCustomTags] = useState<string[]>([]);
   const [suggestedPrice, setSuggestedPrice] = useState(1999);
@@ -45,6 +46,20 @@ const Upload = () => {
     setModelPath(filePath);
     setModelName(file.name.split('.')[0]);
     setAnalyzing(true);
+
+    // Generate SHA hash for file tracking
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const arrayBuffer = e.target?.result as ArrayBuffer;
+      const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      
+      // Store file hash for tracking
+      localStorage.setItem(`file_hash_${filePath}`, hashHex);
+      console.log('File hash stored:', hashHex);
+    };
+    reader.readAsArrayBuffer(file);
   };
 
   // Handle FormIQ analysis completion
@@ -75,37 +90,63 @@ const Upload = () => {
     setCurrentStep(2);
   };
 
+  // Handle metadata submission
+  const handleMetadataSubmit = (metadata: ModelMetadata) => {
+    setModelMetadata(metadata);
+    setCurrentStep(3);
+  };
+
   // Handle model details submission
   const handleDetailsSubmit = (name: string, description: string, tags: string[]) => {
     setModelName(name);
     setModelDescription(description);
     setCustomTags(tags);
-    setCurrentStep(3);
+    setCurrentStep(4);
   };
 
   // Handle pricing submission
   const handlePricingSubmit = (price: number, license: string) => {
     setActualPrice(price);
     setLicenseType(license);
-    setCurrentStep(4);
+    setCurrentStep(5);
   };
 
   // Handle final submission
   const handleSubmit = async () => {
-    if (!modelPath) {
+    if (!modelPath || !modelMetadata) {
       toast({
         title: "Error",
-        description: "Missing model file",
+        description: "Missing required model data",
         variant: "destructive"
       });
       return;
     }
 
     try {
-      // For now, just simulate successful upload without database storage
+      // Create comprehensive model data
+      const modelData = {
+        name: modelName,
+        description: modelDescription,
+        file_path: modelPath,
+        metadata: modelMetadata,
+        tags: [...aiGeneratedTags, ...customTags],
+        price: actualPrice,
+        license_type: licenseType,
+        printability_score: printabilityScore,
+        material_recommendations: materialRecommendations,
+        design_issues: designIssues,
+        oem_compatibility: oemCompatibility,
+        upload_timestamp: new Date().toISOString()
+      };
+
+      // Store in localStorage for demo purposes
+      const existingModels = JSON.parse(localStorage.getItem('uploaded_models') || '[]');
+      existingModels.push(modelData);
+      localStorage.setItem('uploaded_models', JSON.stringify(existingModels));
+
       toast({
         title: "Model uploaded successfully!",
-        description: "Your model has been uploaded and is ready for review.",
+        description: "Your model has been uploaded with comprehensive metadata and is ready for review.",
       });
       
       // Redirect to discover page after successful upload
@@ -135,13 +176,37 @@ const Upload = () => {
               <span className="text-xs font-medium formiq-gradient-text">FormIQ Enhanced</span>
             </div>
           </div>
-          <p className="text-muted-foreground">Let FormIQ analyze your model and provide AI-powered suggestions.</p>
+          <p className="text-muted-foreground">Let FormIQ analyze your model and provide AI-powered suggestions with comprehensive metadata collection.</p>
         </div>
         
-        {/* Stepper */}
-        <Stepper currentStep={currentStep} />
+        {/* Stepper - Updated for new flow */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            {[
+              { step: 1, label: "Upload & Analysis" },
+              { step: 2, label: "Metadata" },
+              { step: 3, label: "Details & Tags" },
+              { step: 4, label: "Pricing" },
+              { step: 5, label: "Review" }
+            ].map((item, index) => (
+              <div key={item.step} className="flex items-center">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                  currentStep >= item.step ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                }`}>
+                  {item.step}
+                </div>
+                <span className={`ml-2 text-sm ${currentStep >= item.step ? 'text-foreground' : 'text-muted-foreground'}`}>
+                  {item.label}
+                </span>
+                {index < 4 && (
+                  <div className={`w-12 h-px mx-4 ${currentStep > item.step ? 'bg-primary' : 'bg-muted'}`} />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
         
-        {/* Step 1: File Upload */}
+        {/* Step 1: File Upload & Analysis */}
         {currentStep === 1 && (
           <Card>
             <CardContent className="pt-6">
@@ -170,13 +235,26 @@ const Upload = () => {
           </Card>
         )}
         
-        {/* Step 2: Details & Tags */}
+        {/* Step 2: Metadata Collection */}
         {currentStep === 2 && (
+          <Card>
+            <CardContent className="pt-6">
+              <MetadataForm 
+                onBack={() => setCurrentStep(1)}
+                onContinue={handleMetadataSubmit}
+                initialData={modelMetadata || undefined}
+              />
+            </CardContent>
+          </Card>
+        )}
+        
+        {/* Step 3: Details & Tags */}
+        {currentStep === 3 && (
           <Card>
             <CardContent className="pt-6">
               <DetailsForm 
                 aiGeneratedTags={aiGeneratedTags}
-                onBack={() => setCurrentStep(1)}
+                onBack={() => setCurrentStep(2)}
                 onContinue={(name, description, tags) => {
                   handleDetailsSubmit(name, description, tags);
                 }}
@@ -187,13 +265,13 @@ const Upload = () => {
           </Card>
         )}
         
-        {/* Step 3: Pricing & License */}
-        {currentStep === 3 && (
+        {/* Step 4: Pricing & License */}
+        {currentStep === 4 && (
           <Card>
             <CardContent className="pt-6">
               <PricingForm 
                 suggestedPrice={suggestedPrice}
-                onBack={() => setCurrentStep(2)}
+                onBack={() => setCurrentStep(3)}
                 onContinue={(price, license) => {
                   handlePricingSubmit(price, license);
                 }}
@@ -202,8 +280,8 @@ const Upload = () => {
           </Card>
         )}
         
-        {/* Step 4: Review & Publish */}
-        {currentStep === 4 && (
+        {/* Step 5: Review & Publish */}
+        {currentStep === 5 && (
           <Card>
             <CardContent className="pt-6">
               <ReviewForm 
@@ -212,7 +290,7 @@ const Upload = () => {
                 materialRecommendations={materialRecommendations}
                 designIssues={designIssues}
                 actualPrice={actualPrice}
-                onBack={() => setCurrentStep(3)}
+                onBack={() => setCurrentStep(4)}
                 onSubmit={handleSubmit}
               />
             </CardContent>
