@@ -22,6 +22,7 @@ import Creators from "./pages/Creators";
 import Pricing from "./pages/Pricing";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
+import Services from "./pages/Services";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +45,7 @@ const App = () => (
               <Route path="/formiq" element={<FormIQ />} />
               <Route path="/creator/:username" element={<CreatorProfile />} />
               <Route path="/creators" element={<Creators />} />
+              <Route path="/services" element={<Services />} />
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/signin" element={<SignIn />} />
               <Route path="/signup" element={<SignUp />} />

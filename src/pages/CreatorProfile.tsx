@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { Navbar } from "@/components/navbar";
@@ -8,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { HireMeTab } from "@/components/creator/HireMeTab";
 import { 
   FileImage, 
   MessageSquare, 
@@ -15,7 +15,8 @@ import {
   Users, 
   Star,
   Award,
-  ExternalLink
+  ExternalLink,
+  Briefcase
 } from "lucide-react";
 
 // Mock creator data (in a real app, this would come from API)
@@ -217,6 +218,10 @@ const CreatorProfile = () => {
               <FileImage className="h-4 w-4" />
               Models
             </TabsTrigger>
+            <TabsTrigger value="hire-me" className="flex gap-2">
+              <Briefcase className="h-4 w-4" />
+              Hire Me
+            </TabsTrigger>
             <TabsTrigger value="collections">Collections</TabsTrigger>
             <TabsTrigger value="activity">Activity</TabsTrigger>
           </TabsList>
@@ -256,6 +261,14 @@ const CreatorProfile = () => {
                 <p className="text-muted-foreground">This creator hasn't uploaded any models yet.</p>
               </div>
             )}
+          </TabsContent>
+          
+          <TabsContent value="hire-me" className="space-y-6">
+            <HireMeTab 
+              creatorName={creator.name}
+              creatorRating={creator.rating}
+              completedProjects={creator.uploads}
+            />
           </TabsContent>
           
           <TabsContent value="collections">
