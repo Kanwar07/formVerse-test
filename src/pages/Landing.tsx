@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -48,8 +49,8 @@ const Landing = () => {
             <div className="absolute inset-0 mx-auto w-full max-w-5xl">
               <div className="w-full h-full bg-card rounded-xl border shadow-xl overflow-hidden">
                 <img 
-                  src="https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?auto=format&fit=crop&q=80&w=2940&ixlib=rb-4.0.3" 
-                  alt="FormVerse Dashboard Preview" 
+                  src="https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&q=80&w=4896&ixlib=rb-4.0.3" 
+                  alt="High-tech 3D CAD Design Interface" 
                   className="w-full h-full object-cover object-center"
                 />
               </div>
