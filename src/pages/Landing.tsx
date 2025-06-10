@@ -378,5 +378,3 @@ const Landing = () => {
 };
 
 export default Landing;
-
-</edits_to_apply>
