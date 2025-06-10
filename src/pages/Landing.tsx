@@ -39,6 +39,9 @@ const Landing = () => {
             <Button variant="outline" size="lg" asChild>
               <Link to="/discover">Browse Models</Link>
             </Button>
+            <Button variant="outline" size="lg" asChild>
+              <Link to="/services">Hire Creators</Link>
+            </Button>
           </div>
           
           <div className="relative w-full h-[400px] md:h-[500px] mt-12">
@@ -375,3 +378,5 @@ const Landing = () => {
 };
 
 export default Landing;
+
+</edits_to_apply>

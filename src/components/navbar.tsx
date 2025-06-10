@@ -38,6 +38,9 @@ export function Navbar({ transparent = false, className }: NavbarProps) {
           <Link to="/discover" className="text-foreground/80 hover:text-foreground transition-colors">
             Discover
           </Link>
+          <Link to="/services" className="text-foreground/80 hover:text-foreground transition-colors">
+            Hire Creators
+          </Link>
           <Link to="/dashboard" className="text-foreground/80 hover:text-foreground transition-colors">
             Dashboard
           </Link>
