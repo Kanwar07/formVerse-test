@@ -4,79 +4,9 @@ import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Star, Award, ChevronRight } from "lucide-react";
+import { Star, Award, ChevronRight, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-interface Creator {
-  id: string;
-  name: string;
-  username: string;
-  avatar: string;
-  bio: string;
-  premium: boolean;
-  rating: number;
-  models: number;
-  downloads: number;
-  rank?: number;
-}
-
-const mockCreatorData: Creator[] = [
-  {
-    id: "1",
-    name: "John Doe",
-    username: "johndoe",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=1974&fit=crop&auto=format&fit=facearea&facepad=2&w=256&h=256",
-    bio: "Industrial designer specializing in automotive and consumer electronics",
-    premium: true,
-    rating: 4.8,
-    models: 47,
-    downloads: 1240
-  },
-  {
-    id: "2",
-    name: "Jane Doe",
-    username: "janedoe",
-    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1974&fit=crop&auto=format&fit=facearea&facepad=2&w=256&h=256",
-    bio: "3D artist and product designer | Focus on healthcare and accessibility",
-    premium: false,
-    rating: 4.5,
-    models: 32,
-    downloads: 980
-  },
-  {
-    id: "3",
-    name: "Sam Smith",
-    username: "samsmith",
-    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=1974&fit=crop&auto=format&fit=facearea&facepad=2&w=256&h=256",
-    bio: "Mechanical engineer turned 3D designer | Robotics & IoT specialist",
-    premium: true,
-    rating: 4.7,
-    models: 28,
-    downloads: 1050
-  },
-  {
-    id: "4",
-    name: "Priya Sharma",
-    username: "priyasharma",
-    avatar: "https://images.unsplash.com/photo-1664575602554-2087b04935a5?q=80&w=1974&fit=crop&auto=format&fit=facearea&facepad=2&w=256&h=256",
-    bio: "Architect & 3D visualizer | Sustainable design advocate",
-    premium: false,
-    rating: 4.6,
-    models: 25,
-    downloads: 850
-  },
-  {
-    id: "5",
-    name: "Alex Johnson",
-    username: "alexjohnson",
-    avatar: "https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=1974&fit=crop&auto=format&fit=facearea&facepad=2&w=256&h=256",
-    bio: "Product designer with focus on consumer electronics",
-    premium: true,
-    rating: 4.9,
-    models: 36,
-    downloads: 1120
-  }
-];
+import { useCreators } from "@/hooks/useCreators";
 
 interface CreatorLeaderboardProps {
   className?: string;
@@ -90,9 +20,44 @@ export const CreatorLeaderboard = ({
   showViewAll = true 
 }: CreatorLeaderboardProps) => {
   const [sortBy, setSortBy] = useState<"downloads" | "rating" | "models">("downloads");
+  const { creators, loading, error } = useCreators();
+  
+  if (loading) {
+    return (
+      <div className={cn("w-full", className)}>
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="ml-2">Loading creators...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={cn("w-full", className)}>
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">Failed to load creators: {error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (creators.length === 0) {
+    return (
+      <div className={cn("w-full", className)}>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-2xl font-semibold">Top Creators</h3>
+        </div>
+        <div className="bg-card rounded-xl border shadow-sm p-8 text-center">
+          <p className="text-muted-foreground">No creators found. Upload the first model to get started!</p>
+        </div>
+      </div>
+    );
+  }
   
   // Sort creators based on selected criteria
-  const sortedCreators = [...mockCreatorData].sort((a, b) => {
+  const sortedCreators = [...creators].sort((a, b) => {
     return b[sortBy] - a[sortBy];
   }).slice(0, limit).map((creator, index) => ({
     ...creator,
