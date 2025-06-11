@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { signIn } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { Brain } from "lucide-react";
 
 export function SignInForm() {
@@ -21,9 +21,17 @@ export function SignInForm() {
     setLoading(true);
 
     try {
-      const { data, error } = await signIn(email, password);
+      console.log('Attempting to sign in with:', email);
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      console.log('Sign in response:', { data, error });
       
       if (error) {
+        console.error('Sign in error:', error);
         toast({
           variant: "destructive",
           title: "Sign in failed",
@@ -33,6 +41,7 @@ export function SignInForm() {
       }
       
       if (data.user) {
+        console.log('Sign in successful, user:', data.user);
         toast({
           title: "Welcome back!",
           description: "Successfully signed in."
@@ -40,10 +49,62 @@ export function SignInForm() {
         navigate('/dashboard');
       }
     } catch (error) {
-      console.error('Sign in error:', error);
+      console.error('Unexpected sign in error:', error);
       toast({
         variant: "destructive",
         title: "Sign in failed",
+        description: "An unexpected error occurred. Please try again."
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSignUp = async () => {
+    if (!email || !password) {
+      toast({
+        variant: "destructive",
+        title: "Missing information",
+        description: "Please enter both email and password to sign up."
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      console.log('Attempting to sign up with:', email);
+      
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/dashboard`
+        }
+      });
+      
+      console.log('Sign up response:', { data, error });
+      
+      if (error) {
+        console.error('Sign up error:', error);
+        toast({
+          variant: "destructive",
+          title: "Sign up failed",
+          description: error.message
+        });
+        return;
+      }
+      
+      if (data.user) {
+        toast({
+          title: "Account created!",
+          description: "Please check your email to verify your account.",
+        });
+      }
+    } catch (error) {
+      console.error('Unexpected sign up error:', error);
+      toast({
+        variant: "destructive",
+        title: "Sign up failed",
         description: "An unexpected error occurred. Please try again."
       });
     } finally {
@@ -67,9 +128,9 @@ export function SignInForm() {
             <span className="text-[#9b87f5]">VERSE</span>
           </span>
         </div>
-        <CardTitle className="text-xl text-center">Sign In</CardTitle>
+        <CardTitle className="text-xl text-center">Welcome to FormVerse</CardTitle>
         <CardDescription className="text-center">
-          Enter your credentials to access your account
+          Sign in to your account or create a new one
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -86,12 +147,7 @@ export function SignInForm() {
             />
           </div>
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="password">Password</Label>
-              <Button variant="link" className="p-0 h-auto" type="button">
-                Forgot password?
-              </Button>
-            </div>
+            <Label htmlFor="password">Password</Label>
             <Input
               id="password"
               type="password"
@@ -101,17 +157,25 @@ export function SignInForm() {
               required
             />
           </div>
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Signing in..." : "Sign In"}
-          </Button>
+          <div className="space-y-2">
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Signing in..." : "Sign In"}
+            </Button>
+            <Button 
+              type="button" 
+              variant="outline" 
+              className="w-full" 
+              disabled={loading}
+              onClick={handleSignUp}
+            >
+              {loading ? "Creating account..." : "Create New Account"}
+            </Button>
+          </div>
         </form>
       </CardContent>
       <CardFooter className="flex flex-col">
-        <div className="text-center text-sm mb-4">
-          Don't have an account?{" "}
-          <Button variant="link" className="p-0" onClick={() => navigate('/signup')}>
-            Sign Up
-          </Button>
+        <div className="text-center text-sm mb-4 text-muted-foreground">
+          Use any email and password to create an account
         </div>
         <div className="flex items-center mt-2 text-xs text-center text-muted-foreground">
           <Brain className="h-3 w-3 text-[#9b87f5] mr-1" />

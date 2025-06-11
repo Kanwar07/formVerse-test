@@ -3,7 +3,9 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
-import { Brain } from "lucide-react";
+import { Brain, User, LogOut } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface NavbarProps {
   transparent?: boolean;
@@ -11,6 +13,12 @@ interface NavbarProps {
 }
 
 export function Navbar({ transparent = false, className }: NavbarProps) {
+  const { user, loading, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
   return (
     <nav
       className={cn(
@@ -22,7 +30,6 @@ export function Navbar({ transparent = false, className }: NavbarProps) {
       <div className="container flex h-16 items-center justify-between">
         <Link to="/" className="flex items-center space-x-2">
           <div className="relative h-8 w-8">
-            {/* Updated FormVerse logo with blue to purple gradient */}
             <img 
               src="/lovable-uploads/9ce09c17-cfd4-43bc-a961-0bd805bee565.png" 
               alt="FormVerse Logo" 
@@ -41,9 +48,11 @@ export function Navbar({ transparent = false, className }: NavbarProps) {
           <Link to="/services" className="text-foreground/80 hover:text-foreground transition-colors">
             Hire Creators
           </Link>
-          <Link to="/dashboard" className="text-foreground/80 hover:text-foreground transition-colors">
-            Dashboard
-          </Link>
+          {user && (
+            <Link to="/dashboard" className="text-foreground/80 hover:text-foreground transition-colors">
+              Dashboard
+            </Link>
+          )}
           <Link 
             to="/formiq" 
             className="flex items-center space-x-1 text-foreground/80 hover:text-foreground transition-colors"
@@ -60,12 +69,39 @@ export function Navbar({ transparent = false, className }: NavbarProps) {
         </div>
         <div className="flex items-center space-x-2">
           <ThemeToggle />
-          <Button variant="outline" asChild>
-            <Link to="/dashboard">Log In</Link>
-          </Button>
-          <Button asChild className="bg-[#9b87f5] hover:bg-[#7E69AB]">
-            <Link to="/dashboard">Get Started</Link>
-          </Button>
+          {loading ? (
+            <div className="w-20 h-10 bg-muted rounded animate-pulse" />
+          ) : user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <User className="h-4 w-4 mr-2" />
+                  {user.email?.split('@')[0] || 'User'}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <Link to="/dashboard">Dashboard</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/upload">Upload Model</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleSignOut}>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <>
+              <Button variant="outline" asChild>
+                <Link to="/signin">Sign In</Link>
+              </Button>
+              <Button asChild className="bg-[#9b87f5] hover:bg-[#7E69AB]">
+                <Link to="/signin">Get Started</Link>
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </nav>
