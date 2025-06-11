@@ -9,7 +9,113 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      formiq_analyses: {
+        Row: {
+          created_at: string | null
+          design_issues: Json | null
+          id: string
+          material_recommendations: string[] | null
+          model_id: string | null
+          oem_compatibility: Json | null
+          printability_score: number
+          printing_techniques: string[] | null
+        }
+        Insert: {
+          created_at?: string | null
+          design_issues?: Json | null
+          id?: string
+          material_recommendations?: string[] | null
+          model_id?: string | null
+          oem_compatibility?: Json | null
+          printability_score: number
+          printing_techniques?: string[] | null
+        }
+        Update: {
+          created_at?: string | null
+          design_issues?: Json | null
+          id?: string
+          material_recommendations?: string[] | null
+          model_id?: string | null
+          oem_compatibility?: Json | null
+          printability_score?: number
+          printing_techniques?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "formiq_analyses_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "models"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      models: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          design_issues: Json | null
+          downloads: number | null
+          file_path: string
+          file_size: number | null
+          file_type: string | null
+          id: string
+          license_type: string | null
+          material_recommendations: string[] | null
+          name: string
+          oem_compatibility: Json | null
+          preview_image: string | null
+          price: number | null
+          printability_score: number | null
+          printing_techniques: string[] | null
+          tags: string[] | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          design_issues?: Json | null
+          downloads?: number | null
+          file_path: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          license_type?: string | null
+          material_recommendations?: string[] | null
+          name: string
+          oem_compatibility?: Json | null
+          preview_image?: string | null
+          price?: number | null
+          printability_score?: number | null
+          printing_techniques?: string[] | null
+          tags?: string[] | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          design_issues?: Json | null
+          downloads?: number | null
+          file_path?: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          license_type?: string | null
+          material_recommendations?: string[] | null
+          name?: string
+          oem_compatibility?: Json | null
+          preview_image?: string | null
+          price?: number | null
+          printability_score?: number | null
+          printing_techniques?: string[] | null
+          tags?: string[] | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

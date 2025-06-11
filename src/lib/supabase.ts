@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
@@ -103,50 +102,14 @@ export const updateProfile = async (userId: string, updates: any) => {
 };
 
 // Model helper functions
-export const uploadModel = async (file: File, userId: string) => {
-  if (!isSupabaseConfigured) {
-    return { path: null, error: { message: 'Please connect to Supabase to enable file uploads' } };
-  }
-  const fileExt = file.name.split('.').pop();
-  const fileName = `${userId}/${crypto.randomUUID()}.${fileExt}`;
-  const filePath = `models/${fileName}`;
-  
-  const { data, error } = await supabase.storage
-    .from('3d-models')
-    .upload(filePath, file);
-    
-  return { path: data?.path, error };
-};
-
-export const createModelRecord = async (modelData: {
-  name: string;
-  description: string;
-  file_path: string;
-  preview_image?: string;
-  tags: string[];
-  price: number;
-  printability_score: number;
-  user_id: string;
-}) => {
-  if (!isSupabaseConfigured) {
-    return { model: null, error: { message: 'Please connect to Supabase to enable data storage' } };
-  }
-  const { data, error } = await supabase
-    .from('models')
-    .insert(modelData)
-    .select()
-    .single();
-  
-  return { model: data, error };
-};
-
 export const getModels = async () => {
   if (!isSupabaseConfigured) {
     return { models: [], error: { message: 'Please connect to Supabase to load models' } };
   }
   const { data, error } = await supabase
     .from('models')
-    .select('*, profiles(*)');
+    .select('*')
+    .order('created_at', { ascending: false });
   
   return { models: data, error };
 };
@@ -157,7 +120,7 @@ export const getModelById = async (modelId: string) => {
   }
   const { data, error } = await supabase
     .from('models')
-    .select('*, profiles(*)')
+    .select('*')
     .eq('id', modelId)
     .single();
   
@@ -171,7 +134,8 @@ export const getUserModels = async (userId: string) => {
   const { data, error } = await supabase
     .from('models')
     .select('*')
-    .eq('user_id', userId);
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
   
   return { models: data, error };
 };

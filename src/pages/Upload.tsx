@@ -6,6 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Brain } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { FormIQAnalysisResult } from "@/services/formiq";
+import { supabase } from "@/integrations/supabase/client";
 
 // Import refactored components
 import { FileUploader } from "@/components/upload/FileUploader";
@@ -55,8 +56,6 @@ const Upload = () => {
       const hashArray = Array.from(new Uint8Array(hashBuffer));
       const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
       
-      // Store file hash for tracking
-      localStorage.setItem(`file_hash_${filePath}`, hashHex);
       console.log('File hash stored:', hashHex);
     };
     reader.readAsArrayBuffer(file);
@@ -113,7 +112,7 @@ const Upload = () => {
 
   // Handle final submission
   const handleSubmit = async () => {
-    if (!modelPath || !modelMetadata) {
+    if (!modelPath || !modelMetadata || !modelFile) {
       toast({
         title: "Error",
         description: "Missing required model data",
@@ -123,30 +122,70 @@ const Upload = () => {
     }
 
     try {
-      // Create comprehensive model data
-      const modelData = {
-        name: modelName,
-        description: modelDescription,
-        file_path: modelPath,
-        metadata: modelMetadata,
-        tags: [...aiGeneratedTags, ...customTags],
-        price: actualPrice,
-        license_type: licenseType,
-        printability_score: printabilityScore,
-        material_recommendations: materialRecommendations,
-        design_issues: designIssues,
-        oem_compatibility: oemCompatibility,
-        upload_timestamp: new Date().toISOString()
-      };
+      // Get current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to save your model.",
+          variant: "destructive"
+        });
+        return;
+      }
 
-      // Store in localStorage for demo purposes
-      const existingModels = JSON.parse(localStorage.getItem('uploaded_models') || '[]');
-      existingModels.push(modelData);
-      localStorage.setItem('uploaded_models', JSON.stringify(existingModels));
+      // Create model record in database
+      const { data: modelData, error: modelError } = await supabase
+        .from('models')
+        .insert({
+          user_id: user.id,
+          name: modelName,
+          description: modelDescription,
+          file_path: modelPath,
+          file_size: modelFile.size,
+          file_type: modelFile.type,
+          tags: [...aiGeneratedTags, ...customTags],
+          price: actualPrice / 100, // Convert from cents to dollars
+          license_type: licenseType,
+          printability_score: printabilityScore,
+          material_recommendations: materialRecommendations,
+          printing_techniques: printingTechniques,
+          design_issues: designIssues,
+          oem_compatibility: oemCompatibility
+        })
+        .select()
+        .single();
+
+      if (modelError) {
+        console.error("Error creating model:", modelError);
+        toast({
+          title: "Upload failed",
+          description: "An error occurred while saving your model. Please try again.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Save FormIQ analysis
+      const { error: analysisError } = await supabase
+        .from('formiq_analyses')
+        .insert({
+          model_id: modelData.id,
+          printability_score: printabilityScore,
+          material_recommendations: materialRecommendations,
+          printing_techniques: printingTechniques,
+          design_issues: designIssues,
+          oem_compatibility: oemCompatibility
+        });
+
+      if (analysisError) {
+        console.error("Error saving analysis:", analysisError);
+        // Don't fail the whole operation if analysis save fails
+      }
 
       toast({
         title: "Model uploaded successfully!",
-        description: "Your model has been uploaded with comprehensive metadata and is ready for review.",
+        description: "Your model has been uploaded and is now available in the marketplace.",
       });
       
       // Redirect to discover page after successful upload
