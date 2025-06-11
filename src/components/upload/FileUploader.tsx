@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { UploadIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface FileUploaderProps {
   onFileSelected: (file: File, filePath: string) => void;
@@ -51,33 +52,68 @@ export const FileUploader = ({
     
     setModelFile(file);
     setUploading(true);
+    setUploadProgress(0);
     
     try {
-      // Simulate upload progress
+      // Get current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to upload models.",
+          variant: "destructive"
+        });
+        setUploading(false);
+        return;
+      }
+
+      // Create unique file path
+      const timestamp = Date.now();
+      const fileName = `${user.id}/${timestamp}-${file.name}`;
+      const filePath = `models/${fileName}`;
+      
+      // Upload file to Supabase storage
+      const { data, error } = await supabase.storage
+        .from('3d-models')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (error) {
+        console.error('Upload error:', error);
+        toast({
+          title: "Upload failed",
+          description: error.message || "An error occurred during upload.",
+          variant: "destructive"
+        });
+        setUploadProgress(0);
+        return;
+      }
+
+      // Simulate progress for better UX (Supabase doesn't provide upload progress)
       let currentProgress = 0;
       const progressInterval = setInterval(() => {
-        currentProgress = currentProgress + Math.floor(Math.random() * 5) + 1;
-        if (currentProgress >= 90) {
+        currentProgress += 10;
+        if (currentProgress >= 100) {
           clearInterval(progressInterval);
+          setUploadProgress(100);
+          
+          setTimeout(() => {
+            onFileSelected(file, data.path);
+            toast({
+              title: "Upload successful!",
+              description: "Your 3D model has been uploaded successfully.",
+            });
+          }, 500);
           return;
         }
         setUploadProgress(currentProgress);
-      }, 200);
-      
-      // Simulate file upload delay
-      setTimeout(() => {
-        clearInterval(progressInterval);
-        setUploadProgress(100);
-        
-        // Create a mock file path for demo purposes
-        const mockFilePath = `uploads/${crypto.randomUUID()}.${file.name.split('.').pop()}`;
-        
-        setTimeout(() => {
-          onFileSelected(file, mockFilePath);
-        }, 500);
-      }, 2000);
+      }, 100);
       
     } catch (error) {
+      console.error('Unexpected error:', error);
       toast({
         title: "Upload failed",
         description: "An unexpected error occurred. Please try again.",
