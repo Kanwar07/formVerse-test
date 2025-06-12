@@ -9,6 +9,20 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { supabase } from '@/integrations/supabase/client';
 import { Brain } from "lucide-react";
 
+// Helper function to clean up auth state
+const cleanupAuthState = () => {
+  Object.keys(localStorage).forEach((key) => {
+    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+      localStorage.removeItem(key);
+    }
+  });
+  Object.keys(sessionStorage || {}).forEach((key) => {
+    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+      sessionStorage.removeItem(key);
+    }
+  });
+};
+
 export function SignInForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -22,6 +36,17 @@ export function SignInForm() {
 
     try {
       console.log('Attempting to sign in with:', email);
+      
+      // Clean up existing state first
+      cleanupAuthState();
+      
+      // Attempt global sign out to ensure clean state
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (err) {
+        // Continue even if this fails
+        console.log('Global signout attempt:', err);
+      }
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -47,10 +72,8 @@ export function SignInForm() {
           description: "Successfully signed in."
         });
         
-        // Wait a moment for auth state to update, then navigate
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 500);
+        // Force page reload for clean state
+        window.location.href = '/dashboard';
       }
     } catch (error) {
       console.error('Unexpected sign in error:', error);
@@ -77,6 +100,9 @@ export function SignInForm() {
     setLoading(true);
     try {
       console.log('Attempting to sign up with:', email);
+      
+      // Clean up existing state first
+      cleanupAuthState();
       
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -108,10 +134,8 @@ export function SignInForm() {
             description: "You have been automatically signed in.",
           });
           
-          // Wait a moment for auth state to update, then navigate
-          setTimeout(() => {
-            navigate('/dashboard');
-          }, 500);
+          // Force page reload for clean state
+          window.location.href = '/dashboard';
         } else {
           toast({
             title: "Account created!",
