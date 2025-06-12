@@ -38,7 +38,7 @@ export const FileUploader = ({
       return;
     }
     
-    console.log('Current user for upload:', user.email);
+    console.log('Current user for upload:', user.email, 'User ID:', user.id);
     
     // Validate file type
     const validTypes = ['.stl', '.obj', '.step'];
@@ -69,14 +69,16 @@ export const FileUploader = ({
     setUploadProgress(0);
     
     try {
-      // Create unique file path
+      // Create file path that matches RLS policy: {user_id}/{timestamp}-{filename}
       const timestamp = Date.now();
-      const fileName = `${user.id}/${timestamp}-${file.name}`;
-      const filePath = `models/${fileName}`;
+      const fileName = `${timestamp}-${file.name}`;
+      const filePath = `${user.id}/${fileName}`;
       
       console.log('Uploading file to path:', filePath);
+      console.log('Bucket: 3d-models');
+      console.log('User ID:', user.id);
       
-      // Upload file to Supabase storage
+      // Upload file to Supabase storage with correct path structure
       const { data, error } = await supabase.storage
         .from('3d-models')
         .upload(filePath, file, {
