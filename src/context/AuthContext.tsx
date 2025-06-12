@@ -3,17 +3,8 @@ import React, { createContext, useState, useEffect, useContext } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
 
-type Profile = {
-  id: string;
-  username?: string;
-  full_name?: string;
-  avatar_url?: string;
-  created_at: string;
-};
-
 type AuthContextType = {
   user: User | null;
-  profile: Profile | null;
   session: Session | null;
   loading: boolean;
   signOut: () => Promise<void>;
@@ -23,7 +14,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -37,34 +27,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       
-      if (session?.user && event === 'SIGNED_IN') {
-        console.log('User signed in, fetching profile...');
-        // Defer profile fetching to avoid potential issues
-        setTimeout(async () => {
-          try {
-            const { data: profileData, error } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', session.user.id)
-              .maybeSingle();
-            
-            if (error) {
-              console.error('Error fetching profile:', error);
-            } else if (profileData) {
-              console.log('Profile found:', profileData);
-              setProfile(profileData as Profile);
-            } else {
-              console.log('No profile found for user');
-            }
-          } catch (error) {
-            console.error('Error in profile fetch:', error);
-          }
-        }, 100);
-      }
-      
       if (event === 'SIGNED_OUT') {
         console.log('User signed out');
-        setProfile(null);
       }
       
       setLoading(false);
@@ -99,7 +63,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } else {
         console.log('Sign out successful');
         setUser(null);
-        setProfile(null);
         setSession(null);
       }
     } catch (error) {
@@ -113,7 +76,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     <AuthContext.Provider
       value={{
         user,
-        profile,
         session,
         loading,
         signOut: handleSignOut
