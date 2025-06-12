@@ -41,12 +41,16 @@ export function SignInForm() {
       }
       
       if (data.user) {
-        console.log('Sign in successful, user:', data.user);
+        console.log('Sign in successful, user:', data.user.email);
         toast({
           title: "Welcome back!",
           description: "Successfully signed in."
         });
-        navigate('/dashboard');
+        
+        // Wait a moment for auth state to update, then navigate
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 500);
       }
     } catch (error) {
       console.error('Unexpected sign in error:', error);
@@ -95,10 +99,25 @@ export function SignInForm() {
       }
       
       if (data.user) {
-        toast({
-          title: "Account created!",
-          description: "Please check your email to verify your account.",
-        });
+        console.log('Sign up successful, user:', data.user.email);
+        
+        // Check if email confirmation is required
+        if (data.user.email_confirmed_at) {
+          toast({
+            title: "Account created!",
+            description: "You have been automatically signed in.",
+          });
+          
+          // Wait a moment for auth state to update, then navigate
+          setTimeout(() => {
+            navigate('/dashboard');
+          }, 500);
+        } else {
+          toast({
+            title: "Account created!",
+            description: "Please check your email to verify your account before signing in.",
+          });
+        }
       }
     } catch (error) {
       console.error('Unexpected sign up error:', error);

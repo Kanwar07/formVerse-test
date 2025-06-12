@@ -22,10 +22,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     
     // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, session?.user?.email);
+      console.log('Auth state changed:', event, session?.user?.email || 'no user');
       
       setSession(session);
       setUser(session?.user ?? null);
+      
+      if (event === 'SIGNED_IN') {
+        console.log('User signed in successfully:', session?.user?.email);
+      }
       
       if (event === 'SIGNED_OUT') {
         console.log('User signed out');
@@ -39,7 +43,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (error) {
         console.error('Error getting initial session:', error);
       } else {
-        console.log('Initial session:', initialSession?.user?.email);
+        console.log('Initial session:', initialSession?.user?.email || 'no user');
         setSession(initialSession);
         setUser(initialSession?.user ?? null);
       }
