@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Navbar } from "@/components/navbar";
@@ -9,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CadQuaPricing } from "@/components/printing/CadQuaPricing";
+import { ModelPreview } from "@/components/preview/ModelPreview";
+import { EngagementGate } from "@/components/buyer/EngagementGate";
 import { 
   Download, 
   Eye, 
@@ -101,23 +102,25 @@ const ModelDetails = () => {
       
       <div className="container py-8 max-w-6xl">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Model Preview */}
+          {/* Model Preview with Watermark */}
           <div className="space-y-4">
-            <Card>
-              <CardContent className="p-0">
-                <img 
-                  src={model.thumbnail} 
-                  alt={model.name}
-                  className="w-full aspect-square object-cover rounded-t-lg"
-                />
-                <div className="p-4">
-                  <Button variant="outline" className="w-full">
-                    <Eye className="h-4 w-4 mr-2" />
-                    View 3D Preview
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <ModelPreview 
+              modelName={model.name}
+              thumbnail={model.thumbnail}
+              isOwner={false}
+              isPurchased={purchased}
+              price={model.price}
+              onPurchase={handlePurchase}
+            />
+            
+            {/* Engagement Gate for Downloads/Licensing */}
+            {purchased && (
+              <EngagementGate 
+                modelId={model.id!}
+                modelName={model.name}
+                previewImage={model.thumbnail}
+              />
+            )}
             
             <Card>
               <CardHeader>
