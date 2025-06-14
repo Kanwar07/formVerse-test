@@ -51,7 +51,7 @@ const Upload = () => {
   const [oemCompatibility, setOemCompatibility] = useState<{name: string, score: number}[]>([]);
 
   // Add thumbnail generation state
-  const { isGenerating: thumbnailGenerating, thumbnailUrl: generatedThumbnail, generateThumbnail, setThumbnailUrl } = useThumbnailGenerator();
+  const { isGenerating: thumbnailGenerating, thumbnailUrl, generateThumbnail, setThumbnailUrl } = useThumbnailGenerator();
 
   // Generate file URL for preview
   const getFileUrl = () => {
@@ -87,7 +87,6 @@ const Upload = () => {
         const thumbnailUrl = await generateThumbnail(fileUrl, file.name, file.type, user.id);
         if (thumbnailUrl) {
           console.log('Thumbnail generated successfully:', thumbnailUrl);
-          setThumbnailUrl(thumbnailUrl);
         }
       } catch (error) {
         console.error('Thumbnail generation failed:', error);
@@ -107,16 +106,10 @@ const Upload = () => {
     reader.readAsArrayBuffer(file);
   };
 
-  // Handle thumbnail generation (legacy method - kept for compatibility)
+  // Handle thumbnail generation (legacy method - removed the problematic functions)
   const handleThumbnailGenerated = async (dataUrl: string) => {
-    if (!modelFile || !user) return;
-    
-    console.log('Thumbnail generated via canvas, uploading...');
-    const thumbnailUrl = await uploadThumbnail(dataUrl, modelFile.name, user.id);
-    
-    if (thumbnailUrl) {
-      setGeneratedThumbnail(thumbnailUrl);
-    }
+    console.log('Legacy thumbnail generation method called');
+    // This method is kept for compatibility but the main generation happens in handleFileSelected
   };
 
   const handleThumbnailError = (error: string) => {
@@ -128,7 +121,6 @@ const Upload = () => {
     });
   };
 
-  // Handle FormIQ analysis completion
   const handleAnalysisComplete = (result: FormIQAnalysisResult) => {
     setPrintabilityScore(result.printabilityScore);
     setMaterialRecommendations(result.materialRecommendations);
@@ -219,7 +211,7 @@ const Upload = () => {
           printing_techniques: printingTechniques,
           design_issues: designIssues,
           oem_compatibility: oemCompatibility,
-          preview_image: generatedThumbnail
+          preview_image: thumbnailUrl
         })
         .select()
         .single();
@@ -334,14 +326,14 @@ const Upload = () => {
                 
                 <ModelPreview
                   modelName={modelName}
-                  thumbnail={generatedThumbnail || '/placeholder.svg'}
+                  thumbnail={thumbnailUrl || '/placeholder.svg'}
                   fileUrl={getFileUrl()}
                   fileName={modelFile.name}
                   fileType={modelFile.type}
                   isOwner={true}
                 />
                 
-                {generatedThumbnail && (
+                {thumbnailUrl && (
                   <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                     <div className="flex items-center">
                       <div className="w-4 h-4 bg-green-500 rounded-full mr-2"></div>
