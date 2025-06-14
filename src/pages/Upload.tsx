@@ -53,7 +53,7 @@ const Upload = () => {
 
   // Add thumbnail generation state
   const [generatedThumbnail, setGeneratedThumbnail] = useState<string | null>(null);
-  const { isGenerating: thumbnailGenerating, generateThumbnail } = useThumbnailGenerator();
+  const { isGenerating: thumbnailGenerating, generateThumbnail, uploadThumbnail } = useThumbnailGenerator();
 
   // Generate file URL for preview
   const getFileUrl = () => {
@@ -113,8 +113,11 @@ const Upload = () => {
     if (!modelFile || !user) return;
     
     console.log('Thumbnail generated via canvas, uploading...');
-    const { uploadThumbnail } = await import('@/hooks/useThumbnailGenerator');
-    // This would need to be called differently, but keeping for now
+    const thumbnailUrl = await uploadThumbnail(dataUrl, modelFile.name, user.id);
+    
+    if (thumbnailUrl) {
+      setGeneratedThumbnail(thumbnailUrl);
+    }
   };
 
   const handleThumbnailError = (error: string) => {
