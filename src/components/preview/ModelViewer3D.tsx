@@ -7,69 +7,147 @@ import { OBJLoader } from 'three-stdlib';
 import * as THREE from 'three';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Loader2, RotateCcw, Info } from 'lucide-react';
+import { Loader2, RotateCcw, Info, AlertCircle } from 'lucide-react';
 
 interface Model3DProps {
   fileUrl: string;
   fileType: string;
   onGeometryLoaded?: (geometry: THREE.BufferGeometry) => void;
+  onLoadError?: (error: string) => void;
 }
 
-const Model3D = ({ fileUrl, fileType, onGeometryLoaded }: Model3DProps) => {
+const Model3D = ({ fileUrl, fileType, onGeometryLoaded, onLoadError }: Model3DProps) => {
   const meshRef = useRef<THREE.Mesh>(null);
-  const [modelLoaded, setModelLoaded] = useState(false);
+  const [geometry, setGeometry] = useState<THREE.BufferGeometry | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
-  console.log('Model3D component loading:', fileUrl, fileType);
+  console.log('Model3D: Starting to load', fileUrl, fileType);
   
-  let geometry: THREE.BufferGeometry;
-  
-  try {
-    if (fileType.toLowerCase().includes('stl') || fileUrl.toLowerCase().includes('.stl')) {
-      console.log('Loading STL file from:', fileUrl);
-      geometry = useLoader(STLLoader, fileUrl);
-    } else if (fileType.toLowerCase().includes('obj') || fileUrl.toLowerCase().includes('.obj')) {
-      console.log('Loading OBJ file from:', fileUrl);
-      const obj = useLoader(OBJLoader, fileUrl);
-      const mesh = obj.children.find(child => child instanceof THREE.Mesh) as THREE.Mesh;
-      geometry = mesh?.geometry || new THREE.BoxGeometry(1, 1, 1);
-    } else {
-      console.log('Unsupported format, using placeholder');
-      geometry = new THREE.BoxGeometry(1, 1, 1);
-    }
-  } catch (error) {
-    console.error('Error loading model:', error);
-    geometry = new THREE.BoxGeometry(1, 1, 1);
-  }
-
   useEffect(() => {
-    if (geometry && !modelLoaded) {
-      console.log('Processing geometry...', geometry);
-      
-      // Center and scale the geometry
-      geometry.computeBoundingBox();
-      geometry.computeVertexNormals();
-      
-      if (geometry.boundingBox) {
-        const center = new THREE.Vector3();
-        geometry.boundingBox.getCenter(center);
-        geometry.translate(-center.x, -center.y, -center.z);
+    const loadModel = async () => {
+      try {
+        setLoading(true);
+        setError(null);
         
-        const size = new THREE.Vector3();
-        geometry.boundingBox.getSize(size);
-        const maxDimension = Math.max(size.x, size.y, size.z);
-        
-        if (maxDimension > 0) {
-          const scale = 2 / maxDimension;
-          geometry.scale(scale, scale, scale);
+        // Verify file accessibility first
+        const response = await fetch(fileUrl, { method: 'HEAD' });
+        if (!response.ok) {
+          throw new Error(`File not accessible: ${response.status}`);
         }
         
-        console.log('Model processed - size:', size, 'vertices:', geometry.attributes.position?.count);
+        console.log('Model3D: File is accessible, loading geometry...');
+        
+        let loadedGeometry: THREE.BufferGeometry;
+        
+        if (fileType.toLowerCase().includes('stl') || fileUrl.toLowerCase().includes('.stl')) {
+          console.log('Model3D: Loading STL file');
+          const loader = new STLLoader();
+          loadedGeometry = await new Promise<THREE.BufferGeometry>((resolve, reject) => {
+            loader.load(
+              fileUrl,
+              (geometry) => {
+                console.log('Model3D: STL loaded successfully', geometry);
+                resolve(geometry);
+              },
+              (progress) => {
+                console.log('Model3D: Loading progress', progress);
+              },
+              (error) => {
+                console.error('Model3D: STL loading error', error);
+                reject(error);
+              }
+            );
+          });
+        } else if (fileType.toLowerCase().includes('obj') || fileUrl.toLowerCase().includes('.obj')) {
+          console.log('Model3D: Loading OBJ file');
+          const loader = new OBJLoader();
+          const obj = await new Promise<THREE.Group>((resolve, reject) => {
+            loader.load(
+              fileUrl,
+              (object) => {
+                console.log('Model3D: OBJ loaded successfully', object);
+                resolve(object);
+              },
+              (progress) => {
+                console.log('Model3D: Loading progress', progress);
+              },
+              (error) => {
+                console.error('Model3D: OBJ loading error', error);
+                reject(error);
+              }
+            );
+          });
+          
+          const mesh = obj.children.find(child => child instanceof THREE.Mesh) as THREE.Mesh;
+          if (!mesh || !mesh.geometry) {
+            throw new Error('No valid geometry found in OBJ file');
+          }
+          loadedGeometry = mesh.geometry;
+        } else {
+          throw new Error(`Unsupported file format: ${fileType}`);
+        }
+        
+        // Process the geometry
+        loadedGeometry.computeBoundingBox();
+        loadedGeometry.computeVertexNormals();
+        
+        if (loadedGeometry.boundingBox) {
+          const center = new THREE.Vector3();
+          loadedGeometry.boundingBox.getCenter(center);
+          loadedGeometry.translate(-center.x, -center.y, -center.z);
+          
+          const size = new THREE.Vector3();
+          loadedGeometry.boundingBox.getSize(size);
+          const maxDimension = Math.max(size.x, size.y, size.z);
+          
+          if (maxDimension > 0) {
+            const scale = 2 / maxDimension;
+            loadedGeometry.scale(scale, scale, scale);
+          }
+          
+          console.log('Model3D: Geometry processed successfully', {
+            vertices: loadedGeometry.attributes.position?.count,
+            size: size,
+            maxDimension
+          });
+        }
+        
+        setGeometry(loadedGeometry);
+        onGeometryLoaded?.(loadedGeometry);
+        setLoading(false);
+        
+      } catch (error) {
+        console.error('Model3D: Failed to load model', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        setError(errorMessage);
+        onLoadError?.(errorMessage);
+        setLoading(false);
       }
-      
-      setModelLoaded(true);
-      onGeometryLoaded?.(geometry);
+    };
+    
+    if (fileUrl) {
+      loadModel();
     }
-  }, [geometry, modelLoaded, onGeometryLoaded]);
+  }, [fileUrl, fileType, onGeometryLoaded, onLoadError]);
+
+  if (loading) {
+    return (
+      <mesh>
+        <boxGeometry args={[0.1, 0.1, 0.1]} />
+        <meshStandardMaterial color="#888888" transparent opacity={0.3} />
+      </mesh>
+    );
+  }
+
+  if (error || !geometry) {
+    return (
+      <mesh>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshStandardMaterial color="#ff4444" />
+      </mesh>
+    );
+  }
 
   return (
     <Center>
@@ -98,7 +176,7 @@ export const ModelViewer3D = ({ fileUrl, fileName, fileType, onClose, onModelInf
   const [modelInfo, setModelInfo] = useState<any>(null);
 
   const handleGeometryLoaded = (geometry: THREE.BufferGeometry) => {
-    console.log('Geometry loaded successfully:', geometry);
+    console.log('ModelViewer3D: Geometry loaded successfully');
     
     const vertices = geometry.attributes.position ? geometry.attributes.position.count : 0;
     const faces = geometry.index ? geometry.index.count / 3 : vertices / 3;
@@ -122,12 +200,12 @@ export const ModelViewer3D = ({ fileUrl, fileName, fileType, onClose, onModelInf
     setModelInfo(info);
     onModelInfo?.(info);
     setIsLoading(false);
-    console.log('Model loaded successfully:', info);
+    setError(null);
   };
 
-  const handleLoadingError = () => {
-    console.error('Failed to load 3D model');
-    setError('Failed to load the 3D model. Please check the file format.');
+  const handleLoadError = (errorMessage: string) => {
+    console.error('ModelViewer3D: Load error:', errorMessage);
+    setError(errorMessage);
     setIsLoading(false);
   };
 
@@ -165,7 +243,8 @@ export const ModelViewer3D = ({ fileUrl, fileName, fileType, onClose, onModelInf
           <div className="absolute inset-0 flex items-center justify-center bg-muted/50 z-20">
             <div className="text-center">
               <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">Loading 3D model...</p>
+              <p className="text-sm text-muted-foreground">Loading CAD model...</p>
+              <p className="text-xs text-muted-foreground mt-1">Processing {fileType.toUpperCase()} file</p>
             </div>
           </div>
         )}
@@ -173,8 +252,17 @@ export const ModelViewer3D = ({ fileUrl, fileName, fileType, onClose, onModelInf
         {error && (
           <div className="absolute inset-0 flex items-center justify-center bg-destructive/10 z-20">
             <div className="text-center">
-              <p className="text-destructive font-medium">Error</p>
+              <AlertCircle className="h-8 w-8 mx-auto mb-2 text-destructive" />
+              <p className="text-destructive font-medium">Failed to Load Model</p>
               <p className="text-sm text-muted-foreground mt-1">{error}</p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="mt-3"
+                onClick={() => window.location.reload()}
+              >
+                Retry Loading
+              </Button>
             </div>
           </div>
         )}
@@ -195,6 +283,7 @@ export const ModelViewer3D = ({ fileUrl, fileName, fileType, onClose, onModelInf
               fileUrl={fileUrl} 
               fileType={fileType}
               onGeometryLoaded={handleGeometryLoaded}
+              onLoadError={handleLoadError}
             />
             
             <OrbitControls
