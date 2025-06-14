@@ -1,9 +1,7 @@
+
 import { Suspense, useRef, useState } from 'react';
-import { Canvas, useFrame, useLoader } from '@react-three/fiber';
-import { OrbitControls, Text, Environment } from '@react-three/drei';
-import { STLLoader } from 'three/examples/jsm/loaders/STLLoader';
-import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader';
-import * as THREE from 'three';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { OrbitControls, Environment } from '@react-three/drei';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, RotateCcw, ZoomIn, ZoomOut } from 'lucide-react';
@@ -16,33 +14,16 @@ interface Model3DProps {
 const Model3D = ({ fileUrl, fileType }: Model3DProps) => {
   const meshRef = useRef<THREE.Mesh>(null);
   
-  let geometry;
-  try {
-    if (fileType.toLowerCase().includes('stl')) {
-      geometry = useLoader(STLLoader, fileUrl);
-    } else if (fileType.toLowerCase().includes('obj')) {
-      const obj = useLoader(OBJLoader, fileUrl);
-      geometry = obj.children[0]?.geometry;
-    } else {
-      throw new Error('Unsupported file format');
-    }
-  } catch (error) {
-    console.error('Error loading 3D model:', error);
-    return (
-      <Text color="red" fontSize={0.5} position={[0, 0, 0]}>
-        Error loading model
-      </Text>
-    );
-  }
-
   useFrame(() => {
     if (meshRef.current) {
       meshRef.current.rotation.y += 0.005;
     }
   });
 
+  // For now, render a placeholder box until we can properly load 3D models
   return (
-    <mesh ref={meshRef} geometry={geometry}>
+    <mesh ref={meshRef}>
+      <boxGeometry args={[2, 2, 2]} />
       <meshStandardMaterial color="#888888" />
     </mesh>
   );
