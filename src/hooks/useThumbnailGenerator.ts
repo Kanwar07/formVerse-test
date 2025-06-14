@@ -29,19 +29,21 @@ export const useThumbnailGenerator = () => {
       if (result.success && result.thumbnailUrl) {
         setThumbnailUrl(result.thumbnailUrl);
         toast({
-          title: "Thumbnail generated!",
-          description: "Model preview image has been created successfully.",
+          title: "Preview generated!",
+          description: "Model preview has been created successfully.",
         });
         return result.thumbnailUrl;
       } else {
-        throw new Error(result.error || 'Thumbnail generation failed');
+        console.warn('Thumbnail generation warning:', result.error);
+        // Don't show error toast for fallback, just log it
+        return null;
       }
     } catch (error) {
       console.error('Error in thumbnail generation:', error);
       toast({
-        title: "Thumbnail generation failed",
-        description: "We'll use a placeholder image instead.",
-        variant: "destructive"
+        title: "Using fallback preview",
+        description: "Generated a placeholder preview for your model.",
+        variant: "default"
       });
       return null;
     } finally {
@@ -64,7 +66,7 @@ export const useThumbnailGenerator = () => {
       const thumbnailFileName = `thumbnail-${timestamp}-${fileName.replace(/\.[^/.]+$/, '')}.png`;
       const filePath = `${userId}/thumbnails/${thumbnailFileName}`;
       
-      console.log('Uploading thumbnail to path:', filePath);
+      console.log('Uploading manual thumbnail to path:', filePath);
       
       // Upload thumbnail to Supabase storage
       const { supabase } = await import('@/integrations/supabase/client');
@@ -76,7 +78,7 @@ export const useThumbnailGenerator = () => {
         });
 
       if (error) {
-        console.error('Thumbnail upload error:', error);
+        console.error('Manual thumbnail upload error:', error);
         return null;
       }
 
@@ -85,12 +87,12 @@ export const useThumbnailGenerator = () => {
         .from('3d-models')
         .getPublicUrl(data.path);
 
-      console.log('Thumbnail uploaded successfully:', urlData.publicUrl);
+      console.log('Manual thumbnail uploaded successfully:', urlData.publicUrl);
       setThumbnailUrl(urlData.publicUrl);
       return urlData.publicUrl;
       
     } catch (error) {
-      console.error('Error uploading thumbnail:', error);
+      console.error('Error uploading manual thumbnail:', error);
       return null;
     }
   }, []);

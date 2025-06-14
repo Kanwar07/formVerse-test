@@ -18,7 +18,6 @@ import { MetadataForm, ModelMetadata } from "@/components/upload/MetadataForm";
 import { PricingForm } from "@/components/upload/PricingForm";
 import { ReviewForm } from "@/components/upload/ReviewForm";
 import { ModelPreview } from "@/components/preview/ModelPreview";
-import { ThumbnailGenerator } from "@/components/preview/ThumbnailGenerator";
 import { useThumbnailGenerator } from "@/hooks/useThumbnailGenerator";
 
 const Upload = () => {
@@ -62,7 +61,7 @@ const Upload = () => {
     return data.publicUrl;
   };
 
-  const handleFileSelected = (file: File, filePath: string, extractedFileInfo: any) => {
+  const handleFileSelected = async (file: File, filePath: string, extractedFileInfo: any) => {
     setModelFile(file);
     setModelPath(filePath);
     setFileInfo(extractedFileInfo);
@@ -79,7 +78,11 @@ const Upload = () => {
     if (user) {
       const fileUrl = getFileUrl();
       if (fileUrl) {
-        generateThumbnailForFile(fileUrl, file.name, file.type);
+        console.log('Starting thumbnail generation with URL:', fileUrl);
+        const thumbnailUrl = await generateThumbnail(fileUrl, file.name, file.type, user.id);
+        if (thumbnailUrl) {
+          setGeneratedThumbnail(thumbnailUrl);
+        }
       }
     }
 
@@ -94,18 +97,6 @@ const Upload = () => {
       console.log('File hash stored:', hashHex);
     };
     reader.readAsArrayBuffer(file);
-  };
-
-  // New function to generate thumbnail using the service
-  const generateThumbnailForFile = async (fileUrl: string, fileName: string, fileType: string) => {
-    if (!user) return;
-    
-    console.log('Generating thumbnail for uploaded file:', fileName);
-    const thumbnailUrl = await generateThumbnail(fileUrl, fileName, fileType, user.id);
-    
-    if (thumbnailUrl) {
-      setGeneratedThumbnail(thumbnailUrl);
-    }
   };
 
   // Handle thumbnail generation (legacy method - kept for compatibility)
@@ -123,9 +114,9 @@ const Upload = () => {
   const handleThumbnailError = (error: string) => {
     console.error('Thumbnail generation error:', error);
     toast({
-      title: "Thumbnail generation failed",
-      description: "Using placeholder image for preview.",
-      variant: "destructive"
+      title: "Using placeholder preview",
+      description: "Generated a basic preview for your model.",
+      variant: "default"
     });
   };
 
@@ -219,7 +210,8 @@ const Upload = () => {
           material_recommendations: materialRecommendations,
           printing_techniques: printingTechniques,
           design_issues: designIssues,
-          oem_compatibility: oemCompatibility
+          oem_compatibility: oemCompatibility,
+          preview_image: generatedThumbnail
         })
         .select()
         .single();
