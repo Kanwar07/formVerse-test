@@ -113,21 +113,6 @@ const Upload = () => {
     reader.readAsArrayBuffer(file);
   };
 
-  // Handle thumbnail generation (legacy method - removed the problematic functions)
-  const handleThumbnailGenerated = async (dataUrl: string) => {
-    console.log('Legacy thumbnail generation method called');
-    // This method is kept for compatibility but the main generation happens in handleFileSelected
-  };
-
-  const handleThumbnailError = (error: string) => {
-    console.error('Thumbnail generation error:', error);
-    toast({
-      title: "Using placeholder preview",
-      description: "Generated a basic preview for your model.",
-      variant: "default"
-    });
-  };
-
   const handleAnalysisComplete = (result: FormIQAnalysisResult) => {
     setPrintabilityScore(result.printabilityScore);
     setMaterialRecommendations(result.materialRecommendations);
@@ -200,7 +185,11 @@ const Upload = () => {
         return;
       }
 
-      // Create model record in database
+      // Determine category from metadata and tags
+      const category = modelMetadata.industry.toLowerCase();
+      const allTags = [...aiGeneratedTags, ...customTags];
+
+      // Create model record in database with all required fields
       const { data: modelData, error: modelError } = await supabase
         .from('models')
         .insert({
@@ -209,8 +198,8 @@ const Upload = () => {
           description: modelDescription,
           file_path: modelPath,
           file_size: modelFile.size,
-          file_type: modelFile.type,
-          tags: [...aiGeneratedTags, ...customTags],
+          file_type: modelFile.type || fileInfo?.type,
+          tags: allTags,
           price: actualPrice / 100, // Convert from cents to dollars
           license_type: licenseType,
           printability_score: printabilityScore,
@@ -218,7 +207,12 @@ const Upload = () => {
           printing_techniques: printingTechniques,
           design_issues: designIssues,
           oem_compatibility: oemCompatibility,
-          preview_image: thumbnailUrl
+          preview_image: thumbnailUrl,
+          status: 'published', // Auto-publish new models
+          category: category,
+          difficulty_level: modelMetadata.complexity,
+          view_count: 0,
+          downloads: 0
         })
         .select()
         .single();
@@ -227,11 +221,13 @@ const Upload = () => {
         console.error("Error creating model:", modelError);
         toast({
           title: "Upload failed",
-          description: "An error occurred while saving your model. Please try again.",
+          description: modelError.message || "An error occurred while saving your model. Please try again.",
           variant: "destructive"
         });
         return;
       }
+
+      console.log('Model created successfully:', modelData);
 
       // Save FormIQ analysis
       const { error: analysisError } = await supabase

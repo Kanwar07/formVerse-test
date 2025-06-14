@@ -1,106 +1,140 @@
 
-import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { cn } from "@/lib/utils";
-import { Brain, User, LogOut } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Upload, Palette, Users, Search, User, LogOut, Plus } from "lucide-react";
+import { ThemeToggle } from "./theme-toggle";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
 
-interface NavbarProps {
-  transparent?: boolean;
-  className?: string;
-}
-
-export function Navbar({ transparent = false, className }: NavbarProps) {
-  const { user, loading, signOut } = useAuth();
+export function Navbar() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user, signOut } = useAuth();
+  const { toast } = useToast();
 
   const handleSignOut = async () => {
-    await signOut();
+    try {
+      await signOut();
+      toast({
+        title: "Signed out successfully",
+        description: "You have been signed out of your account.",
+      });
+      navigate("/");
+    } catch (error) {
+      console.error("Sign out error:", error);
+      toast({
+        title: "Error signing out",
+        description: "There was a problem signing out. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
+  const isActivePath = (path: string) => location.pathname === path;
+
   return (
-    <nav
-      className={cn(
-        "sticky top-0 z-50 w-full transition-all",
-        transparent ? "bg-transparent" : "bg-background/80 backdrop-blur-md border-b",
-        className
-      )}
-    >
+    <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
-        <Link to="/" className="flex items-center space-x-2">
-          <div className="relative h-8 w-8">
-            <img 
-              src="/lovable-uploads/9ce09c17-cfd4-43bc-a961-0bd805bee565.png" 
-              alt="FormVerse Logo" 
-              className="h-8 w-8"
-            />
-          </div>
-          <span className="font-semibold text-lg">
-            <span className="text-foreground">FORM</span>
-            <span className="text-[#9b87f5]">VERSE</span>
-          </span>
-        </Link>
-        <div className="hidden md:flex items-center space-x-8">
-          <Link to="/discover" className="text-foreground/80 hover:text-foreground transition-colors">
-            Discover
-          </Link>
-          <Link to="/services" className="text-foreground/80 hover:text-foreground transition-colors">
-            Hire Creators
-          </Link>
-          {user && (
-            <Link to="/dashboard" className="text-foreground/80 hover:text-foreground transition-colors">
-              Dashboard
-            </Link>
-          )}
-          <Link 
-            to="/formiq" 
-            className="flex items-center space-x-1 text-foreground/80 hover:text-foreground transition-colors"
+        <div className="flex items-center space-x-8">
+          <div 
+            className="flex items-center space-x-2 cursor-pointer" 
+            onClick={() => navigate("/")}
           >
-            <Brain className="h-4 w-4 text-[#9b87f5]" />
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#7E69AB] to-[#9b87f5]">FormIQ</span>
-          </Link>
-          <Link to="/#pricing" className="text-foreground/80 hover:text-foreground transition-colors">
-            Pricing
-          </Link>
-          <Link to="/#about" className="text-foreground/80 hover:text-foreground transition-colors">
-            About
-          </Link>
+            <div className="h-8 w-8 bg-primary rounded-md flex items-center justify-center">
+              <span className="text-primary-foreground font-bold text-sm">FV</span>
+            </div>
+            <span className="font-bold text-xl">FormVerse</span>
+          </div>
+          
+          <div className="hidden md:flex items-center space-x-6">
+            <Button
+              variant={isActivePath("/discover") ? "default" : "ghost"}
+              onClick={() => navigate("/discover")}
+              className="flex items-center space-x-2"
+            >
+              <Search className="h-4 w-4" />
+              <span>Discover</span>
+            </Button>
+            
+            <Button
+              variant={isActivePath("/creators") ? "default" : "ghost"}
+              onClick={() => navigate("/creators")}
+              className="flex items-center space-x-2"
+            >
+              <Users className="h-4 w-4" />
+              <span>Creators</span>
+            </Button>
+            
+            <Button
+              variant={isActivePath("/formiq") ? "default" : "ghost"}
+              onClick={() => navigate("/formiq")}
+              className="flex items-center space-x-2"
+            >
+              <Palette className="h-4 w-4" />
+              <span>FormIQ</span>
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center space-x-2">
+
+        <div className="flex items-center space-x-4">
           <ThemeToggle />
-          {loading ? (
-            <div className="w-20 h-10 bg-muted rounded animate-pulse" />
-          ) : user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <User className="h-4 w-4 mr-2" />
-                  {user.email?.split('@')[0] || 'User'}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
-                  <Link to="/dashboard">Dashboard</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/upload">Upload Model</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleSignOut}>
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Sign Out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+          
+          {user ? (
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => navigate("/upload")}
+                className="flex items-center space-x-2"
+              >
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">Upload Model</span>
+              </Button>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="flex items-center space-x-2">
+                    <User className="h-4 w-4" />
+                    <span className="hidden sm:inline">{user.email}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem onClick={() => navigate("/dashboard")}>
+                    <User className="mr-2 h-4 w-4" />
+                    Dashboard
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/upload")}>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Upload Model
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut} className="text-red-600">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           ) : (
-            <>
-              <Button variant="outline" asChild>
-                <Link to="/signin">Sign In</Link>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="ghost"
+                onClick={() => navigate("/signin")}
+              >
+                Sign In
               </Button>
-              <Button asChild className="bg-[#9b87f5] hover:bg-[#7E69AB]">
-                <Link to="/signin">Get Started</Link>
+              <Button
+                onClick={() => navigate("/signup")}
+              >
+                Sign Up
               </Button>
-            </>
+            </div>
           )}
         </div>
       </div>

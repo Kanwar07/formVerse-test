@@ -52,14 +52,17 @@ export type Database = {
       }
       models: {
         Row: {
+          category: string | null
           created_at: string | null
           description: string | null
           design_issues: Json | null
+          difficulty_level: string | null
           downloads: number | null
           file_path: string
           file_size: number | null
           file_type: string | null
           id: string
+          is_featured: boolean | null
           license_type: string | null
           material_recommendations: string[] | null
           name: string
@@ -68,19 +71,24 @@ export type Database = {
           price: number | null
           printability_score: number | null
           printing_techniques: string[] | null
+          status: string | null
           tags: string[] | null
           updated_at: string | null
           user_id: string
+          view_count: number | null
         }
         Insert: {
+          category?: string | null
           created_at?: string | null
           description?: string | null
           design_issues?: Json | null
+          difficulty_level?: string | null
           downloads?: number | null
           file_path: string
           file_size?: number | null
           file_type?: string | null
           id?: string
+          is_featured?: boolean | null
           license_type?: string | null
           material_recommendations?: string[] | null
           name: string
@@ -89,19 +97,24 @@ export type Database = {
           price?: number | null
           printability_score?: number | null
           printing_techniques?: string[] | null
+          status?: string | null
           tags?: string[] | null
           updated_at?: string | null
           user_id: string
+          view_count?: number | null
         }
         Update: {
+          category?: string | null
           created_at?: string | null
           description?: string | null
           design_issues?: Json | null
+          difficulty_level?: string | null
           downloads?: number | null
           file_path?: string
           file_size?: number | null
           file_type?: string | null
           id?: string
+          is_featured?: boolean | null
           license_type?: string | null
           material_recommendations?: string[] | null
           name?: string
@@ -110,9 +123,50 @@ export type Database = {
           price?: number | null
           printability_score?: number | null
           printing_techniques?: string[] | null
+          status?: string | null
           tags?: string[] | null
           updated_at?: string | null
           user_id?: string
+          view_count?: number | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string | null
+          full_name: string | null
+          id: string
+          location: string | null
+          specialties: string[] | null
+          updated_at: string | null
+          username: string | null
+          website: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id: string
+          location?: string | null
+          specialties?: string[] | null
+          updated_at?: string | null
+          username?: string | null
+          website?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id?: string
+          location?: string | null
+          specialties?: string[] | null
+          updated_at?: string | null
+          username?: string | null
+          website?: string | null
         }
         Relationships: []
       }
