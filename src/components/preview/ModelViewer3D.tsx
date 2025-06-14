@@ -2,6 +2,7 @@
 import { Suspense, useRef, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Environment } from '@react-three/drei';
+import * as THREE from 'three';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, RotateCcw, ZoomIn, ZoomOut } from 'lucide-react';
