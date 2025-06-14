@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Eye, Cube, Image, Download, Lock } from 'lucide-react';
+import { Eye, Box, Image, Download, Lock } from 'lucide-react';
 import { ModelViewer3D } from './ModelViewer3D';
 import { WatermarkCanvas } from './WatermarkCanvas';
 
@@ -75,7 +75,7 @@ export const PreviewSelector = ({
             onClick={handle3DPreview}
             disabled={!canView3D || !hasFileAccess}
           >
-            <Cube className="h-4 w-4 mr-2" />
+            <Box className="h-4 w-4 mr-2" />
             3D Viewer
             {!canView3D && <Lock className="h-3 w-3 ml-1" />}
           </Button>
