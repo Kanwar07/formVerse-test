@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Navbar } from "@/components/navbar";
@@ -31,6 +32,11 @@ const Upload = () => {
   const [actualPrice, setActualPrice] = useState(1999);
   const [analysisComplete, setAnalysisComplete] = useState(false);
   const [licenseType, setLicenseType] = useState<string>("commercial");
+  
+  // Add missing state variables
+  const [modelName, setModelName] = useState<string>("");
+  const [modelDescription, setModelDescription] = useState<string>("");
+  
   const { toast } = useToast();
   const navigate = useNavigate();
 

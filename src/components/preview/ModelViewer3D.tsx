@@ -25,7 +25,9 @@ const Model3D = ({ fileUrl, fileType }: Model3DProps) => {
       geometry = useLoader(STLLoader, fileUrl);
     } else if (fileType.toLowerCase().includes('obj')) {
       const obj = useLoader(OBJLoader, fileUrl);
-      geometry = obj.children[0]?.geometry;
+      // Find the first mesh in the OBJ object
+      const mesh = obj.children.find(child => child instanceof THREE.Mesh) as THREE.Mesh;
+      geometry = mesh?.geometry || new THREE.BoxGeometry(2, 2, 2);
     } else {
       // Fallback to placeholder
       geometry = new THREE.BoxGeometry(2, 2, 2);
