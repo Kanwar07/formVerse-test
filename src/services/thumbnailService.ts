@@ -20,184 +20,82 @@ export class ThumbnailService {
       console.log('File Name:', fileName);
       console.log('File Type:', fileType);
       
-      // For STL files, use ViewSTL API with better error handling
-      if (fileType.toLowerCase().includes('stl') || fileName.toLowerCase().endsWith('.stl')) {
-        console.log('Processing STL file with ViewSTL API');
-        
-        // Try multiple ViewSTL endpoints for better reliability
-        const viewStlUrls = [
-          `https://www.viewstl.com/?url=${encodeURIComponent(fileUrl)}`,
-          `https://viewstl.com/?url=${encodeURIComponent(fileUrl)}`
-        ];
-        
-        for (const viewStlUrl of viewStlUrls) {
-          console.log('Trying ViewSTL URL:', viewStlUrl);
-          
-          try {
-            // First, verify the file is accessible
-            const fileResponse = await fetch(fileUrl, { method: 'HEAD' });
-            console.log('File accessibility check:', fileResponse.status);
-            
-            if (!fileResponse.ok) {
-              console.error('File not accessible:', fileResponse.status);
-              continue;
-            }
-            
-            // Use ViewSTL's direct image API
-            const thumbnailApiUrl = `https://www.viewstl.com/api/thumbnail/400x400?url=${encodeURIComponent(fileUrl)}`;
-            console.log('ViewSTL API URL:', thumbnailApiUrl);
-            
-            const response = await fetch(thumbnailApiUrl, {
-              method: 'GET',
-              headers: {
-                'Accept': 'image/png, image/jpeg, */*',
-                'User-Agent': 'FormIQ-Marketplace/1.0'
-              }
-            });
-            
-            console.log('ViewSTL Response status:', response.status);
-            console.log('ViewSTL Response headers:', Object.fromEntries(response.headers.entries()));
-            
-            if (response.ok) {
-              const blob = await response.blob();
-              console.log('Received blob size:', blob.size, 'bytes');
-              
-              if (blob.size > 0) {
-                const result = await this.uploadThumbnailBlob(blob, fileName, userId);
-                console.log('STL thumbnail upload result:', result);
-                if (result.success) {
-                  return result;
-                }
-              }
-            }
-          } catch (error) {
-            console.error('ViewSTL attempt failed:', error);
-            continue;
-          }
+      // Verify the file is accessible first
+      try {
+        const response = await fetch(fileUrl, { method: 'HEAD' });
+        if (!response.ok) {
+          console.error('File not accessible:', response.status);
+          return await this.generateFallbackThumbnail(fileName, userId);
         }
-        
-        // If ViewSTL fails, try loading the STL and creating a preview
-        return await this.generateSTLPreview(fileUrl, fileName, userId);
+      } catch (error) {
+        console.error('File accessibility check failed:', error);
+        return await this.generateFallbackThumbnail(fileName, userId);
       }
       
-      // For other formats, generate a fallback
-      console.log('Generating fallback thumbnail');
-      return await this.generateFallbackThumbnail(fileName, userId);
+      // For STL files, try ViewSTL API
+      if (fileType.toLowerCase().includes('stl') || fileName.toLowerCase().endsWith('.stl')) {
+        console.log('Attempting ViewSTL thumbnail generation...');
+        
+        const viewStlResult = await this.tryViewSTLGeneration(fileUrl, fileName, userId);
+        if (viewStlResult.success) {
+          return viewStlResult;
+        }
+      }
+      
+      // Generate custom thumbnail for CAD files
+      return await this.generateCADThumbnail(fileUrl, fileName, fileType, userId);
       
     } catch (error) {
       console.error('Thumbnail generation error:', error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
-      };
+      return await this.generateFallbackThumbnail(fileName, userId);
     }
   }
   
-  private static async generateSTLPreview(
+  private static async tryViewSTLGeneration(
     fileUrl: string,
     fileName: string,
     userId: string
   ): Promise<ThumbnailGenerationResult> {
     try {
-      console.log('=== GENERATING STL PREVIEW ===');
+      const viewStlApiUrl = `https://www.viewstl.com/api/thumbnail/512x512?url=${encodeURIComponent(fileUrl)}`;
+      console.log('ViewSTL API URL:', viewStlApiUrl);
       
-      // Create a canvas to render the STL
-      const canvas = document.createElement('canvas');
-      canvas.width = 400;
-      canvas.height = 400;
-      const ctx = canvas.getContext('2d');
-      
-      if (!ctx) {
-        throw new Error('Cannot create canvas context');
-      }
-      
-      // Try to fetch and parse the STL file
-      const response = await fetch(fileUrl);
-      const arrayBuffer = await response.arrayBuffer();
-      
-      console.log('STL file size:', arrayBuffer.byteLength);
-      
-      // Parse STL header to check if it's binary or ASCII
-      const header = new Uint8Array(arrayBuffer.slice(0, 80));
-      const headerString = new TextDecoder().decode(header);
-      const isBinary = !headerString.toLowerCase().includes('solid');
-      
-      console.log('STL format detected:', isBinary ? 'Binary' : 'ASCII');
-      
-      // Create a 3D-like preview based on STL data
-      ctx.fillStyle = '#f8f9fa';
-      ctx.fillRect(0, 0, 400, 400);
-      
-      // Draw a more sophisticated 3D representation
-      ctx.save();
-      ctx.translate(200, 200);
-      
-      // Create gradient for 3D effect
-      const gradient = ctx.createLinearGradient(-100, -100, 100, 100);
-      gradient.addColorStop(0, '#e9ecef');
-      gradient.addColorStop(0.5, '#6c757d');
-      gradient.addColorStop(1, '#343a40');
-      
-      // Draw multiple layers to simulate 3D depth
-      for (let i = 0; i < 5; i++) {
-        const offset = i * 5;
-        const size = 80 - (i * 5);
-        
-        ctx.fillStyle = gradient;
-        ctx.fillRect(-size/2 + offset, -size/2 + offset, size, size);
-        
-        // Add some triangular faces to make it look more like STL
-        ctx.beginPath();
-        ctx.moveTo(-size/2 + offset, -size/2 + offset);
-        ctx.lineTo(size/2 + offset, -size/2 + offset);
-        ctx.lineTo(0 + offset, size/2 + offset);
-        ctx.closePath();
-        ctx.fillStyle = '#adb5bd';
-        ctx.fill();
-      }
-      
-      // Add file info
-      ctx.fillStyle = '#495057';
-      ctx.font = 'bold 14px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText('STL MODEL', 0, 120);
-      ctx.font = '10px Arial';
-      ctx.fillStyle = '#6c757d';
-      const displayName = fileName.split('.')[0];
-      ctx.fillText(displayName.substring(0, 20), 0, 140);
-      ctx.fillText(`${(arrayBuffer.byteLength / 1024).toFixed(1)} KB`, 0, 155);
-      
-      ctx.restore();
-      
-      return new Promise((resolve) => {
-        canvas.toBlob(async (blob) => {
-          if (blob) {
-            console.log('STL preview blob generated, size:', blob.size);
-            const result = await this.uploadThumbnailBlob(blob, fileName, userId);
-            console.log('STL preview upload result:', result);
-            resolve(result);
-          } else {
-            resolve({ success: false, error: 'Failed to create STL preview' });
-          }
-        }, 'image/png');
+      const response = await fetch(viewStlApiUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'image/png, image/jpeg, */*'
+        }
       });
       
+      if (response.ok && response.headers.get('content-type')?.includes('image')) {
+        const blob = await response.blob();
+        if (blob.size > 1000) { // Valid image should be larger than 1KB
+          const result = await this.uploadThumbnailBlob(blob, fileName, userId);
+          if (result.success) {
+            console.log('ViewSTL thumbnail generated successfully');
+            return result;
+          }
+        }
+      }
     } catch (error) {
-      console.error('STL preview generation error:', error);
-      return await this.generateFallbackThumbnail(fileName, userId);
+      console.error('ViewSTL generation failed:', error);
     }
+    
+    return { success: false, error: 'ViewSTL generation failed' };
   }
   
-  private static async generateFallbackThumbnail(
+  private static async generateCADThumbnail(
+    fileUrl: string,
     fileName: string,
+    fileType: string,
     userId: string
   ): Promise<ThumbnailGenerationResult> {
     try {
-      console.log('=== FALLBACK THUMBNAIL GENERATION ===');
+      console.log('Generating custom CAD thumbnail...');
       
       const canvas = document.createElement('canvas');
-      canvas.width = 400;
-      canvas.height = 400;
+      canvas.width = 512;
+      canvas.height = 512;
       const ctx = canvas.getContext('2d');
       
       if (!ctx) {
@@ -205,23 +103,24 @@ export class ThumbnailService {
       }
       
       // Create gradient background
-      const gradient = ctx.createLinearGradient(0, 0, 400, 400);
+      const gradient = ctx.createLinearGradient(0, 0, 512, 512);
       gradient.addColorStop(0, '#f8f9fa');
       gradient.addColorStop(1, '#e9ecef');
       ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, 400, 400);
+      ctx.fillRect(0, 0, 512, 512);
       
-      // Draw 3D-looking object
+      // Draw 3D-looking CAD model representation
       ctx.save();
-      ctx.translate(200, 200);
+      ctx.translate(256, 256);
       
-      const size = 100;
+      // Main object
+      const size = 120;
       
       // Front face
       ctx.fillStyle = '#6c757d';
       ctx.fillRect(-size/2, -size/2, size, size);
       
-      // Top face
+      // Top face (isometric view)
       ctx.fillStyle = '#adb5bd';
       ctx.beginPath();
       ctx.moveTo(-size/2, -size/2);
@@ -241,24 +140,125 @@ export class ThumbnailService {
       ctx.closePath();
       ctx.fill();
       
-      // Add text
+      // Add wireframe lines for CAD look
+      ctx.strokeStyle = '#343a40';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([5, 5]);
+      
+      // Grid lines on front face
+      for (let i = -size/2; i <= size/2; i += 20) {
+        ctx.beginPath();
+        ctx.moveTo(i, -size/2);
+        ctx.lineTo(i, size/2);
+        ctx.stroke();
+        
+        ctx.beginPath();
+        ctx.moveTo(-size/2, i);
+        ctx.lineTo(size/2, i);
+        ctx.stroke();
+      }
+      
+      ctx.setLineDash([]);
+      
+      // Add file type indicator
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 14px Arial';
+      ctx.font = 'bold 16px Arial';
       ctx.textAlign = 'center';
-      ctx.fillText('3D MODEL', 0, size + 30);
-      ctx.font = '10px Arial';
+      ctx.fillText('CAD MODEL', 0, size + 40);
+      
+      ctx.font = '12px Arial';
       ctx.fillStyle = '#6c757d';
       const displayName = fileName.split('.')[0];
-      ctx.fillText(displayName.substring(0, 20), 0, size + 50);
+      ctx.fillText(displayName.substring(0, 25), 0, size + 60);
+      ctx.fillText(fileType.toUpperCase(), 0, size + 80);
       
       ctx.restore();
       
       return new Promise((resolve) => {
         canvas.toBlob(async (blob) => {
           if (blob) {
-            console.log('Fallback blob generated, size:', blob.size);
+            console.log('CAD thumbnail blob generated, size:', blob.size);
             const result = await this.uploadThumbnailBlob(blob, fileName, userId);
-            console.log('Fallback thumbnail upload result:', result);
+            resolve(result);
+          } else {
+            resolve({ success: false, error: 'Failed to create CAD thumbnail' });
+          }
+        }, 'image/png');
+      });
+      
+    } catch (error) {
+      console.error('CAD thumbnail generation error:', error);
+      return await this.generateFallbackThumbnail(fileName, userId);
+    }
+  }
+  
+  private static async generateFallbackThumbnail(
+    fileName: string,
+    userId: string
+  ): Promise<ThumbnailGenerationResult> {
+    try {
+      console.log('Generating fallback thumbnail...');
+      
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 512;
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) {
+        throw new Error('Cannot create canvas context');
+      }
+      
+      // Simple gradient background
+      const gradient = ctx.createLinearGradient(0, 0, 512, 512);
+      gradient.addColorStop(0, '#f8f9fa');
+      gradient.addColorStop(1, '#dee2e6');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, 512, 512);
+      
+      // Simple 3D cube
+      ctx.save();
+      ctx.translate(256, 256);
+      
+      const size = 100;
+      
+      ctx.fillStyle = '#6c757d';
+      ctx.fillRect(-size/2, -size/2, size, size);
+      
+      ctx.fillStyle = '#adb5bd';
+      ctx.beginPath();
+      ctx.moveTo(-size/2, -size/2);
+      ctx.lineTo(-size/2 + size/4, -size/2 - size/4);
+      ctx.lineTo(size/2 + size/4, -size/2 - size/4);
+      ctx.lineTo(size/2, -size/2);
+      ctx.closePath();
+      ctx.fill();
+      
+      ctx.fillStyle = '#495057';
+      ctx.beginPath();
+      ctx.moveTo(size/2, -size/2);
+      ctx.lineTo(size/2 + size/4, -size/2 - size/4);
+      ctx.lineTo(size/2 + size/4, size/2 - size/4);
+      ctx.lineTo(size/2, size/2);
+      ctx.closePath();
+      ctx.fill();
+      
+      // Text
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 18px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('3D MODEL', 0, size + 40);
+      
+      ctx.font = '12px Arial';
+      ctx.fillStyle = '#6c757d';
+      const displayName = fileName.split('.')[0];
+      ctx.fillText(displayName.substring(0, 25), 0, size + 60);
+      
+      ctx.restore();
+      
+      return new Promise((resolve) => {
+        canvas.toBlob(async (blob) => {
+          if (blob) {
+            const result = await this.uploadThumbnailBlob(blob, fileName, userId);
             resolve(result);
           } else {
             resolve({ success: false, error: 'Failed to create fallback thumbnail' });
@@ -285,8 +285,7 @@ export class ThumbnailService {
       const thumbnailFileName = `thumbnail-${timestamp}-${fileName.replace(/\.[^/.]+$/, '')}.png`;
       const filePath = `${userId}/thumbnails/${thumbnailFileName}`;
       
-      console.log('Uploading thumbnail blob to:', filePath);
-      console.log('Blob size:', blob.size, 'bytes');
+      console.log('Uploading thumbnail to:', filePath, 'Size:', blob.size);
       
       const { data, error } = await supabase.storage
         .from('3d-models')
@@ -304,14 +303,14 @@ export class ThumbnailService {
         .from('3d-models')
         .getPublicUrl(data.path);
 
-      console.log('Thumbnail uploaded successfully to:', urlData.publicUrl);
+      console.log('Thumbnail uploaded successfully:', urlData.publicUrl);
       
       return {
         success: true,
         thumbnailUrl: urlData.publicUrl
       };
     } catch (error) {
-      console.error('Thumbnail upload error:', error);
+      console.error('Thumbnail upload failed:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Upload failed'
