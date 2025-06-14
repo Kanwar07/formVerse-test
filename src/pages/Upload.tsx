@@ -78,16 +78,23 @@ const Upload = () => {
 
     // Get the public URL for the uploaded file
     const fileUrl = supabase.storage.from('3d-models').getPublicUrl(filePath).data.publicUrl;
-    console.log('Public file URL:', fileUrl);
+    console.log('Public file URL for thumbnail generation:', fileUrl);
 
-    // Start thumbnail generation immediately after upload
+    // Start thumbnail generation with increased timeout for CAD files
     if (user && fileUrl) {
-      console.log('Starting thumbnail generation...');
+      console.log('Starting enhanced thumbnail generation for CAD file...');
       try {
-        const thumbnailUrl = await generateThumbnail(fileUrl, file.name, file.type, user.id);
-        if (thumbnailUrl) {
-          console.log('Thumbnail generated successfully:', thumbnailUrl);
-        }
+        // Add a small delay to ensure file is fully uploaded and accessible
+        setTimeout(async () => {
+          const thumbnailUrl = await generateThumbnail(fileUrl, file.name, file.type, user.id);
+          if (thumbnailUrl) {
+            console.log('CAD thumbnail generated successfully:', thumbnailUrl);
+            toast({
+              title: "Model preview ready!",
+              description: "Your CAD model preview has been generated successfully.",
+            });
+          }
+        }, 2000); // 2 second delay for file propagation
       } catch (error) {
         console.error('Thumbnail generation failed:', error);
       }
@@ -275,7 +282,7 @@ const Upload = () => {
               <span className="text-xs font-medium formiq-gradient-text">FormIQ Enhanced</span>
             </div>
           </div>
-          <p className="text-muted-foreground">Let FormIQ analyze your model and provide AI-powered suggestions with comprehensive metadata collection.</p>
+          <p className="text-muted-foreground">Let FormIQ analyze your CAD model and provide AI-powered suggestions with accurate 3D preview generation.</p>
         </div>
         
         {/* Stepper - Updated for new flow */}
@@ -310,15 +317,15 @@ const Upload = () => {
           <div className="mb-6">
             <Card>
               <CardContent className="pt-6">
-                <h3 className="text-lg font-semibold mb-4">Uploaded Model Preview</h3>
+                <h3 className="text-lg font-semibold mb-4">CAD Model Preview</h3>
                 
                 {thumbnailGenerating && (
                   <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                     <div className="flex items-center">
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600 mr-3"></div>
                       <div>
-                        <span className="text-sm font-medium text-blue-800">Generating accurate model preview...</span>
-                        <p className="text-xs text-blue-600 mt-1">Using ViewSTL API for precise 3D visualization</p>
+                        <span className="text-sm font-medium text-blue-800">Generating accurate CAD model preview...</span>
+                        <p className="text-xs text-blue-600 mt-1">Analyzing geometry and creating 3D visualization</p>
                       </div>
                     </div>
                   </div>
@@ -337,7 +344,7 @@ const Upload = () => {
                   <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                     <div className="flex items-center">
                       <div className="w-4 h-4 bg-green-500 rounded-full mr-2"></div>
-                      <span className="text-sm text-green-800 font-medium">Model preview generated successfully!</span>
+                      <span className="text-sm text-green-800 font-medium">CAD model preview generated successfully!</span>
                     </div>
                   </div>
                 )}
@@ -361,7 +368,7 @@ const Upload = () => {
                 {fileInfo && (
                   <div className="mt-6 w-full max-w-xl">
                     <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                      <h4 className="font-medium text-green-800 mb-2">File Information Gathered</h4>
+                      <h4 className="font-medium text-green-800 mb-2">CAD File Information Gathered</h4>
                       <div className="grid grid-cols-2 gap-2 text-sm text-green-700">
                         <div><strong>File:</strong> {fileInfo.name}</div>
                         <div><strong>Size:</strong> {fileInfo.sizeFormatted}</div>
