@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Navbar } from "@/components/navbar";
@@ -54,7 +53,7 @@ const Upload = () => {
 
   // Add thumbnail generation state
   const [generatedThumbnail, setGeneratedThumbnail] = useState<string | null>(null);
-  const { isGenerating: thumbnailGenerating, uploadThumbnail } = useThumbnailGenerator();
+  const { isGenerating: thumbnailGenerating, generateThumbnail } = useThumbnailGenerator();
 
   // Generate file URL for preview
   const getFileUrl = () => {
@@ -76,6 +75,14 @@ const Upload = () => {
     // Reset thumbnail state
     setGeneratedThumbnail(null);
 
+    // Start thumbnail generation immediately after upload
+    if (user) {
+      const fileUrl = getFileUrl();
+      if (fileUrl) {
+        generateThumbnailForFile(fileUrl, file.name, file.type);
+      }
+    }
+
     // Generate SHA hash for file tracking
     const reader = new FileReader();
     reader.onload = async (e) => {
@@ -89,20 +96,25 @@ const Upload = () => {
     reader.readAsArrayBuffer(file);
   };
 
-  // Handle thumbnail generation
-  const handleThumbnailGenerated = async (dataUrl: string) => {
-    if (!modelFile || !user) return;
+  // New function to generate thumbnail using the service
+  const generateThumbnailForFile = async (fileUrl: string, fileName: string, fileType: string) => {
+    if (!user) return;
     
-    console.log('Thumbnail generated, uploading...');
-    const thumbnailUrl = await uploadThumbnail(dataUrl, modelFile.name, user.id);
+    console.log('Generating thumbnail for uploaded file:', fileName);
+    const thumbnailUrl = await generateThumbnail(fileUrl, fileName, fileType, user.id);
     
     if (thumbnailUrl) {
       setGeneratedThumbnail(thumbnailUrl);
-      toast({
-        title: "Thumbnail generated!",
-        description: "Model preview image has been created successfully.",
-      });
     }
+  };
+
+  // Handle thumbnail generation (legacy method - kept for compatibility)
+  const handleThumbnailGenerated = async (dataUrl: string) => {
+    if (!modelFile || !user) return;
+    
+    console.log('Thumbnail generated via canvas, uploading...');
+    const { uploadThumbnail } = await import('@/hooks/useThumbnailGenerator');
+    // This would need to be called differently, but keeping for now
   };
 
   const handleThumbnailError = (error: string) => {
@@ -317,20 +329,9 @@ const Upload = () => {
                   <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                     <div className="flex items-center">
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-                      <span className="text-sm text-blue-800">Generating model thumbnail...</span>
+                      <span className="text-sm text-blue-800">Generating accurate model preview...</span>
                     </div>
                   </div>
-                )}
-                
-                {/* Add the thumbnail generator */}
-                {modelFile && fileInfo && getFileUrl() && !generatedThumbnail && (
-                  <ThumbnailGenerator
-                    fileUrl={getFileUrl()!}
-                    fileName={modelFile.name}
-                    fileType={modelFile.type}
-                    onThumbnailGenerated={handleThumbnailGenerated}
-                    onError={handleThumbnailError}
-                  />
                 )}
               </CardContent>
             </Card>

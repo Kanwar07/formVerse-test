@@ -1,7 +1,7 @@
 
 import { useState, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { ThumbnailService } from '@/services/thumbnailService';
 
 export const useThumbnailGenerator = () => {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -17,9 +17,25 @@ export const useThumbnailGenerator = () => {
     setIsGenerating(true);
     
     try {
-      // This would be handled by the ThumbnailGenerator component
-      console.log('Starting thumbnail generation process for:', fileName);
-      return true;
+      console.log('Starting thumbnail generation for:', fileName);
+      
+      const result = await ThumbnailService.generateThumbnail(
+        modelFileUrl,
+        fileName,
+        fileType,
+        userId
+      );
+      
+      if (result.success && result.thumbnailUrl) {
+        setThumbnailUrl(result.thumbnailUrl);
+        toast({
+          title: "Thumbnail generated!",
+          description: "Model preview image has been created successfully.",
+        });
+        return result.thumbnailUrl;
+      } else {
+        throw new Error(result.error || 'Thumbnail generation failed');
+      }
     } catch (error) {
       console.error('Error in thumbnail generation:', error);
       toast({
@@ -27,7 +43,9 @@ export const useThumbnailGenerator = () => {
         description: "We'll use a placeholder image instead.",
         variant: "destructive"
       });
-      return false;
+      return null;
+    } finally {
+      setIsGenerating(false);
     }
   }, [toast]);
 
@@ -49,6 +67,7 @@ export const useThumbnailGenerator = () => {
       console.log('Uploading thumbnail to path:', filePath);
       
       // Upload thumbnail to Supabase storage
+      const { supabase } = await import('@/integrations/supabase/client');
       const { data, error } = await supabase.storage
         .from('3d-models')
         .upload(filePath, blob, {
@@ -73,8 +92,6 @@ export const useThumbnailGenerator = () => {
     } catch (error) {
       console.error('Error uploading thumbnail:', error);
       return null;
-    } finally {
-      setIsGenerating(false);
     }
   }, []);
 
