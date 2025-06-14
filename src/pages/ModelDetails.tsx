@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CadQuaPricing } from "@/components/printing/CadQuaPricing";
 import { ModelPreview } from "@/components/preview/ModelPreview";
 import { EngagementGate } from "@/components/buyer/EngagementGate";
+import { PreviewSelector } from "@/components/preview/PreviewSelector";
 import { 
   Download, 
   Eye, 
@@ -102,11 +103,14 @@ const ModelDetails = () => {
       
       <div className="container py-8 max-w-6xl">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Model Preview with Watermark */}
+          {/* Enhanced Model Preview */}
           <div className="space-y-4">
-            <ModelPreview 
+            <PreviewSelector
               modelName={model.name}
               thumbnail={model.thumbnail}
+              fileUrl={purchased ? model.fileUrl : undefined}
+              fileName={purchased ? "industrial-gear-assembly.stl" : undefined}
+              fileType={purchased ? model.fileFormat : undefined}
               isOwner={false}
               isPurchased={purchased}
               price={model.price}

@@ -2,8 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Link } from "react-router-dom";
 import { Brain } from "lucide-react";
-import { WatermarkCanvas } from "@/components/preview/WatermarkCanvas";
-import { useState } from "react";
+import { PreviewSelector } from "@/components/preview/PreviewSelector";
 
 interface DesignIssue {
   issue: string;
@@ -29,54 +28,22 @@ export const ReviewForm = ({
   onBack, 
   onSubmit
 }: ReviewFormProps) => {
-  const [watermarkedPreview, setWatermarkedPreview] = useState<string>("");
-  const [showWatermarked, setShowWatermarked] = useState(false);
-
   const originalImage = "https://images.unsplash.com/photo-1483058712412-4245e9b90334?auto=format&fit=crop&q=80&w=2070&ixlib=rb-4.0.3";
 
   return (
     <div className="space-y-6">
       <div className="border rounded-xl overflow-hidden">
-        <div className="bg-muted p-4 flex items-center justify-between">
+        <div className="bg-muted p-4">
           <h3 className="font-semibold">Model Preview</h3>
-          <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setShowWatermarked(!showWatermarked)}
-            >
-              {showWatermarked ? 'Show Original' : 'Show Preview Mode'}
-            </Button>
-          </div>
         </div>
-        <div className="p-6 flex flex-col items-center justify-center">
-          {showWatermarked && watermarkedPreview ? (
-            <img 
-              src={watermarkedPreview} 
-              alt="Watermarked Model Preview" 
-              className="h-48 w-auto mb-4 object-contain"
-            />
-          ) : (
-            <img 
-              src={originalImage} 
-              alt="Model Preview" 
-              className="h-48 w-auto mb-4 object-contain"
-            />
-          )}
-          
-          {/* Hidden watermark generator */}
-          <div style={{ display: 'none' }}>
-            <WatermarkCanvas 
-              imageUrl={originalImage}
-              watermarkText="FormIQ Preview"
-              onWatermarkedImage={setWatermarkedPreview}
-            />
-          </div>
-          
-          <Button variant="outline" size="sm">View 3D Preview</Button>
-          <p className="text-xs text-muted-foreground mt-2">
-            {showWatermarked ? 'Preview mode - as buyers will see it' : 'Original - as you uploaded it'}
-          </p>
+        <div className="p-6">
+          <PreviewSelector
+            modelName="Industrial Gear Assembly"
+            thumbnail={originalImage}
+            isOwner={true}
+            isPurchased={false}
+            className="max-w-md mx-auto"
+          />
         </div>
       </div>
       
