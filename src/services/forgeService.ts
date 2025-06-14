@@ -1,39 +1,41 @@
+// Autodesk Forge Service for 3D Model Viewing
+// This service handles authentication and model translation for Forge Viewer
 
-// Autodesk Forge Service
-// This service handles authentication and file operations for the Forge Viewer
-
-export interface ForgeCredentials {
+interface ForgeCredentials {
   clientId: string;
   clientSecret: string;
 }
 
-export interface ForgeTranslationJob {
-  urn: string;
-  status: 'pending' | 'inprogress' | 'success' | 'failed';
-  progress: string;
+interface ForgeTokenResponse {
+  access_token: string;
+  token_type: string;
+  expires_in: number;
 }
 
-export class ForgeService {
+class ForgeService {
   private credentials: ForgeCredentials | null = null;
   private accessToken: string | null = null;
   private tokenExpiry: number = 0;
 
-  constructor(credentials?: ForgeCredentials) {
-    this.credentials = credentials || null;
-  }
-
   // Set Forge credentials
   setCredentials(credentials: ForgeCredentials) {
     this.credentials = credentials;
+    this.accessToken = null; // Reset token when credentials change
+    this.tokenExpiry = 0;
   }
 
-  // Get access token for Forge API
+  // Check if credentials are configured
+  hasCredentials(): boolean {
+    return !!(this.credentials?.clientId && this.credentials?.clientSecret);
+  }
+
+  // Get access token (with caching)
   async getAccessToken(): Promise<string> {
-    if (!this.credentials) {
-      throw new Error('Forge credentials not set');
+    if (!this.hasCredentials()) {
+      throw new Error('Forge credentials not configured');
     }
 
-    // Check if token is still valid
+    // Return cached token if still valid
     if (this.accessToken && Date.now() < this.tokenExpiry) {
       return this.accessToken;
     }
@@ -45,170 +47,68 @@ export class ForgeService {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: new URLSearchParams({
-          client_id: this.credentials.clientId,
-          client_secret: this.credentials.clientSecret,
+          client_id: this.credentials!.clientId,
+          client_secret: this.credentials!.clientSecret,
           grant_type: 'client_credentials',
           scope: 'data:read data:write data:create bucket:create bucket:read viewables:read'
         })
       });
 
       if (!response.ok) {
-        throw new Error(`Authentication failed: ${response.statusText}`);
+        throw new Error(`Authentication failed: ${response.status} ${response.statusText}`);
       }
 
-      const data = await response.json();
+      const data: ForgeTokenResponse = await response.json();
+      
       this.accessToken = data.access_token;
-      this.tokenExpiry = Date.now() + (data.expires_in * 1000);
-
+      this.tokenExpiry = Date.now() + (data.expires_in * 1000) - 60000; // Refresh 1 minute early
+      
       return this.accessToken;
     } catch (error) {
-      console.error('Error getting Forge access token:', error);
+      console.error('Failed to get Forge access token:', error);
       throw error;
     }
   }
 
-  // Upload file to Forge and get URN
-  async uploadFile(file: File, bucketKey: string): Promise<string> {
+  // Upload file to Forge (placeholder - needs implementation)
+  async uploadFile(file: File): Promise<string> {
+    // This would implement the Data Management API upload process
+    // 1. Create/get bucket
+    // 2. Upload file to bucket
+    // 3. Return object URN
+    throw new Error('File upload not implemented. This requires backend implementation for security.');
+  }
+
+  // Translate model to viewable format (placeholder)
+  async translateModel(urn: string): Promise<string> {
+    // This would implement the Model Derivative API translation
+    // 1. Submit translation job
+    // 2. Poll for completion
+    // 3. Return viewable URN
+    throw new Error('Model translation not implemented. This requires backend implementation.');
+  }
+
+  // Get model status
+  async getModelStatus(urn: string): Promise<string> {
+    if (!this.hasCredentials()) {
+      throw new Error('Forge credentials not configured');
+    }
+
     const token = await this.getAccessToken();
     
-    try {
-      // Create bucket if it doesn't exist
-      await this.createBucket(bucketKey, token);
-
-      // Upload file to bucket
-      const objectKey = encodeURIComponent(file.name);
-      const uploadResponse = await fetch(
-        `https://developer.api.autodesk.com/oss/v2/buckets/${bucketKey}/objects/${objectKey}`,
-        {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/octet-stream',
-          },
-          body: file
-        }
-      );
-
-      if (!uploadResponse.ok) {
-        throw new Error(`Upload failed: ${uploadResponse.statusText}`);
+    const response = await fetch(`https://developer.api.autodesk.com/modelderivative/v2/designdata/${urn}/manifest`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
       }
+    });
 
-      const uploadData = await uploadResponse.json();
-      return uploadData.objectId;
-    } catch (error) {
-      console.error('Error uploading file to Forge:', error);
-      throw error;
+    if (!response.ok) {
+      throw new Error(`Failed to get model status: ${response.status}`);
     }
-  }
 
-  // Create bucket for file storage
-  private async createBucket(bucketKey: string, token: string): Promise<void> {
-    try {
-      const response = await fetch('https://developer.api.autodesk.com/oss/v2/buckets', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          bucketKey: bucketKey,
-          policyKey: 'temporary'
-        })
-      });
-
-      // Bucket might already exist, which is fine
-      if (response.status === 409) {
-        console.log('Bucket already exists');
-        return;
-      }
-
-      if (!response.ok) {
-        throw new Error(`Bucket creation failed: ${response.statusText}`);
-      }
-    } catch (error) {
-      console.error('Error creating bucket:', error);
-      throw error;
-    }
-  }
-
-  // Start model translation job
-  async translateModel(urn: string): Promise<ForgeTranslationJob> {
-    const token = await this.getAccessToken();
-    
-    try {
-      const response = await fetch('https://developer.api.autodesk.com/modelderivative/v2/designdata/job', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          input: {
-            urn: urn
-          },
-          output: {
-            formats: [
-              {
-                type: 'svf',
-                views: ['2d', '3d']
-              }
-            ]
-          }
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`Translation failed: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      return {
-        urn: urn,
-        status: 'pending',
-        progress: '0%'
-      };
-    } catch (error) {
-      console.error('Error starting model translation:', error);
-      throw error;
-    }
-  }
-
-  // Check translation status
-  async getTranslationStatus(urn: string): Promise<ForgeTranslationJob> {
-    const token = await this.getAccessToken();
-    
-    try {
-      const response = await fetch(
-        `https://developer.api.autodesk.com/modelderivative/v2/designdata/${encodeURIComponent(urn)}/manifest`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          }
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Status check failed: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      
-      return {
-        urn: urn,
-        status: data.status.toLowerCase(),
-        progress: data.progress || '0%'
-      };
-    } catch (error) {
-      console.error('Error checking translation status:', error);
-      throw error;
-    }
-  }
-
-  // Convert Base64 URN for Forge
-  base64encode(str: string): string {
-    return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    const data = await response.json();
+    return data.status;
   }
 }
 
-// Export singleton instance
 export const forgeService = new ForgeService();
