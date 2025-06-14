@@ -51,38 +51,46 @@ const Upload = () => {
   const [oemCompatibility, setOemCompatibility] = useState<{name: string, score: number}[]>([]);
 
   // Add thumbnail generation state
-  const [generatedThumbnail, setGeneratedThumbnail] = useState<string | null>(null);
-  const { isGenerating: thumbnailGenerating, generateThumbnail, uploadThumbnail } = useThumbnailGenerator();
+  const { isGenerating: thumbnailGenerating, thumbnailUrl: generatedThumbnail, generateThumbnail, setThumbnailUrl } = useThumbnailGenerator();
 
   // Generate file URL for preview
   const getFileUrl = () => {
     if (!modelPath) return undefined;
     const { data } = supabase.storage.from('3d-models').getPublicUrl(modelPath);
+    console.log('Generated file URL for preview:', data.publicUrl);
     return data.publicUrl;
   };
 
   const handleFileSelected = async (file: File, filePath: string, extractedFileInfo: any) => {
+    console.log('=== FILE SELECTED ===');
+    console.log('File:', file.name);
+    console.log('File Path:', filePath);
+    console.log('File Info:', extractedFileInfo);
+    
     setModelFile(file);
     setModelPath(filePath);
     setFileInfo(extractedFileInfo);
     setModelName(file.name.split('.')[0]);
     setAnalyzing(true);
 
-    console.log('File selected with info:', extractedFileInfo);
-    console.log('File path for preview:', filePath);
-
     // Reset thumbnail state
-    setGeneratedThumbnail(null);
+    setThumbnailUrl(null);
+
+    // Get the public URL for the uploaded file
+    const fileUrl = supabase.storage.from('3d-models').getPublicUrl(filePath).data.publicUrl;
+    console.log('Public file URL:', fileUrl);
 
     // Start thumbnail generation immediately after upload
-    if (user) {
-      const fileUrl = getFileUrl();
-      if (fileUrl) {
-        console.log('Starting thumbnail generation with URL:', fileUrl);
+    if (user && fileUrl) {
+      console.log('Starting thumbnail generation...');
+      try {
         const thumbnailUrl = await generateThumbnail(fileUrl, file.name, file.type, user.id);
         if (thumbnailUrl) {
-          setGeneratedThumbnail(thumbnailUrl);
+          console.log('Thumbnail generated successfully:', thumbnailUrl);
+          setThumbnailUrl(thumbnailUrl);
         }
+      } catch (error) {
+        console.error('Thumbnail generation failed:', error);
       }
     }
 
@@ -311,20 +319,33 @@ const Upload = () => {
             <Card>
               <CardContent className="pt-6">
                 <h3 className="text-lg font-semibold mb-4">Uploaded Model Preview</h3>
+                
+                {thumbnailGenerating && (
+                  <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600 mr-3"></div>
+                      <div>
+                        <span className="text-sm font-medium text-blue-800">Generating accurate model preview...</span>
+                        <p className="text-xs text-blue-600 mt-1">Using ViewSTL API for precise 3D visualization</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
                 <ModelPreview
                   modelName={modelName}
-                  thumbnail={generatedThumbnail || `/placeholder.svg`}
+                  thumbnail={generatedThumbnail || '/placeholder.svg'}
                   fileUrl={getFileUrl()}
                   fileName={modelFile.name}
                   fileType={modelFile.type}
                   isOwner={true}
                 />
                 
-                {thumbnailGenerating && (
-                  <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                {generatedThumbnail && (
+                  <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                     <div className="flex items-center">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-                      <span className="text-sm text-blue-800">Generating accurate model preview...</span>
+                      <div className="w-4 h-4 bg-green-500 rounded-full mr-2"></div>
+                      <span className="text-sm text-green-800 font-medium">Model preview generated successfully!</span>
                     </div>
                   </div>
                 )}

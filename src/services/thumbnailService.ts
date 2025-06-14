@@ -15,18 +15,23 @@ export class ThumbnailService {
     userId: string
   ): Promise<ThumbnailGenerationResult> {
     try {
-      console.log('Generating thumbnail for:', fileName, 'Type:', fileType);
+      console.log('=== THUMBNAIL GENERATION START ===');
+      console.log('File URL:', fileUrl);
+      console.log('File Name:', fileName);
+      console.log('File Type:', fileType);
       
       // For STL files, use ViewSTL API
       if (fileType.toLowerCase().includes('stl') || fileName.toLowerCase().endsWith('.stl')) {
+        console.log('Processing STL file with ViewSTL API');
         return await this.generateSTLThumbnail(fileUrl, fileName, userId);
       }
       
-      // For other formats, generate a simple geometric preview
+      // For other formats, generate a fallback
+      console.log('Generating fallback thumbnail');
       return await this.generateFallbackThumbnail(fileName, userId);
       
     } catch (error) {
-      console.error('Error generating thumbnail:', error);
+      console.error('Thumbnail generation error:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error'
@@ -40,31 +45,42 @@ export class ThumbnailService {
     userId: string
   ): Promise<ThumbnailGenerationResult> {
     try {
-      console.log('Generating STL thumbnail using ViewSTL API for:', fileUrl);
+      console.log('=== STL THUMBNAIL GENERATION ===');
+      console.log('Input URL:', fileUrl);
       
-      // Use ViewSTL API to generate thumbnail
-      const viewStlUrl = `https://www.viewstl.com/api/thumbnail/512x512?url=${encodeURIComponent(fileUrl)}`;
+      // Ensure the URL is properly encoded and accessible
+      const encodedUrl = encodeURIComponent(fileUrl);
+      const viewStlUrl = `https://www.viewstl.com/api/thumbnail/400x400?url=${encodedUrl}`;
+      
+      console.log('ViewSTL API URL:', viewStlUrl);
       
       const response = await fetch(viewStlUrl, {
         method: 'GET',
         headers: {
-          'Accept': 'image/png'
+          'Accept': 'image/png',
+          'User-Agent': 'FormIQ-Marketplace/1.0'
         }
       });
       
+      console.log('ViewSTL Response status:', response.status);
+      console.log('ViewSTL Response headers:', Object.fromEntries(response.headers.entries()));
+      
       if (!response.ok) {
-        console.error('ViewSTL API error:', response.status, response.statusText);
+        console.error('ViewSTL API failed:', response.status, response.statusText);
         return await this.generateFallbackThumbnail(fileName, userId);
       }
       
       const blob = await response.blob();
+      console.log('Received blob size:', blob.size, 'bytes');
       
       if (blob.size === 0) {
         console.error('ViewSTL returned empty blob');
         return await this.generateFallbackThumbnail(fileName, userId);
       }
       
-      return await this.uploadThumbnailBlob(blob, fileName, userId);
+      const result = await this.uploadThumbnailBlob(blob, fileName, userId);
+      console.log('STL thumbnail upload result:', result);
+      return result;
       
     } catch (error) {
       console.error('STL thumbnail generation failed:', error);
@@ -77,35 +93,35 @@ export class ThumbnailService {
     userId: string
   ): Promise<ThumbnailGenerationResult> {
     try {
-      // Create a simple canvas with 3D-looking geometric shape
+      console.log('=== FALLBACK THUMBNAIL GENERATION ===');
+      
       const canvas = document.createElement('canvas');
-      canvas.width = 512;
-      canvas.height = 512;
+      canvas.width = 400;
+      canvas.height = 400;
       const ctx = canvas.getContext('2d');
       
       if (!ctx) {
         throw new Error('Cannot create canvas context');
       }
       
-      // Create a gradient background
-      const gradient = ctx.createLinearGradient(0, 0, 512, 512);
+      // Create gradient background
+      const gradient = ctx.createLinearGradient(0, 0, 400, 400);
       gradient.addColorStop(0, '#f8f9fa');
       gradient.addColorStop(1, '#e9ecef');
       ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, 512, 512);
+      ctx.fillRect(0, 0, 400, 400);
       
-      // Draw a 3D-looking object
+      // Draw 3D-looking object
       ctx.save();
-      ctx.translate(256, 256);
+      ctx.translate(200, 200);
       
-      // Draw a cube in isometric view
-      const size = 120;
+      const size = 100;
       
       // Front face
       ctx.fillStyle = '#6c757d';
       ctx.fillRect(-size/2, -size/2, size, size);
       
-      // Top face (lighter)
+      // Top face
       ctx.fillStyle = '#adb5bd';
       ctx.beginPath();
       ctx.moveTo(-size/2, -size/2);
@@ -115,7 +131,7 @@ export class ThumbnailService {
       ctx.closePath();
       ctx.fill();
       
-      // Right face (darker)
+      // Right face
       ctx.fillStyle = '#495057';
       ctx.beginPath();
       ctx.moveTo(size/2, -size/2);
@@ -127,20 +143,22 @@ export class ThumbnailService {
       
       // Add text
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 16px Arial';
+      ctx.font = 'bold 14px Arial';
       ctx.textAlign = 'center';
-      ctx.fillText('3D MODEL', 0, size + 40);
-      ctx.font = '12px Arial';
+      ctx.fillText('3D MODEL', 0, size + 30);
+      ctx.font = '10px Arial';
       ctx.fillStyle = '#6c757d';
-      ctx.fillText(fileName.split('.')[0], 0, size + 60);
+      const displayName = fileName.split('.')[0];
+      ctx.fillText(displayName.substring(0, 20), 0, size + 50);
       
       ctx.restore();
       
-      // Convert to blob and upload
       return new Promise((resolve) => {
         canvas.toBlob(async (blob) => {
           if (blob) {
+            console.log('Fallback blob generated, size:', blob.size);
             const result = await this.uploadThumbnailBlob(blob, fileName, userId);
+            console.log('Fallback thumbnail upload result:', result);
             resolve(result);
           } else {
             resolve({ success: false, error: 'Failed to create fallback thumbnail' });
@@ -167,7 +185,8 @@ export class ThumbnailService {
       const thumbnailFileName = `thumbnail-${timestamp}-${fileName.replace(/\.[^/.]+$/, '')}.png`;
       const filePath = `${userId}/thumbnails/${thumbnailFileName}`;
       
-      console.log('Uploading thumbnail to path:', filePath);
+      console.log('Uploading thumbnail blob to:', filePath);
+      console.log('Blob size:', blob.size, 'bytes');
       
       const { data, error } = await supabase.storage
         .from('3d-models')
@@ -185,7 +204,7 @@ export class ThumbnailService {
         .from('3d-models')
         .getPublicUrl(data.path);
 
-      console.log('Thumbnail uploaded successfully:', urlData.publicUrl);
+      console.log('Thumbnail uploaded successfully to:', urlData.publicUrl);
       
       return {
         success: true,

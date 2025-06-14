@@ -14,11 +14,14 @@ export const useThumbnailGenerator = () => {
     fileType: string,
     userId: string
   ) => {
+    console.log('=== HOOK: Starting thumbnail generation ===');
+    console.log('Model URL:', modelFileUrl);
+    console.log('File Name:', fileName);
+    
     setIsGenerating(true);
+    setThumbnailUrl(null); // Reset previous thumbnail
     
     try {
-      console.log('Starting thumbnail generation for:', fileName);
-      
       const result = await ThumbnailService.generateThumbnail(
         modelFileUrl,
         fileName,
@@ -26,24 +29,30 @@ export const useThumbnailGenerator = () => {
         userId
       );
       
+      console.log('=== HOOK: Thumbnail generation result ===', result);
+      
       if (result.success && result.thumbnailUrl) {
         setThumbnailUrl(result.thumbnailUrl);
         toast({
-          title: "Preview generated!",
-          description: "Model preview has been created successfully.",
+          title: "Model preview generated!",
+          description: "Your 3D model preview is ready.",
         });
         return result.thumbnailUrl;
       } else {
-        console.warn('Thumbnail generation warning:', result.error);
-        // Don't show error toast for fallback, just log it
+        console.warn('Thumbnail generation failed:', result.error);
+        toast({
+          title: "Using basic preview",
+          description: "Generated a placeholder preview for your model.",
+          variant: "default"
+        });
         return null;
       }
     } catch (error) {
-      console.error('Error in thumbnail generation:', error);
+      console.error('Error in thumbnail generation hook:', error);
       toast({
-        title: "Using fallback preview",
-        description: "Generated a placeholder preview for your model.",
-        variant: "default"
+        title: "Preview generation failed",
+        description: "Using a basic placeholder for your model.",
+        variant: "destructive"
       });
       return null;
     } finally {
@@ -51,57 +60,10 @@ export const useThumbnailGenerator = () => {
     }
   }, [toast]);
 
-  const uploadThumbnail = useCallback(async (
-    dataUrl: string,
-    fileName: string,
-    userId: string
-  ): Promise<string | null> => {
-    try {
-      // Convert data URL to blob
-      const response = await fetch(dataUrl);
-      const blob = await response.blob();
-      
-      // Create file path for thumbnail
-      const timestamp = Date.now();
-      const thumbnailFileName = `thumbnail-${timestamp}-${fileName.replace(/\.[^/.]+$/, '')}.png`;
-      const filePath = `${userId}/thumbnails/${thumbnailFileName}`;
-      
-      console.log('Uploading manual thumbnail to path:', filePath);
-      
-      // Upload thumbnail to Supabase storage
-      const { supabase } = await import('@/integrations/supabase/client');
-      const { data, error } = await supabase.storage
-        .from('3d-models')
-        .upload(filePath, blob, {
-          cacheControl: '3600',
-          upsert: false
-        });
-
-      if (error) {
-        console.error('Manual thumbnail upload error:', error);
-        return null;
-      }
-
-      // Get public URL for the thumbnail
-      const { data: urlData } = supabase.storage
-        .from('3d-models')
-        .getPublicUrl(data.path);
-
-      console.log('Manual thumbnail uploaded successfully:', urlData.publicUrl);
-      setThumbnailUrl(urlData.publicUrl);
-      return urlData.publicUrl;
-      
-    } catch (error) {
-      console.error('Error uploading manual thumbnail:', error);
-      return null;
-    }
-  }, []);
-
   return {
     isGenerating,
     thumbnailUrl,
     generateThumbnail,
-    uploadThumbnail,
     setThumbnailUrl
   };
 };
