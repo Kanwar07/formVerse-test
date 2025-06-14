@@ -17,6 +17,7 @@ import { DetailsForm } from "@/components/upload/DetailsForm";
 import { MetadataForm, ModelMetadata } from "@/components/upload/MetadataForm";
 import { PricingForm } from "@/components/upload/PricingForm";
 import { ReviewForm } from "@/components/upload/ReviewForm";
+import { ModelPreview } from "@/components/preview/ModelPreview";
 
 const Upload = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -47,6 +48,13 @@ const Upload = () => {
   const [designIssues, setDesignIssues] = useState<{issue: string, severity: string}[]>([]);
   const [oemCompatibility, setOemCompatibility] = useState<{name: string, score: number}[]>([]);
 
+  // Generate file URL for preview
+  const getFileUrl = () => {
+    if (!modelPath) return undefined;
+    const { data } = supabase.storage.from('3d-models').getPublicUrl(modelPath);
+    return data.publicUrl;
+  };
+
   const handleFileSelected = (file: File, filePath: string, extractedFileInfo: any) => {
     setModelFile(file);
     setModelPath(filePath);
@@ -55,6 +63,7 @@ const Upload = () => {
     setAnalyzing(true);
 
     console.log('File selected with info:', extractedFileInfo);
+    console.log('File path for preview:', filePath);
 
     // Generate SHA hash for file tracking
     const reader = new FileReader();
@@ -252,6 +261,25 @@ const Upload = () => {
             ))}
           </div>
         </div>
+        
+        {/* Show file preview after upload */}
+        {modelFile && fileInfo && modelPath && (
+          <div className="mb-6">
+            <Card>
+              <CardContent className="pt-6">
+                <h3 className="text-lg font-semibold mb-4">Uploaded Model Preview</h3>
+                <ModelPreview
+                  modelName={modelName}
+                  thumbnail={`/placeholder.svg`} // Using placeholder for now - in real app would generate thumbnail
+                  fileUrl={getFileUrl()}
+                  fileName={modelFile.name}
+                  fileType={modelFile.type}
+                  isOwner={true}
+                />
+              </CardContent>
+            </Card>
+          </div>
+        )}
         
         {/* Step 1: File Upload & Analysis */}
         {currentStep === 1 && (
