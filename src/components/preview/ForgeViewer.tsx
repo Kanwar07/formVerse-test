@@ -163,6 +163,8 @@ export const ForgeViewer = ({ fileUrl, fileName, fileType, onClose, onModelInfo 
     }
   };
 
+  const isViewerDisabled = !viewer || error !== null;
+
   return (
     <Card className="w-full h-[500px]">
       <CardContent className="p-0 h-full relative">
@@ -176,13 +178,13 @@ export const ForgeViewer = ({ fileUrl, fileName, fileType, onClose, onModelInfo 
         
         {/* Viewer Controls */}
         <div className="absolute top-4 right-4 z-10 flex gap-2">
-          <Button variant="outline" size="sm" onClick={handleResetView} title="Reset View" disabled={!viewer || !!error}>
+          <Button variant="outline" size="sm" onClick={handleResetView} title="Reset View" disabled={isViewerDisabled}>
             <RotateCcw className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="sm" onClick={handleZoomIn} title="Zoom In" disabled={!viewer || !!error}>
+          <Button variant="outline" size="sm" onClick={handleZoomIn} title="Zoom In" disabled={isViewerDisabled}>
             <ZoomIn className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="sm" onClick={handleZoomOut} title="Zoom Out" disabled={!viewer || !!error}>
+          <Button variant="outline" size="sm" onClick={handleZoomOut} title="Zoom Out" disabled={isViewerDisabled}>
             <ZoomOut className="h-4 w-4" />
           </Button>
         </div>
