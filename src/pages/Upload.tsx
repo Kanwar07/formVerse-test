@@ -23,8 +23,7 @@ const Upload = () => {
   const [analyzing, setAnalyzing] = useState(false);
   const [modelFile, setModelFile] = useState<File | null>(null);
   const [modelPath, setModelPath] = useState<string | undefined>(undefined);
-  const [modelName, setModelName] = useState<string>("");
-  const [modelDescription, setModelDescription] = useState<string>("");
+  const [fileInfo, setFileInfo] = useState<any>(null);
   const [modelMetadata, setModelMetadata] = useState<ModelMetadata | null>(null);
   const [aiGeneratedTags, setAiGeneratedTags] = useState<string[]>([]);
   const [customTags, setCustomTags] = useState<string[]>([]);
@@ -42,11 +41,14 @@ const Upload = () => {
   const [designIssues, setDesignIssues] = useState<{issue: string, severity: string}[]>([]);
   const [oemCompatibility, setOemCompatibility] = useState<{name: string, score: number}[]>([]);
 
-  const handleFileSelected = (file: File, filePath: string) => {
+  const handleFileSelected = (file: File, filePath: string, extractedFileInfo: any) => {
     setModelFile(file);
     setModelPath(filePath);
+    setFileInfo(extractedFileInfo);
     setModelName(file.name.split('.')[0]);
     setAnalyzing(true);
+
+    console.log('File selected with info:', extractedFileInfo);
 
     // Generate SHA hash for file tracking
     const reader = new FileReader();
@@ -255,6 +257,21 @@ const Upload = () => {
                   uploadProgress={uploadProgress} 
                   setUploadProgress={setUploadProgress}
                 />
+                
+                {/* Show file info after upload */}
+                {fileInfo && (
+                  <div className="mt-6 w-full max-w-xl">
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <h4 className="font-medium text-green-800 mb-2">File Information Gathered</h4>
+                      <div className="grid grid-cols-2 gap-2 text-sm text-green-700">
+                        <div><strong>File:</strong> {fileInfo.name}</div>
+                        <div><strong>Size:</strong> {fileInfo.sizeFormatted}</div>
+                        <div><strong>Format:</strong> {fileInfo.extension?.toUpperCase()}</div>
+                        <div><strong>Uploaded:</strong> {new Date().toLocaleString()}</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 
                 <FormIQAnalyzer 
                   analyzing={analyzing}

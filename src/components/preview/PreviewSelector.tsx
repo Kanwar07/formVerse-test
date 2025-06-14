@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Eye, Box, Image, Download, Lock } from 'lucide-react';
+import { Eye, Box, Image, Download, Lock, Info } from 'lucide-react';
 import { ModelViewer3D } from './ModelViewer3D';
 import { WatermarkCanvas } from './WatermarkCanvas';
 
@@ -36,13 +36,13 @@ export const PreviewSelector = ({
   const [previewMode, setPreviewMode] = useState<PreviewMode>('image');
   const [showWatermark, setShowWatermark] = useState(!isOwner && !isPurchased);
   const [watermarkedImage, setWatermarkedImage] = useState<string>("");
+  const [modelInfo, setModelInfo] = useState<any>(null);
 
   const canView3D = isOwner || isPurchased;
   const hasFileAccess = fileUrl && fileName && fileType;
 
   const handlePreviewToggle = () => {
     if (!isOwner && !isPurchased) {
-      // Non-owners can only toggle watermark on image preview
       setShowWatermark(!showWatermark);
       return;
     }
@@ -53,6 +53,11 @@ export const PreviewSelector = ({
     if (canView3D && hasFileAccess) {
       setPreviewMode('3d');
     }
+  };
+
+  const handleModelInfo = (info: any) => {
+    setModelInfo(info);
+    console.log('Model information received:', info);
   };
 
   return (
@@ -92,6 +97,13 @@ export const PreviewSelector = ({
               {showWatermark && !isOwner && !isPurchased ? 'Show Preview' : 'Toggle View'}
             </Button>
           )}
+          
+          {modelInfo && (
+            <Button variant="outline" size="sm">
+              <Info className="h-4 w-4 mr-2" />
+              {modelInfo.fileSizeFormatted}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -101,7 +113,24 @@ export const PreviewSelector = ({
         {isPurchased && !isOwner && <Badge variant="outline">Purchased</Badge>}
         {!isOwner && !isPurchased && <Badge variant="destructive">Preview Mode</Badge>}
         {previewMode === '3d' && canView3D && <Badge variant="default">3D View Active</Badge>}
+        {modelInfo && <Badge variant="outline">{modelInfo.fileType.toUpperCase()}</Badge>}
       </div>
+
+      {/* Model Information Display */}
+      {modelInfo && previewMode === '3d' && (
+        <div className="bg-muted/50 rounded-lg p-3 text-sm">
+          <h4 className="font-medium mb-2 flex items-center">
+            <Info className="h-4 w-4 mr-2" />
+            Model Information
+          </h4>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div><strong>File Name:</strong> {modelInfo.fileName}</div>
+            <div><strong>File Size:</strong> {modelInfo.fileSizeFormatted}</div>
+            <div><strong>Format:</strong> {modelInfo.fileType.toUpperCase()}</div>
+            <div><strong>Status:</strong> Successfully Loaded</div>
+          </div>
+        </div>
+      )}
 
       {/* Preview Content */}
       {previewMode === 'image' ? (
@@ -157,6 +186,7 @@ export const PreviewSelector = ({
             fileName={fileName!}
             fileType={fileType!}
             onClose={() => setPreviewMode('image')}
+            onModelInfo={handleModelInfo}
           />
         ) : (
           <div className="border rounded-lg aspect-square flex items-center justify-center bg-muted/50">
@@ -193,7 +223,9 @@ export const PreviewSelector = ({
           ? (showWatermark && !isOwner && !isPurchased 
               ? 'Preview mode - watermarked for protection' 
               : 'Full quality preview')
-          : '3D model viewer - interact with the model above'
+          : modelInfo 
+            ? `3D model loaded - ${modelInfo.fileSizeFormatted} ${modelInfo.fileType.toUpperCase()} file`
+            : '3D model viewer - interact with the model above'
         }
       </p>
     </div>

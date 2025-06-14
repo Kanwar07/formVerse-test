@@ -3,13 +3,13 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { UploadIcon } from "lucide-react";
+import { UploadIcon, FileCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 
 interface FileUploaderProps {
-  onFileSelected: (file: File, filePath: string) => void;
+  onFileSelected: (file: File, filePath: string, fileInfo: any) => void;
   uploadProgress: number;
   setUploadProgress: (progress: number) => void;
 }
@@ -21,8 +21,30 @@ export const FileUploader = ({
 }: FileUploaderProps) => {
   const [modelFile, setModelFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [fileInfo, setFileInfo] = useState<any>(null);
   const { toast } = useToast();
   const { user, session } = useAuth();
+
+  const extractFileInfo = (file: File) => {
+    const info = {
+      name: file.name,
+      size: file.size,
+      type: file.type || `application/${file.name.split('.').pop()}`,
+      lastModified: new Date(file.lastModified),
+      extension: file.name.split('.').pop()?.toLowerCase(),
+      sizeFormatted: formatFileSize(file.size)
+    };
+    setFileInfo(info);
+    return info;
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -40,9 +62,13 @@ export const FileUploader = ({
     
     console.log('Current user for upload:', user.email, 'User ID:', user.id);
     
+    // Extract file information
+    const extractedInfo = extractFileInfo(file);
+    console.log('File info extracted:', extractedInfo);
+    
     // Validate file type
     const validTypes = ['.stl', '.obj', '.step'];
-    const fileExt = `.${file.name.split('.').pop()?.toLowerCase()}`;
+    const fileExt = `.${extractedInfo.extension}`;
     
     if (!validTypes.includes(fileExt)) {
       toast({
@@ -77,6 +103,7 @@ export const FileUploader = ({
       console.log('Uploading file to path:', filePath);
       console.log('Bucket: 3d-models');
       console.log('User ID:', user.id);
+      console.log('File info:', extractedInfo);
       
       // Upload file to Supabase storage with correct path structure
       const { data, error } = await supabase.storage
@@ -108,10 +135,10 @@ export const FileUploader = ({
           setUploadProgress(100);
           
           setTimeout(() => {
-            onFileSelected(file, data.path);
+            onFileSelected(file, data.path, extractedInfo);
             toast({
               title: "Upload successful!",
-              description: "Your 3D model has been uploaded successfully.",
+              description: `Your 3D model (${extractedInfo.sizeFormatted}) has been uploaded successfully.`,
             });
           }, 500);
           return;
@@ -175,10 +202,19 @@ export const FileUploader = ({
         >
           {uploading ? "Uploading..." : "Select File"}
         </Label>
-        {modelFile && (
-          <p className="mt-4 text-sm">
-            Selected: {modelFile.name}
-          </p>
+        
+        {modelFile && fileInfo && (
+          <div className="mt-4 p-3 bg-muted/50 rounded-lg text-sm w-full">
+            <div className="flex items-center mb-2">
+              <FileCheck className="h-4 w-4 text-green-600 mr-2" />
+              <span className="font-medium">File Selected</span>
+            </div>
+            <div className="space-y-1 text-xs text-muted-foreground">
+              <div><strong>Name:</strong> {fileInfo.name}</div>
+              <div><strong>Size:</strong> {fileInfo.sizeFormatted}</div>
+              <div><strong>Type:</strong> {fileInfo.extension?.toUpperCase()}</div>
+            </div>
+          </div>
         )}
       </div>
 

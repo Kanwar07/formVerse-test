@@ -1,7 +1,9 @@
 
-import { Suspense, useRef, useState } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Environment } from '@react-three/drei';
+import { Suspense, useRef, useState, useEffect } from 'react';
+import { Canvas, useFrame, useLoader } from '@react-three/fiber';
+import { OrbitControls, Environment, Center } from '@react-three/drei';
+import { STLLoader } from 'three-stdlib';
+import { OBJLoader } from 'three-stdlib';
 import * as THREE from 'three';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -14,19 +16,49 @@ interface Model3DProps {
 
 const Model3D = ({ fileUrl, fileType }: Model3DProps) => {
   const meshRef = useRef<THREE.Mesh>(null);
+  const [modelLoaded, setModelLoaded] = useState(false);
+  
+  let geometry;
+  
+  try {
+    if (fileType.toLowerCase().includes('stl')) {
+      geometry = useLoader(STLLoader, fileUrl);
+    } else if (fileType.toLowerCase().includes('obj')) {
+      const obj = useLoader(OBJLoader, fileUrl);
+      geometry = obj.children[0]?.geometry;
+    } else {
+      // Fallback to placeholder
+      geometry = new THREE.BoxGeometry(2, 2, 2);
+    }
+  } catch (error) {
+    console.error('Error loading 3D model:', error);
+    geometry = new THREE.BoxGeometry(2, 2, 2);
+  }
+
+  useEffect(() => {
+    if (geometry) {
+      setModelLoaded(true);
+      // Compute bounding box for proper centering
+      geometry.computeBoundingBox();
+    }
+  }, [geometry]);
   
   useFrame(() => {
-    if (meshRef.current) {
+    if (meshRef.current && modelLoaded) {
       meshRef.current.rotation.y += 0.005;
     }
   });
 
-  // For now, render a placeholder box until we can properly load 3D models
   return (
-    <mesh ref={meshRef}>
-      <boxGeometry args={[2, 2, 2]} />
-      <meshStandardMaterial color="#888888" />
-    </mesh>
+    <Center>
+      <mesh ref={meshRef} geometry={geometry}>
+        <meshStandardMaterial 
+          color="#888888" 
+          metalness={0.1}
+          roughness={0.4}
+        />
+      </mesh>
+    </Center>
   );
 };
 
@@ -35,11 +67,13 @@ interface ModelViewer3DProps {
   fileName: string;
   fileType: string;
   onClose: () => void;
+  onModelInfo?: (info: any) => void;
 }
 
-export const ModelViewer3D = ({ fileUrl, fileName, fileType, onClose }: ModelViewer3DProps) => {
+export const ModelViewer3D = ({ fileUrl, fileName, fileType, onClose, onModelInfo }: ModelViewer3DProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [modelInfo, setModelInfo] = useState<any>(null);
 
   const handleModelLoad = () => {
     setIsLoading(false);
@@ -50,6 +84,49 @@ export const ModelViewer3D = ({ fileUrl, fileName, fileType, onClose }: ModelVie
     setIsLoading(false);
     console.error('3D Model loading error:', error);
   };
+
+  // Extract model information
+  const extractModelInfo = async () => {
+    try {
+      console.log('Extracting model info for:', fileName, fileType);
+      
+      // Get file size from the URL (if it's a blob URL, we can get the original file size)
+      const response = await fetch(fileUrl);
+      const blob = await response.blob();
+      
+      const info = {
+        fileName,
+        fileType,
+        fileSize: blob.size,
+        fileSizeFormatted: formatFileSize(blob.size),
+        lastModified: new Date().toISOString(),
+        dimensions: 'Calculating...',
+        vertices: 'Calculating...',
+        faces: 'Calculating...'
+      };
+      
+      setModelInfo(info);
+      onModelInfo?.(info);
+      console.log('Model info extracted:', info);
+      
+    } catch (error) {
+      console.error('Error extracting model info:', error);
+    }
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  useEffect(() => {
+    if (fileUrl && fileName) {
+      extractModelInfo();
+    }
+  }, [fileUrl, fileName]);
 
   return (
     <Card className="w-full h-[500px]">
@@ -72,11 +149,23 @@ export const ModelViewer3D = ({ fileUrl, fileName, fileType, onClose }: ModelVie
           </Button>
         </div>
 
+        {/* Model Info Display */}
+        {modelInfo && (
+          <div className="absolute bottom-4 right-4 z-10 bg-background/90 rounded-md p-3 text-xs">
+            <div className="space-y-1">
+              <div><strong>File:</strong> {modelInfo.fileName}</div>
+              <div><strong>Size:</strong> {modelInfo.fileSizeFormatted}</div>
+              <div><strong>Type:</strong> {modelInfo.fileType.toUpperCase()}</div>
+            </div>
+          </div>
+        )}
+
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center bg-muted/50 z-20">
             <div className="text-center">
               <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
               <p className="text-sm text-muted-foreground">Loading 3D model...</p>
+              <p className="text-xs text-muted-foreground mt-1">Analyzing geometry...</p>
             </div>
           </div>
         )}
