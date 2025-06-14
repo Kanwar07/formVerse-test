@@ -3,9 +3,10 @@ import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, AlertCircle, RotateCcw, ZoomIn, ZoomOut, Move3d } from 'lucide-react';
+import { Loader2, AlertCircle, RotateCcw, ZoomIn, ZoomOut, Move3d, FileText, Eye } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { forgeService } from '@/services/forgeService';
+import { ModelViewer3D } from './ModelViewer3D';
 
 declare global {
   interface Window {
@@ -22,148 +23,116 @@ interface ForgeViewerProps {
 }
 
 export const ForgeViewer = ({ fileUrl, fileName, fileType, onClose, onModelInfo }: ForgeViewerProps) => {
-  const viewerRef = useRef<HTMLDivElement>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<'3d' | 'file' | 'forge'>('3d');
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [viewer, setViewer] = useState<any>(null);
   const [modelInfo, setModelInfo] = useState<any>({
     fileName,
     fileType,
-    viewer: 'Autodesk Forge'
+    viewer: 'CAD Viewer'
   });
   const { toast } = useToast();
 
   useEffect(() => {
-    // Set initial model info
     setModelInfo({
       fileName,
       fileType,
-      viewer: 'Autodesk Forge'
+      viewer: viewMode === '3d' ? 'Three.js 3D' : viewMode === 'file' ? 'File Viewer' : 'Autodesk Forge'
     });
 
     if (onModelInfo) {
       onModelInfo({
         fileName,
         fileType,
-        viewer: 'Autodesk Forge'
+        viewer: viewMode === '3d' ? 'Three.js 3D' : viewMode === 'file' ? 'File Viewer' : 'Autodesk Forge'
       });
     }
-  }, [fileName, fileType, onModelInfo]);
+  }, [fileName, fileType, viewMode, onModelInfo]);
 
-  useEffect(() => {
-    const loadForgeViewer = () => {
-      return new Promise((resolve, reject) => {
-        if (window.Autodesk) {
-          resolve(window.Autodesk);
-          return;
-        }
+  // Check if file is 3D viewable
+  const is3DViewable = () => {
+    const supported3DFormats = ['stl', 'obj', 'ply', 'gltf', 'glb'];
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    return extension && supported3DFormats.includes(extension);
+  };
 
-        // Load Forge Viewer CSS
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = 'https://developer.api.autodesk.com/modelderivative/v2/viewers/7.*/style.min.css';
-        document.head.appendChild(link);
+  // Check if file is CAD format
+  const isCADFile = () => {
+    const cadFormats = ['step', 'stp', 'iges', 'igs', 'dwg', 'dxf', 'catpart', 'catproduct', 'prt', 'asm'];
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    return extension && cadFormats.includes(extension);
+  };
 
-        // Load Forge Viewer JS
-        const script = document.createElement('script');
-        script.src = 'https://developer.api.autodesk.com/modelderivative/v2/viewers/7.*/viewer3D.min.js';
-        script.onload = () => resolve(window.Autodesk);
-        script.onerror = () => reject(new Error('Failed to load Autodesk Forge Viewer'));
-        document.head.appendChild(script);
-      });
-    };
+  const handleDownloadFile = () => {
+    const link = document.createElement('a');
+    link.href = fileUrl;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({
+      title: "Download started",
+      description: `Downloading ${fileName}`,
+    });
+  };
 
-    const initializeViewer = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        // Check if Forge credentials are configured
-        if (!forgeService.hasCredentials()) {
-          throw new Error('Forge credentials not configured. Please set up your Autodesk Forge API credentials first.');
-        }
-
-        await loadForgeViewer();
-        
-        if (!viewerRef.current) return;
-
-        const options = {
-          env: 'AutodeskProduction',
-          api: 'derivativeV2',
-          getAccessToken: async (onSuccess: any, onError: any) => {
-            try {
-              const token = await forgeService.getAccessToken();
-              onSuccess(token, 3600);
-            } catch (error) {
-              console.error('Failed to get Forge access token:', error);
-              onError(error);
-            }
-          }
-        };
-
-        window.Autodesk.Viewing.Initializer(options, async () => {
-          const viewerDiv = viewerRef.current;
-          if (!viewerDiv) return;
-
-          const viewer3D = new window.Autodesk.Viewing.GuiViewer3D(viewerDiv);
+  const renderFileViewer = () => {
+    return (
+      <div className="w-full h-full flex flex-col items-center justify-center bg-muted/20">
+        <div className="text-center max-w-md p-6">
+          <FileText className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+          <h3 className="text-lg font-semibold mb-2">CAD File Viewer</h3>
+          <p className="text-muted-foreground mb-4">
+            {fileName} ({fileType.toUpperCase()})
+          </p>
           
-          const startedCode = viewer3D.start();
-          if (startedCode > 0) {
-            console.error('Failed to create a Viewer: WebGL not supported.');
-            setError('WebGL not supported in your browser. Please use a modern browser with WebGL support.');
-            return;
-          }
-
-          setViewer(viewer3D);
-
-          // For demonstration, show instructions for proper implementation
-          setError('Model translation required. To view CAD models, you need to: 1) Upload the file to Autodesk Forge, 2) Translate it to SVF format, 3) Load the translated model URN.');
-          setIsLoading(false);
-
-          // In a real implementation, you would:
-          // 1. Upload the file to Forge using Data Management API
-          // 2. Submit a translation job to convert to SVF
-          // 3. Get the translated model URN
-          // 4. Load the model using viewer3D.loadDocumentNode()
-        });
-
-      } catch (error) {
-        console.error('Error initializing Forge Viewer:', error);
-        setError(error instanceof Error ? error.message : 'Failed to initialize Forge Viewer');
-        setIsLoading(false);
-      }
-    };
-
-    initializeViewer();
-
-    return () => {
-      if (viewer) {
-        viewer.tearDown();
-      }
-    };
-  }, [fileUrl, fileName, fileType]);
-
-  const handleResetView = () => {
-    if (viewer) {
-      viewer.fitToView();
-    }
+          <div className="space-y-3">
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-left">
+              <p className="text-sm text-blue-800 font-medium mb-1">File Information:</p>
+              <div className="text-xs text-blue-700 space-y-1">
+                <div><strong>Name:</strong> {fileName}</div>
+                <div><strong>Format:</strong> {fileType.toUpperCase()}</div>
+                <div><strong>Status:</strong> Ready for download</div>
+              </div>
+            </div>
+            
+            <div className="flex gap-2">
+              <Button onClick={handleDownloadFile} className="flex-1">
+                Download & View
+              </Button>
+              {is3DViewable() && (
+                <Button variant="outline" onClick={() => setViewMode('3d')}>
+                  <Eye className="h-4 w-4 mr-2" />
+                  3D View
+                </Button>
+              )}
+            </div>
+          </div>
+          
+          <p className="text-xs text-muted-foreground mt-3">
+            Professional CAD files can be viewed in specialized software
+          </p>
+        </div>
+      </div>
+    );
   };
 
-  const handleZoomIn = () => {
-    if (viewer) {
-      viewer.navigation.setZoomTowardsPivot(true);
-      viewer.navigation.zoom(1.2);
+  const renderContent = () => {
+    if (viewMode === '3d' && is3DViewable()) {
+      return (
+        <ModelViewer3D
+          fileUrl={fileUrl}
+          fileName={fileName}
+          fileType={fileType}
+          onClose={() => setViewMode('file')}
+          onModelInfo={onModelInfo}
+        />
+      );
     }
+    
+    return renderFileViewer();
   };
-
-  const handleZoomOut = () => {
-    if (viewer) {
-      viewer.navigation.setZoomTowardsPivot(true);
-      viewer.navigation.zoom(0.8);
-    }
-  };
-
-  const isViewerDisabled = !viewer || error !== null;
 
   return (
     <Card className="w-full h-[500px]">
@@ -173,19 +142,30 @@ export const ForgeViewer = ({ fileUrl, fileName, fileType, onClose, onModelInfo 
           <Button variant="outline" size="sm" onClick={onClose}>
             Back to Preview
           </Button>
-          <Badge variant="secondary">Autodesk Forge</Badge>
+          <Badge variant="secondary">
+            {viewMode === '3d' ? '3D Viewer' : 'File Viewer'}
+          </Badge>
         </div>
         
-        {/* Viewer Controls */}
+        {/* View Mode Controls */}
         <div className="absolute top-4 right-4 z-10 flex gap-2">
-          <Button variant="outline" size="sm" onClick={handleResetView} title="Reset View" disabled={isViewerDisabled}>
-            <RotateCcw className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleZoomIn} title="Zoom In" disabled={isViewerDisabled}>
-            <ZoomIn className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleZoomOut} title="Zoom Out" disabled={isViewerDisabled}>
-            <ZoomOut className="h-4 w-4" />
+          {is3DViewable() && (
+            <Button 
+              variant={viewMode === '3d' ? 'default' : 'outline'} 
+              size="sm" 
+              onClick={() => setViewMode('3d')}
+            >
+              <Move3d className="h-4 w-4 mr-1" />
+              3D
+            </Button>
+          )}
+          <Button 
+            variant={viewMode === 'file' ? 'default' : 'outline'} 
+            size="sm" 
+            onClick={() => setViewMode('file')}
+          >
+            <FileText className="h-4 w-4 mr-1" />
+            File
           </Button>
         </div>
 
@@ -194,80 +174,43 @@ export const ForgeViewer = ({ fileUrl, fileName, fileType, onClose, onModelInfo 
           <div className="absolute bottom-4 right-4 z-10 bg-background/95 backdrop-blur rounded-md p-3 text-xs max-w-xs">
             <div className="flex items-center mb-2">
               <Move3d className="h-4 w-4 mr-2" />
-              <span className="font-medium">Model Info</span>
+              <span className="font-medium">File Info</span>
             </div>
             <div className="space-y-1">
               <div><strong>Format:</strong> {fileType.toUpperCase()}</div>
               <div><strong>File:</strong> {fileName}</div>
-              <div><strong>Viewer:</strong> Autodesk Forge</div>
+              <div><strong>Viewer:</strong> {modelInfo.viewer}</div>
+              {isCADFile() && <div><strong>Type:</strong> Professional CAD</div>}
             </div>
           </div>
         )}
 
-        {/* Loading State */}
-        {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-muted/50 z-20">
+        {/* Main Content */}
+        {viewMode === '3d' && !is3DViewable() ? (
+          <div className="w-full h-full flex items-center justify-center bg-muted/20">
             <div className="text-center">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">Initializing Autodesk Forge Viewer...</p>
-              <p className="text-xs text-muted-foreground mt-1">Loading precision CAD viewer</p>
+              <AlertCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <p className="text-muted-foreground font-medium">3D Preview Not Available</p>
+              <p className="text-sm text-muted-foreground mb-4">
+                This file format doesn't support 3D preview
+              </p>
+              <Button variant="outline" onClick={() => setViewMode('file')}>
+                View File Details
+              </Button>
             </div>
           </div>
+        ) : (
+          renderContent()
         )}
-
-        {/* Error State */}
-        {error && (
-          <div className="absolute inset-0 flex items-center justify-center bg-destructive/10 z-20">
-            <div className="text-center max-w-md p-4">
-              <AlertCircle className="h-8 w-8 mx-auto mb-2 text-destructive" />
-              <p className="text-destructive font-medium">Forge Viewer Setup Required</p>
-              <p className="text-sm text-muted-foreground mt-1 mb-4">{error}</p>
-              
-              <div className="space-y-3">
-                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-left">
-                  <p className="text-xs text-blue-800 font-medium mb-2">Complete Setup Steps:</p>
-                  <ol className="text-xs text-blue-700 space-y-1">
-                    <li>1. Configure Forge credentials in setup</li>
-                    <li>2. Implement file upload to Forge</li>
-                    <li>3. Set up model translation service</li>
-                    <li>4. Load translated model URN</li>
-                  </ol>
-                </div>
-                
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={onClose}
-                  >
-                    Use Basic Viewer
-                  </Button>
-                  <Button 
-                    variant="default" 
-                    size="sm" 
-                    onClick={() => window.open('/forge-setup', '_blank')}
-                  >
-                    Setup Forge
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Forge Viewer Container */}
-        <div 
-          ref={viewerRef} 
-          className="w-full h-full"
-          style={{ display: error ? 'none' : 'block' }}
-        />
 
         {/* Controls Help */}
-        <div className="absolute bottom-4 left-4 z-10 bg-background/90 rounded-md p-2">
-          <p className="text-xs text-muted-foreground">
-            Left-click: Orbit • Right-click: Pan • Scroll: Zoom • Double-click: Focus
-          </p>
-        </div>
+        {viewMode === '3d' && is3DViewable() && (
+          <div className="absolute bottom-4 left-4 z-10 bg-background/90 rounded-md p-2">
+            <p className="text-xs text-muted-foreground">
+              Drag to rotate • Scroll to zoom • Right-click to pan
+            </p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
