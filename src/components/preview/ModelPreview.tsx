@@ -50,6 +50,15 @@ export const ModelPreview = ({
               <span className="font-bold text-lg">₹{price}</span>
             </div>
           )}
+          
+          {/* Show thumbnail status */}
+          {thumbnail.includes('placeholder') && (
+            <div className="mt-2">
+              <span className="text-xs text-muted-foreground">
+                Generating preview image...
+              </span>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

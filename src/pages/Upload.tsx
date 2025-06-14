@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Navbar } from "@/components/navbar";
@@ -18,6 +17,8 @@ import { MetadataForm, ModelMetadata } from "@/components/upload/MetadataForm";
 import { PricingForm } from "@/components/upload/PricingForm";
 import { ReviewForm } from "@/components/upload/ReviewForm";
 import { ModelPreview } from "@/components/preview/ModelPreview";
+import { ThumbnailGenerator } from "@/components/preview/ThumbnailGenerator";
+import { useThumbnailGenerator } from "@/hooks/useThumbnailGenerator";
 
 const Upload = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -48,6 +49,10 @@ const Upload = () => {
   const [designIssues, setDesignIssues] = useState<{issue: string, severity: string}[]>([]);
   const [oemCompatibility, setOemCompatibility] = useState<{name: string, score: number}[]>([]);
 
+  // Add thumbnail generation state
+  const [generatedThumbnail, setGeneratedThumbnail] = useState<string | null>(null);
+  const { isGenerating: thumbnailGenerating, uploadThumbnail } = useThumbnailGenerator();
+
   // Generate file URL for preview
   const getFileUrl = () => {
     if (!modelPath) return undefined;
@@ -65,6 +70,9 @@ const Upload = () => {
     console.log('File selected with info:', extractedFileInfo);
     console.log('File path for preview:', filePath);
 
+    // Reset thumbnail state
+    setGeneratedThumbnail(null);
+
     // Generate SHA hash for file tracking
     const reader = new FileReader();
     reader.onload = async (e) => {
@@ -76,6 +84,31 @@ const Upload = () => {
       console.log('File hash stored:', hashHex);
     };
     reader.readAsArrayBuffer(file);
+  };
+
+  // Handle thumbnail generation
+  const handleThumbnailGenerated = async (dataUrl: string) => {
+    if (!modelFile || !user) return;
+    
+    console.log('Thumbnail generated, uploading...');
+    const thumbnailUrl = await uploadThumbnail(dataUrl, modelFile.name, user.id);
+    
+    if (thumbnailUrl) {
+      setGeneratedThumbnail(thumbnailUrl);
+      toast({
+        title: "Thumbnail generated!",
+        description: "Model preview image has been created successfully.",
+      });
+    }
+  };
+
+  const handleThumbnailError = (error: string) => {
+    console.error('Thumbnail generation error:', error);
+    toast({
+      title: "Thumbnail generation failed",
+      description: "Using placeholder image for preview.",
+      variant: "destructive"
+    });
   };
 
   // Handle FormIQ analysis completion
@@ -270,12 +303,21 @@ const Upload = () => {
                 <h3 className="text-lg font-semibold mb-4">Uploaded Model Preview</h3>
                 <ModelPreview
                   modelName={modelName}
-                  thumbnail={`/placeholder.svg`} // Using placeholder for now - in real app would generate thumbnail
+                  thumbnail={generatedThumbnail || `/placeholder.svg`}
                   fileUrl={getFileUrl()}
                   fileName={modelFile.name}
                   fileType={modelFile.type}
                   isOwner={true}
                 />
+                
+                {thumbnailGenerating && (
+                  <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                      <span className="text-sm text-blue-800">Generating model thumbnail...</span>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
