@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Navbar } from "@/components/navbar";
@@ -7,6 +8,7 @@ import { Brain } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { FormIQAnalysisResult } from "@/services/formiq";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
 
 // Import refactored components
 import { FileUploader } from "@/components/upload/FileUploader";
@@ -41,6 +43,7 @@ const Upload = () => {
   
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   // FormIQ Analysis Results
   const [printabilityScore, setPrintabilityScore] = useState(0);
@@ -317,6 +320,17 @@ const Upload = () => {
                       <span className="text-sm text-blue-800">Generating model thumbnail...</span>
                     </div>
                   </div>
+                )}
+                
+                {/* Add the thumbnail generator */}
+                {modelFile && fileInfo && getFileUrl() && !generatedThumbnail && (
+                  <ThumbnailGenerator
+                    fileUrl={getFileUrl()!}
+                    fileName={modelFile.name}
+                    fileType={modelFile.type}
+                    onThumbnailGenerated={handleThumbnailGenerated}
+                    onError={handleThumbnailError}
+                  />
                 )}
               </CardContent>
             </Card>
