@@ -65,9 +65,16 @@ const FormIQ = () => {
               <div className="relative w-full md:w-2/5 aspect-square max-w-xs">
                 <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-accent/20 rounded-full blur-3xl"></div>
                 <div className="relative w-full h-full flex items-center justify-center">
-                  <div className="w-3/4 h-3/4 rounded-xl bg-gradient-to-br from-[hsl(var(--formiq-blue))] to-[hsl(var(--formiq-purple))] shadow-xl">
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Brain className="w-1/2 h-1/2 text-white" />
+                  <div className="w-3/4 h-3/4 rounded-xl bg-gradient-to-br from-[hsl(var(--formiq-blue))] to-[hsl(var(--formiq-purple))] shadow-xl flex items-center justify-center">
+                    <div className="flex flex-col items-center space-y-4">
+                      <Brain className="w-20 h-20 text-white" />
+                      <div className="relative h-8 w-8">
+                        <img 
+                          src="/lovable-uploads/9ce09c17-cfd4-43bc-a961-0bd805bee565.png" 
+                          alt="FormVerse Logo" 
+                          className="h-8 w-8"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>

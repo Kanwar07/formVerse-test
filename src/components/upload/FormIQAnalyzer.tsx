@@ -82,7 +82,17 @@ export const FormIQAnalyzer = ({
           <div className="flex items-center mb-4">
             <Brain className="h-5 w-5 text-[#9b87f5] mr-2" />
             <span className="font-medium bg-clip-text text-transparent bg-gradient-to-r from-[#7E69AB] to-[#9b87f5]">FormIQ Analysis Results</span>
-            <span className="ml-2 text-sm text-muted-foreground">(The Brain of FormVerse)</span>
+            <div className="ml-2 flex items-center">
+              <span className="text-sm text-muted-foreground mr-1">(The Brain of</span>
+              <div className="relative h-4 w-4 mr-1">
+                <img 
+                  src="/lovable-uploads/9ce09c17-cfd4-43bc-a961-0bd805bee565.png" 
+                  alt="FormVerse Logo" 
+                  className="h-4 w-4"
+                />
+              </div>
+              <span className="text-sm text-muted-foreground">FormVerse)</span>
+            </div>
           </div>
           
           <PrintabilityCard 
