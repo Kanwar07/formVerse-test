@@ -32,7 +32,7 @@ interface Model {
     username: string;
     full_name: string;
     avatar_url: string;
-  };
+  } | null;
 }
 
 const Discover = () => {
@@ -67,12 +67,7 @@ const Discover = () => {
           view_count,
           printability_score,
           created_at,
-          user_id,
-          profiles (
-            username,
-            full_name,
-            avatar_url
-          )
+          user_id
         `)
         .eq('status', 'published');
 
@@ -94,10 +89,10 @@ const Discover = () => {
           query = query.order('created_at', { ascending: false });
       }
 
-      const { data, error } = await query.limit(20);
+      const { data: modelsData, error: modelsError } = await query.limit(20);
 
-      if (error) {
-        console.error('Error fetching models:', error);
+      if (modelsError) {
+        console.error('Error fetching models:', modelsError);
         toast({
           title: "Error loading models",
           description: "Could not load models from the database",
@@ -106,7 +101,23 @@ const Discover = () => {
         return;
       }
 
-      setModels(data || []);
+      // Fetch profiles separately for each model
+      const modelsWithProfiles: Model[] = [];
+      
+      for (const model of modelsData || []) {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('username, full_name, avatar_url')
+          .eq('id', model.user_id)
+          .single();
+
+        modelsWithProfiles.push({
+          ...model,
+          profiles: profileData || null
+        });
+      }
+
+      setModels(modelsWithProfiles);
     } catch (error) {
       console.error('Error:', error);
       toast({
