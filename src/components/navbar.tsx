@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { Upload, Palette, Users, Search, User, LogOut, Plus } from "lucide-react";
+import { Upload, Brain, Users, Search, User, LogOut, Plus } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 import {
   DropdownMenu,
@@ -84,7 +84,7 @@ export function Navbar() {
               onClick={() => navigate("/formiq")}
               className="flex items-center space-x-2"
             >
-              <Palette className="h-4 w-4" />
+              <Brain className="h-4 w-4" />
               <span>FormIQ</span>
             </Button>
           </div>
