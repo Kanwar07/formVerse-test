@@ -47,10 +47,17 @@ export function Navbar() {
             className="flex items-center space-x-2 cursor-pointer" 
             onClick={() => navigate("/")}
           >
-            <div className="h-8 w-8 bg-primary rounded-md flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">FV</span>
+            <div className="relative h-8 w-8 mr-2">
+              <img 
+                src="/lovable-uploads/9ce09c17-cfd4-43bc-a961-0bd805bee565.png" 
+                alt="FormVerse Logo" 
+                className="h-8 w-8"
+              />
             </div>
-            <span className="font-bold text-xl">FormVerse</span>
+            <span className="font-semibold text-lg">
+              <span className="text-foreground">FORM</span>
+              <span className="text-[#9b87f5]">VERSE</span>
+            </span>
           </div>
           
           <div className="hidden md:flex items-center space-x-6">
