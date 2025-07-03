@@ -1,5 +1,5 @@
 
-import { Moon, Sun } from "lucide-react"
+import { Moon, Sun, Zap } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -19,40 +19,36 @@ export function ThemeToggle() {
         <Button 
           variant="ghost" 
           size="icon" 
-          className="rounded-full bg-background/5 backdrop-blur-sm hover:bg-accent/10"
+          className="cyber-button rounded-full bg-cyber-blue/10 border-cyber-blue/30 hover:bg-cyber-blue/20 hover:border-cyber-blue/50"
         >
-          <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all text-foreground/80 dark:text-foreground/70 dark:-rotate-90 dark:scale-0" />
-          <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all text-foreground/80 dark:text-foreground/70 dark:rotate-0 dark:scale-100" />
+          <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all text-cyber-blue dark:text-cyber-blue dark:-rotate-90 dark:scale-0" />
+          <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all text-cyber-blue dark:text-cyber-blue dark:rotate-0 dark:scale-100" />
           <span className="sr-only">Toggle theme</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent 
         align="end"
-        className="bg-background/80 backdrop-blur-md border border-border/50"
+        className="cyber-glass border-cyber-blue/30"
       >
         <DropdownMenuItem 
           onClick={() => setTheme("light")}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 hover:bg-cyber-blue/10 text-foreground"
         >
-          <Sun className="h-4 w-4" />
+          <Sun className="h-4 w-4 text-cyber-blue" />
           <span>Light</span>
         </DropdownMenuItem>
         <DropdownMenuItem 
           onClick={() => setTheme("dark")}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 hover:bg-cyber-purple/10 text-foreground"
         >
-          <Moon className="h-4 w-4" />
+          <Moon className="h-4 w-4 text-cyber-purple" />
           <span>Dark</span>
         </DropdownMenuItem>
         <DropdownMenuItem 
           onClick={() => setTheme("system")}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 hover:bg-cyber-green/10 text-foreground"
         >
-          <span className="h-4 w-4 flex items-center justify-center">
-            <div className="h-3 w-3 rounded-full bg-primary/30 flex items-center justify-center">
-              <div className="h-1.5 w-1.5 rounded-full bg-primary"></div>
-            </div>
-          </span>
+          <Zap className="h-4 w-4 text-cyber-green" />
           <span>System</span>
         </DropdownMenuItem>
       </DropdownMenuContent>

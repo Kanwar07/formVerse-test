@@ -76,6 +76,22 @@ export default {
 				formiq: {
 					blue: 'hsl(var(--formverse-blue))',
 					purple: 'hsl(var(--formverse-indigo))'
+				},
+				// Futuristic colors
+				cyber: {
+					blue: '#00D4FF',
+					purple: '#B800FF',
+					pink: '#FF006B',
+					green: '#00FF94',
+					yellow: '#FFD700',
+					dark: '#0A0A0F',
+					darker: '#050508'
+				},
+				neon: {
+					cyan: '#00FFFF',
+					magenta: '#FF00FF',
+					lime: '#00FF00',
+					orange: '#FF4500'
 				}
 			},
 			borderRadius: {
@@ -107,6 +123,34 @@ export default {
 				'spin-slow': {
 					'0%': { transform: 'rotate(0deg)' },
 					'100%': { transform: 'rotate(360deg)' }
+				},
+				'glow-pulse': {
+					'0%, 100%': { 
+						boxShadow: '0 0 20px rgba(0, 212, 255, 0.3), 0 0 40px rgba(0, 212, 255, 0.1)',
+						transform: 'scale(1)'
+					},
+					'50%': { 
+						boxShadow: '0 0 30px rgba(0, 212, 255, 0.5), 0 0 60px rgba(0, 212, 255, 0.2)',
+						transform: 'scale(1.02)'
+					}
+				},
+				'float': {
+					'0%, 100%': { transform: 'translateY(0px)' },
+					'50%': { transform: 'translateY(-10px)' }
+				},
+				'slide-glow': {
+					'0%': { transform: 'translateX(-100%)', opacity: '0' },
+					'50%': { opacity: '1' },
+					'100%': { transform: 'translateX(100%)', opacity: '0' }
+				},
+				'matrix-rain': {
+					'0%': { transform: 'translateY(-100%)' },
+					'100%': { transform: 'translateY(100vh)' }
+				},
+				'cyber-flicker': {
+					'0%, 100%': { opacity: '1' },
+					'50%': { opacity: '0.8' },
+					'75%': { opacity: '0.9' }
 				}
 			},
 			animation: {
@@ -115,7 +159,20 @@ export default {
 				'fade-in': 'fade-in 0.3s ease-out',
 				'fade-out': 'fade-out 0.3s ease-out',
 				'scale-in': 'scale-in 0.2s ease-out',
-				'spin-slow': 'spin-slow 15s linear infinite'
+				'spin-slow': 'spin-slow 15s linear infinite',
+				'glow-pulse': 'glow-pulse 2s ease-in-out infinite',
+				'float': 'float 3s ease-in-out infinite',
+				'slide-glow': 'slide-glow 2s ease-in-out infinite',
+				'matrix-rain': 'matrix-rain 3s linear infinite',
+				'cyber-flicker': 'cyber-flicker 0.15s ease-in-out infinite'
+			},
+			backgroundImage: {
+				'cyber-gradient': 'linear-gradient(135deg, #00D4FF 0%, #B800FF 100%)',
+				'neon-gradient': 'linear-gradient(45deg, #00FFFF 0%, #FF00FF 50%, #00FF94 100%)',
+				'matrix-bg': 'radial-gradient(circle at center, rgba(0, 255, 0, 0.1) 0%, transparent 70%)'
+			},
+			backdropBlur: {
+				xs: '2px'
 			}
 		}
 	},
