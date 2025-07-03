@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { Upload, Brain, Users, Search, User, LogOut, Plus } from "lucide-react";
+import { Upload, Brain, Users, Search, User, LogOut, Plus, Image } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 import {
   DropdownMenu,
@@ -77,6 +77,15 @@ export function Navbar() {
             >
               <Users className="h-4 w-4" />
               <span>Creators</span>
+            </Button>
+            
+            <Button
+              variant={isActivePath("/image-to-cad") ? "default" : "ghost"}
+              onClick={() => navigate("/image-to-cad")}
+              className="flex items-center space-x-2"
+            >
+              <Image className="h-4 w-4" />
+              <span>Image to CAD</span>
             </Button>
             
             <Button

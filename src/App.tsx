@@ -22,6 +22,7 @@ import PrintabilityReport from "./pages/PrintabilityReport";
 import VersionHistory from "./pages/VersionHistory";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
+import ImageToCAD from "./pages/ImageToCAD";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -50,6 +51,7 @@ function App() {
                 <Route path="/pricing" element={<Pricing />} />
                 <Route path="/printability/:id" element={<PrintabilityReport />} />
                 <Route path="/version-history/:id" element={<VersionHistory />} />
+                <Route path="/image-to-cad" element={<ImageToCAD />} />
                 <Route path="/signin" element={<SignIn />} />
                 <Route path="/signup" element={<SignUp />} />
                 <Route path="*" element={<NotFound />} />
