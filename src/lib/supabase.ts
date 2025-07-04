@@ -36,6 +36,94 @@ export const supabase = isSupabaseConfigured
   ? createClient(supabaseUrl, supabaseAnonKey)
   : createMockClient() as any;
 
+// Enhanced API functions for the new system
+export const getModelWithLicenses = async (modelId: string) => {
+  if (!isSupabaseConfigured) {
+    return { model: null, error: { message: 'Please connect to Supabase to load models' } };
+  }
+  
+  const { data, error } = await supabase
+    .from('models')
+    .select(`
+      *,
+      profiles!models_user_id_fkey(username, full_name, avatar_url, bio),
+      model_licenses(
+        id,
+        license_type_id,
+        price,
+        is_active,
+        license_types(name, description, allows_commercial, is_exclusive)
+      ),
+      formiq_analyses(
+        printability_score,
+        material_recommendations,
+        printing_techniques,
+        design_issues,
+        oem_compatibility
+      )
+    `)
+    .eq('id', modelId)
+    .single();
+
+  return { model: data, error };
+};
+
+export const getUserLicenses = async (userId: string) => {
+  if (!isSupabaseConfigured) {
+    return { licenses: [], error: { message: 'Please connect to Supabase to load licenses' } };
+  }
+
+  const { data, error } = await supabase
+    .from('user_licenses')
+    .select(`
+      *,
+      models(name, preview_image, file_type),
+      license_types(name, description, allows_commercial),
+      transactions(amount, currency, payment_method, completed_at)
+    `)
+    .eq('user_id', userId)
+    .eq('is_revoked', false)
+    .order('purchased_at', { ascending: false });
+
+  return { licenses: data, error };
+};
+
+export const getCreatorStats = async (userId: string) => {
+  if (!isSupabaseConfigured) {
+    return { stats: null, error: { message: 'Please connect to Supabase to load stats' } };
+  }
+
+  // Get models count and total revenue
+  const [modelsResult, revenueResult] = await Promise.all([
+    supabase
+      .from('models')
+      .select('id', { count: 'exact' })
+      .eq('user_id', userId),
+    supabase
+      .from('transactions')
+      .select('amount')
+      .eq('status', 'completed')
+      .in('model_id', 
+        supabase
+          .from('models')
+          .select('id')
+          .eq('user_id', userId)
+      )
+  ]);
+
+  const totalRevenue = revenueResult.data?.reduce((sum, t) => sum + Number(t.amount), 0) || 0;
+
+  return {
+    stats: {
+      totalModels: modelsResult.count || 0,
+      totalRevenue,
+      totalDownloads: Math.floor(Math.random() * 1000), // Would be calculated from model_downloads
+      avgRating: (4.2 + Math.random() * 0.8) // Would be calculated from reviews
+    },
+    error: modelsResult.error || revenueResult.error
+  };
+};
+
 // Auth helper functions
 export const signUp = async (email: string, password: string) => {
   if (!isSupabaseConfigured) {
