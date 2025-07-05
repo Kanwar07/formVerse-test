@@ -1,6 +1,8 @@
 
 import { APIService } from './api';
 
+// Global type declarations are in src/types/global.d.ts
+
 export interface PaymentProvider {
   initialize(): Promise<void>;
   createPayment(amount: number, currency: string, metadata: any): Promise<any>;
@@ -29,7 +31,7 @@ export class RazorpayProvider implements PaymentProvider {
     
     return new Promise((resolve, reject) => {
       const options = {
-        key: process.env.REACT_APP_RAZORPAY_KEY,
+        key: import.meta.env.VITE_RAZORPAY_KEY,
         amount: amount * 100, // Razorpay expects amount in paise
         currency: currency,
         name: 'FormVerse',
@@ -76,7 +78,7 @@ export class PayPalProvider implements PaymentProvider {
   async initialize() {
     if (!window.paypal) {
       const script = document.createElement('script');
-      script.src = `https://www.paypal.com/sdk/js?client-id=${process.env.REACT_APP_PAYPAL_CLIENT_ID}&currency=USD`;
+      script.src = `https://www.paypal.com/sdk/js?client-id=${import.meta.env.VITE_PAYPAL_CLIENT_ID}&currency=USD`;
       document.head.appendChild(script);
       
       await new Promise((resolve) => {

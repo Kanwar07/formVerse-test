@@ -347,18 +347,26 @@ export class APIService {
     }
   }
 
-  // Analytics
+  // Analytics - using existing tables instead of model_analytics
   static async trackModelEvent(modelId: string, eventType: string, metadata?: any) {
     const { data: { user } } = await supabase.auth.getUser();
     
-    return supabase
-      .from('model_analytics')
-      .insert({
-        model_id: modelId,
-        event_type: eventType,
-        user_id: user?.id,
-        metadata: metadata || {}
-      });
+    // Log to model_downloads table for download events
+    if (eventType === 'download' && user) {
+      return supabase
+        .from('model_downloads')
+        .insert({
+          model_id: modelId,
+          user_id: user.id,
+          license_id: metadata?.license_id,
+          ip_address: metadata?.ip_address,
+          user_agent: metadata?.user_agent
+        });
+    }
+
+    // For other events, we could extend this to use other tables
+    console.log(`Event tracked: ${eventType} for model ${modelId}`, metadata);
+    return null;
   }
 
   // Admin Functions

@@ -1,7 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { APIService } from './api';
-import * as crypto from 'crypto-js';
+import CryptoJS from 'crypto-js';
 
 export class FileUploadService {
   private static readonly ALLOWED_EXTENSIONS = ['.stl', '.obj', '.step', '.stp', '.ply', '.3mf'];
@@ -73,8 +73,8 @@ export class FileUploadService {
       const reader = new FileReader();
       reader.onload = (e) => {
         const content = e.target?.result as ArrayBuffer;
-        const wordArray = crypto.lib.WordArray.create(content);
-        const hash = crypto.SHA256(wordArray).toString();
+        const wordArray = CryptoJS.lib.WordArray.create(content);
+        const hash = CryptoJS.SHA256(wordArray).toString();
         resolve(hash);
       };
       reader.onerror = reject;
