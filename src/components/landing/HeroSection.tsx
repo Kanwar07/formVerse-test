@@ -60,12 +60,18 @@ export function HeroSection() {
             <div className="relative w-full h-full">
               <div className="absolute inset-0 bg-gradient-to-r from-white/5 via-transparent to-cyber-blue/5 rounded-3xl blur-3xl animate-glow-pulse"></div>
               <div className="relative w-full h-full elegant-glass rounded-3xl border-2 border-white/20 shadow-2xl overflow-hidden elegant-glow">
-                <img 
-                  src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1920&h=1080&fit=crop&crop=center" 
-                  alt="Advanced 3D CAD Design and Manufacturing Technology" 
-                  className="w-full h-full object-cover object-center"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/10"></div>
+                <div className="w-full h-full bg-gradient-to-br from-cyber-dark/80 via-black/60 to-cyber-darker/80 flex items-center justify-center">
+                  <img 
+                    src="/lovable-uploads/1afacf1b-1bf6-4915-91fd-d70280b94f0a.png" 
+                    alt="FormVerse - AI-Powered CAD Design Platform" 
+                    className="max-w-[80%] max-h-[80%] object-contain"
+                    style={{
+                      filter: 'drop-shadow(0 0 30px rgba(0, 212, 255, 0.3))',
+                      mixBlendMode: 'screen'
+                    }}
+                  />
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-black/5"></div>
                 <div className="absolute inset-0 elegant-scan-line"></div>
                 
                 {/* Floating UI elements */}
