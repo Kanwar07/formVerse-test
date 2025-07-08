@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 
 interface CADTool {
@@ -11,42 +10,42 @@ const cadTools: CADTool[] = [
   {
     name: "Fusion 360",
     logo: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=100&h=100&fit=crop&crop=center",
-    description: "Professional 3D CAD/CAM/CAE tool"
+    description: "Cloud-based 3D CAD/CAM/CAE with AI-powered generative design"
   },
   {
     name: "SolidWorks",
     logo: "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?w=100&h=100&fit=crop&crop=center",
-    description: "Industry-leading CAD software"
+    description: "Parametric design with intelligent feature recognition"
   },
   {
     name: "AutoCAD",
     logo: "https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=100&h=100&fit=crop&crop=center",
-    description: "2D and 3D CAD design software"
+    description: "AI-enhanced 2D/3D drafting with smart automation tools"
   },
   {
     name: "Blender",
     logo: "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=100&h=100&fit=crop&crop=center",
-    description: "Open-source 3D creation suite"
+    description: "Open-source 3D creation with AI geometry nodes"
   },
   {
     name: "Rhino 3D",
     logo: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=100&h=100&fit=crop&crop=center",
-    description: "3D computer graphics software"
+    description: "NURBS modeling with Grasshopper algorithmic design"
   },
   {
     name: "SketchUp",
     logo: "https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=100&h=100&fit=crop&crop=center",
-    description: "3D modeling computer program"
+    description: "Intuitive 3D modeling with AI-powered layout suggestions"
   },
   {
     name: "Inventor",
     logo: "https://images.unsplash.com/photo-1581092787765-e3d8d5f66e97?w=100&h=100&fit=crop&crop=center",
-    description: "Professional-grade 3D CAD software"
+    description: "Professional mechanical design with simulation integration"
   },
   {
     name: "CATIA",
     logo: "https://images.unsplash.com/photo-1581092918484-8ae83a4b4223?w=100&h=100&fit=crop&crop=center",
-    description: "Advanced CAD/CAM/CAE software"
+    description: "Advanced surface modeling for aerospace & automotive"
   }
 ];
 
