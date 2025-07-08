@@ -61,8 +61,8 @@ export function HeroSection() {
               <div className="absolute inset-0 bg-gradient-to-r from-white/5 via-transparent to-cyber-blue/5 rounded-3xl blur-3xl animate-glow-pulse"></div>
               <div className="relative w-full h-full elegant-glass rounded-3xl border-2 border-white/20 shadow-2xl overflow-hidden elegant-glow">
                 <img 
-                  src="/lovable-uploads/8ce7b101-e889-47f8-a4e1-dc69243fe78a.png" 
-                  alt="CAD Designer Working - From Design to Manufacturing" 
+                  src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1920&h=1080&fit=crop&crop=center" 
+                  alt="Advanced 3D CAD Design and Manufacturing Technology" 
                   className="w-full h-full object-cover object-center"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/10"></div>
