@@ -4,6 +4,7 @@ import { Footer } from "@/components/footer";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { FeaturesSection } from "@/components/landing/FeaturesSection";
 import { ImageToCADSection } from "@/components/landing/ImageToCADSection";
+import { CADToolsSlider } from "@/components/landing/CADToolsSlider";
 import { TabsSection } from "@/components/landing/TabsSection";
 import { CreatorLeaderboardSection } from "@/components/landing/CreatorLeaderboardSection";
 import { PricingSection } from "@/components/landing/PricingSection";
@@ -17,6 +18,7 @@ const Landing = () => {
       <HeroSection />
       <FeaturesSection />
       <ImageToCADSection />
+      <CADToolsSlider />
       <TabsSection />
       <CreatorLeaderboardSection />
       <PricingSection />
