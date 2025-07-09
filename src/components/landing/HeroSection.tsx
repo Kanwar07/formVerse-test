@@ -60,16 +60,52 @@ export function HeroSection() {
             <div className="relative w-full h-full">
               <div className="absolute inset-0 bg-gradient-to-r from-white/5 via-transparent to-cyber-blue/5 rounded-3xl blur-3xl animate-glow-pulse"></div>
               <div className="relative w-full h-full elegant-glass rounded-3xl border-2 border-white/20 shadow-2xl overflow-hidden elegant-glow">
-                <div className="w-full h-full bg-gradient-to-br from-cyber-dark/80 via-black/60 to-cyber-darker/80 flex items-center justify-center">
-                  <img 
-                    src="/lovable-uploads/1afacf1b-1bf6-4915-91fd-d70280b94f0a.png" 
-                    alt="FormVerse - AI-Powered CAD Design Platform" 
-                    className="max-w-[80%] max-h-[80%] object-contain"
+                <div className="w-full h-full bg-gradient-to-br from-cyber-dark/80 via-black/60 to-cyber-darker/80 flex items-center justify-center relative">
+                  {/* Video Background */}
+                  <video 
+                    autoPlay 
+                    loop 
+                    muted 
+                    playsInline
+                    className="absolute inset-0 w-full h-full object-cover opacity-70"
                     style={{
-                      filter: 'drop-shadow(0 0 30px rgba(0, 212, 255, 0.3))',
-                      mixBlendMode: 'screen'
+                      filter: 'brightness(0.8) contrast(1.2) saturate(1.1)',
                     }}
-                  />
+                  >
+                    <source src="/videos/cad-design-motion.mp4" type="video/mp4" />
+                    {/* Fallback for when video is not available */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-cyber-blue/20 to-cyber-purple/20 animate-pulse"></div>
+                  </video>
+                  
+                  {/* Animated Overlay Graphics */}
+                  <div className="absolute inset-0 z-10">
+                    {/* Floating geometric shapes */}
+                    <div className="absolute top-1/4 left-1/4 w-16 h-16 border-2 border-cyber-blue/40 rounded-lg animate-float"></div>
+                    <div className="absolute top-1/3 right-1/3 w-12 h-12 border-2 border-cyber-purple/40 rounded-full animate-float" style={{animationDelay: '1s'}}></div>
+                    <div className="absolute bottom-1/3 left-1/3 w-8 h-8 bg-gradient-to-r from-cyber-blue/30 to-cyber-purple/30 rounded-sm animate-float" style={{animationDelay: '2s'}}></div>
+                    
+                    {/* Grid lines */}
+                    <div className="absolute inset-0 opacity-20">
+                      <div className="w-full h-full" style={{
+                        backgroundImage: `
+                          linear-gradient(rgba(0, 212, 255, 0.1) 1px, transparent 1px),
+                          linear-gradient(90deg, rgba(0, 212, 255, 0.1) 1px, transparent 1px)
+                        `,
+                        backgroundSize: '40px 40px'
+                      }}></div>
+                    </div>
+                  </div>
+                  
+                  {/* Central Logo/Brand */}
+                  <div className="relative z-20 text-center">
+                    <div className="w-32 h-32 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-white/10 to-white/5 border border-white/20 flex items-center justify-center elegant-glass">
+                      <div className="text-4xl font-bold matrix-text bg-gradient-to-r from-cyber-blue to-cyber-purple bg-clip-text text-transparent">
+                        3D
+                      </div>
+                    </div>
+                    <h3 className="text-xl font-semibold text-white/90 matrix-text elegant-text-glow">CAD Revolution</h3>
+                    <p className="text-sm text-white/60 mt-2">AI-Powered Design Intelligence</p>
+                  </div>
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-black/5"></div>
                 <div className="absolute inset-0 elegant-scan-line"></div>
