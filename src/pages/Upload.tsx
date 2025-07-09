@@ -38,6 +38,8 @@ const Upload = () => {
   // Add missing state variables
   const [modelName, setModelName] = useState<string>("");
   const [modelDescription, setModelDescription] = useState<string>("");
+  const [qualityStatus, setQualityStatus] = useState<'approved' | 'declined' | 'reviewing'>('reviewing');
+  const [qualityNotes, setQualityNotes] = useState<string>("");
   
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -119,6 +121,8 @@ const Upload = () => {
     setPrintingTechniques(result.printingTechniques);
     setDesignIssues(result.designIssues);
     setOemCompatibility(result.oemCompatibility);
+    setQualityStatus(result.qualityStatus);
+    setQualityNotes(result.qualityNotes || '');
     
     // Generate tags based on analysis
     setAiGeneratedTags([
@@ -137,7 +141,11 @@ const Upload = () => {
     
     setAnalyzing(false);
     setAnalysisComplete(true);
-    setCurrentStep(2);
+    
+    // Only proceed to next step if approved
+    if (result.qualityStatus === 'approved') {
+      setCurrentStep(2);
+    }
   };
 
   // Handle metadata submission
@@ -212,7 +220,10 @@ const Upload = () => {
           category: category,
           difficulty_level: modelMetadata.complexity,
           view_count: 0,
-          downloads: 0
+          downloads: 0,
+          quality_status: qualityStatus,
+          quality_checked_at: new Date().toISOString(),
+          quality_notes: qualityNotes
         })
         .select()
         .single();

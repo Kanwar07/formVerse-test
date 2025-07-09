@@ -18,6 +18,8 @@ export interface FormIQAnalysisResult {
   printingTechniques: string[];
   designIssues: DesignIssue[];
   oemCompatibility: OemCompatibility[];
+  qualityStatus: 'approved' | 'declined' | 'reviewing';
+  qualityNotes?: string;
 }
 
 // FormIQ analysis service
@@ -61,12 +63,22 @@ export const analyzeModel = async (modelPath: string, modelName: string): Promis
     { name: "Anycubic", score: Math.floor(Math.random() * 10) + 85 }
   ];
 
+  // Determine quality status based on printability score
+  const qualityStatus: 'approved' | 'declined' | 'reviewing' = 
+    printabilityScore >= 70 ? 'approved' : 'declined';
+  
+  const qualityNotes = printabilityScore >= 70 
+    ? 'Model meets quality standards for marketplace listing'
+    : `Model quality score (${printabilityScore}%) is below the required threshold of 70%`;
+
   return {
     printabilityScore,
     materialRecommendations,
     printingTechniques,
     designIssues,
-    oemCompatibility
+    oemCompatibility,
+    qualityStatus,
+    qualityNotes
   };
 };
 

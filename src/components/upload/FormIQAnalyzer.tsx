@@ -39,7 +39,9 @@ export const FormIQAnalyzer = ({
     materialRecommendations,
     printingTechniques,
     designIssues,
-    oemCompatibility
+    oemCompatibility,
+    qualityStatus: 'reviewing',
+    qualityNotes: 'Analysis in progress...'
   });
 
   useEffect(() => {
@@ -100,6 +102,8 @@ export const FormIQAnalyzer = ({
             oemCompatibility={result.oemCompatibility}
             materialRecommendations={result.materialRecommendations}
             designIssues={result.designIssues}
+            qualityStatus={result.qualityStatus}
+            qualityNotes={result.qualityNotes}
             onContinue={onContinue}
           />
         </div>

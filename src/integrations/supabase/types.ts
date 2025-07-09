@@ -326,6 +326,9 @@ export type Database = {
           price: number | null
           printability_score: number | null
           printing_techniques: string[] | null
+          quality_checked_at: string | null
+          quality_notes: string | null
+          quality_status: string | null
           report_count: number | null
           status: string | null
           tags: string[] | null
@@ -359,6 +362,9 @@ export type Database = {
           price?: number | null
           printability_score?: number | null
           printing_techniques?: string[] | null
+          quality_checked_at?: string | null
+          quality_notes?: string | null
+          quality_status?: string | null
           report_count?: number | null
           status?: string | null
           tags?: string[] | null
@@ -392,6 +398,9 @@ export type Database = {
           price?: number | null
           printability_score?: number | null
           printing_techniques?: string[] | null
+          quality_checked_at?: string | null
+          quality_notes?: string | null
+          quality_status?: string | null
           report_count?: number | null
           status?: string | null
           tags?: string[] | null
