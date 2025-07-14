@@ -132,13 +132,11 @@ serve(async (req) => {
     console.log("Starting image conversion for:", body.imageUrl)
 
     try {
-      // Use a simple image to 3D model (InstantMesh works well)
+      // Use a reliable image to 3D model conversion
       const prediction = await replicate.predictions.create({
-        version: "tencentarc/instantmesh:5ddd56c5583ad28b8db119261829ef875a875b3d9a51a0fd3e3b25f3c16ca4b2",
+        version: "adirik/layer-diffusion:6a5fccd06b5b0b8abb3b16ae7c78c65bea24ad5a74ce42dceb88de7df86dd479",
         input: {
-          image: body.imageUrl,
-          sample_steps: 75,
-          sample_seed: 42
+          image: body.imageUrl
         }
       })
 
