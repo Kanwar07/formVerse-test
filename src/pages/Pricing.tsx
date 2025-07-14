@@ -133,7 +133,7 @@ const Pricing = () => {
             <h1 className="text-4xl font-bold mb-4">Choose the Right Plan</h1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
               Affordable plans designed specifically for the Indian market, 
-              enabling creators and users to make the most of FormVerse.
+              enabling creators and users to make the most of <span className="font-space-grotesk font-bold bg-gradient-to-r from-purple-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">FormVerse</span>.
             </p>
           </div>
           

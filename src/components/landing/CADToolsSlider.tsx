@@ -80,7 +80,7 @@ export function CADToolsSlider() {
           </h2>
           <p className="text-xl text-white/70 max-w-3xl mx-auto leading-relaxed">
             Use these powerful CAD AI tools to create your designs, then bring them to{" "}
-            <span className="text-white font-medium elegant-text-glow">FormVerse</span>{" "}
+            <span className="text-white font-space-grotesk font-bold bg-gradient-to-r from-purple-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">FormVerse</span>{" "}
             to monetize your creativity
           </p>
         </div>
@@ -192,7 +192,7 @@ export function CADToolsSlider() {
                 Ready to Upload Your Design?
               </h3>
               <p className="text-white/70 leading-relaxed">
-                Create stunning CAD models with these AI-powered tools, then upload to FormVerse 
+                Create stunning CAD models with these AI-powered tools, then upload to <span className="font-space-grotesk font-bold bg-gradient-to-r from-purple-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">FormVerse</span> 
                 to license, sell, and validate your designs with our proprietary{" "}
                 <span className="text-cyber-blue font-medium">FormIQ</span> technology.
               </p>

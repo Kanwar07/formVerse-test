@@ -67,14 +67,14 @@ export function SignUpForm() {
               className="h-16 w-16"
             />
           </div>
-          <span className="font-semibold text-lg">
+          <span className="font-space-grotesk font-bold text-lg tracking-tight">
             <span className="text-foreground">FORM</span>
-            <span className="text-[#9b87f5]">VERSE</span>
+            <span className="bg-gradient-to-r from-purple-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">VERSE</span>
           </span>
         </div>
         <CardTitle className="text-xl text-center">Create an Account</CardTitle>
         <CardDescription className="text-center">
-          Join FormVerse to buy, sell, and share 3D models
+          Join <span className="font-space-grotesk bg-gradient-to-r from-purple-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">FormVerse</span> to buy, sell, and share 3D models
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -116,7 +116,7 @@ export function SignUpForm() {
         </div>
         <div className="flex items-center mt-2 text-xs text-center text-muted-foreground">
           <Brain className="h-3 w-3 text-[#9b87f5] mr-1" />
-          <span>Powered by FormIQ - The Brain of FormVerse</span>
+          <span>Powered by FormIQ - The Brain of <span className="font-space-grotesk font-bold bg-gradient-to-r from-purple-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">FormVerse</span></span>
         </div>
       </CardFooter>
     </Card>

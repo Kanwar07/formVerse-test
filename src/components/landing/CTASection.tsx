@@ -13,7 +13,7 @@ export function CTASection() {
       <div className="relative container text-center max-w-3xl mx-auto">
         <h2 className="text-3xl font-bold mb-6">Ready to transform your designs into income?</h2>
         <p className="text-xl text-muted-foreground mb-8">
-          Join thousands of creators already using FormVerse to monetize their CAD models.
+          Join thousands of creators already using <span className="font-space-grotesk font-bold bg-gradient-to-r from-purple-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">FormVerse</span> to monetize their CAD models.
         </p>
         <div className="flex flex-col sm:flex-row justify-center gap-4">
           <Button size="lg" asChild>

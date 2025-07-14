@@ -13,9 +13,9 @@ export function Footer() {
                 className="h-16 w-16"
               />
             </div>
-            <span className="font-semibold text-lg">
-              <span className="text-foreground">FORM</span>
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#1EAEDB] to-[#8B5CF6]">VERSE</span>
+            <span className="font-space-grotesk font-bold text-lg tracking-tight">
+              <span className="text-white">FORM</span>
+              <span className="bg-gradient-to-r from-purple-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">VERSE</span>
             </span>
           </div>
           <p className="text-sm text-muted-foreground">
@@ -90,7 +90,7 @@ export function Footer() {
       <div className="container mt-8 pt-8 border-t">
         <div className="flex flex-col md:flex-row justify-between items-center">
           <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} FormVerse. All rights reserved.
+            &copy; {new Date().getFullYear()} <span className="font-space-grotesk bg-gradient-to-r from-purple-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">FormVerse</span>. All rights reserved.
           </p>
           <div className="flex space-x-6 mt-4 md:mt-0">
             <a href="#" className="text-muted-foreground hover:text-foreground">

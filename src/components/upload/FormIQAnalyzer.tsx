@@ -93,7 +93,7 @@ export const FormIQAnalyzer = ({
                   className="h-8 w-8"
                 />
               </div>
-              <span className="text-sm text-muted-foreground">FormVerse)</span>
+              <span className="text-sm text-muted-foreground"><span className="font-space-grotesk font-bold bg-gradient-to-r from-purple-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">FormVerse</span>)</span>
             </div>
           </div>
           

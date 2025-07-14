@@ -7,9 +7,9 @@ export function AboutSection() {
       <div className="container">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
           <div>
-            <h2 className="text-3xl font-bold mb-4">About FormVerse</h2>
+            <h2 className="text-3xl font-bold mb-4">About <span className="font-space-grotesk bg-gradient-to-r from-purple-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">FormVerse</span></h2>
             <p className="text-muted-foreground mb-4">
-              FormVerse is India's first AI-powered platform dedicated to helping CAD creators monetize their designs while providing OEMs with access to high-quality, verified 3D models.
+              <span className="font-space-grotesk font-bold bg-gradient-to-r from-purple-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">FormVerse</span> is India's first AI-powered platform dedicated to helping CAD creators monetize their designs while providing OEMs with access to high-quality, verified 3D models.
             </p>
             <p className="text-muted-foreground mb-4">
               Our proprietary AI system, FormIQ, helps validate model printability, suggest optimal pricing, and ensure designs meet industry standards before they reach the marketplace.

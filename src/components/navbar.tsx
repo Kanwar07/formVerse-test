@@ -59,9 +59,9 @@ export function Navbar() {
                   className="h-16 w-16 elegant-glow-effect group-hover:animate-glow-pulse transition-all duration-500"
                 />
               </div>
-              <span className="font-bold text-xl matrix-text">
-                <span className="text-white/95 elegant-text-glow">FORM</span>
-                <span className="text-cyber-blue/90 elegant-text-glow">VERSE</span>
+              <span className="font-space-grotesk font-bold text-xl tracking-tight">
+                <span className="text-white">FORM</span>
+                <span className="bg-gradient-to-r from-purple-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">VERSE</span>
               </span>
             </div>
           </div>
