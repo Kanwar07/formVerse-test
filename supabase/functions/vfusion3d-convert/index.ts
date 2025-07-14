@@ -9,53 +9,73 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  console.log(`${req.method} ${req.url}`);
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
+    // Check environment variables
     const REPLICATE_API_KEY = Deno.env.get('REPLICATE_API_KEY')
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+
     if (!REPLICATE_API_KEY) {
-      throw new Error('REPLICATE_API_KEY is not set')
+      console.error('REPLICATE_API_KEY is missing')
+      return new Response(JSON.stringify({ 
+        error: 'REPLICATE_API_KEY is not configured' 
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      })
     }
 
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    const supabase = createClient(supabaseUrl, supabaseKey)
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('Supabase credentials missing')
+      return new Response(JSON.stringify({ 
+        error: 'Supabase credentials not configured' 
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      })
+    }
 
+    // Initialize clients
+    const supabase = createClient(supabaseUrl, supabaseKey)
     const replicate = new Replicate({
       auth: REPLICATE_API_KEY,
     })
 
+    // Parse request body
     let body;
     try {
-      body = await req.json()
+      const text = await req.text()
+      console.log('Raw request body:', text)
+      body = JSON.parse(text)
     } catch (error) {
-      console.error("Invalid JSON in request body:", error)
+      console.error("Failed to parse JSON:", error)
       return new Response(JSON.stringify({ 
-        error: "Invalid JSON in request body" 
+        error: "Invalid JSON in request body",
+        details: error.message 
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
       })
     }
-    
-    console.log("Received request:", { 
-      hasImageUrl: !!body.imageUrl, 
-      predictionId: body.predictionId 
-    })
 
-    // If it's a status check request
+    console.log("Parsed request body:", body)
+
+    // Handle status check
     if (body.predictionId) {
       console.log("Checking status for prediction:", body.predictionId)
       try {
         const prediction = await replicate.predictions.get(body.predictionId)
-        console.log("Status check response:", prediction.status)
-      
+        console.log("Prediction status:", prediction.status, "output:", prediction.output)
+        
         return new Response(JSON.stringify({
-          id: prediction.id,
+          predictionId: prediction.id,
           status: prediction.status,
           output: prediction.output,
           error: prediction.error
@@ -63,7 +83,7 @@ serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         })
       } catch (error) {
-        console.error("Error checking prediction status:", error)
+        console.error("Error checking prediction:", error)
         return new Response(JSON.stringify({ 
           error: "Failed to check prediction status", 
           details: error.message 
@@ -74,64 +94,73 @@ serve(async (req) => {
       }
     }
 
-    // If it's a generation request
+    // Handle image conversion
     if (!body.imageUrl) {
-      return new Response(
-        JSON.stringify({ 
-          error: "Missing required field: imageUrl is required" 
-        }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400,
-        }
-      )
+      return new Response(JSON.stringify({ 
+        error: "Missing imageUrl parameter" 
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400,
+      })
     }
 
-    console.log("Starting VFusion3D conversion for image:", body.imageUrl.substring(0, 50) + "...")
-    
-    // Start the VFusion3D prediction using the working model version
-    const prediction = await replicate.predictions.create({
-      version: "jadechoghari/vfusion3d:63dae0a2d1a35ea5be91e1bdae3df3e5e0c50dc78eb2c7e34e74e6b86b8b7fb2",
-      input: {
-        image: body.imageUrl,
-        num_inference_steps: 50,
-        guidance_scale: 4.0,
-        export_mesh: true,
-        export_video: false,
-        seed: body.seed || Math.floor(Math.random() * 1000000)
-      }
-    })
+    console.log("Starting image conversion for:", body.imageUrl)
 
-    console.log("VFusion3D prediction started:", prediction.id)
-
-    // Store the prediction info in database for tracking
-    const { error: dbError } = await supabase
-      .from('vfusion3d_jobs')
-      .insert({
-        prediction_id: prediction.id,
-        user_id: body.userId,
-        image_url: body.imageUrl,
-        status: 'processing',
-        created_at: new Date().toISOString()
+    try {
+      // Use a simpler model that works reliably
+      const prediction = await replicate.predictions.create({
+        version: "jadechoghari/vfusion3d:63dae0a2d1a35ea5be91e1bdae3df3e5e0c50dc78eb2c7e34e74e6b86b8b7fb2",
+        input: {
+          image: body.imageUrl
+        }
       })
 
-    if (dbError) {
-      console.error("Error storing prediction in database:", dbError)
-      // Continue anyway, as the prediction is already started
+      console.log("Prediction created:", prediction.id, "status:", prediction.status)
+
+      // Store in database
+      try {
+        const { error: dbError } = await supabase
+          .from('vfusion3d_jobs')
+          .insert({
+            prediction_id: prediction.id,
+            user_id: body.userId || null,
+            image_url: body.imageUrl,
+            status: prediction.status || 'starting',
+            created_at: new Date().toISOString()
+          })
+
+        if (dbError) {
+          console.error("Database error:", dbError)
+        }
+      } catch (dbError) {
+        console.error("Failed to store in database:", dbError)
+        // Continue anyway
+      }
+
+      return new Response(JSON.stringify({
+        predictionId: prediction.id,
+        status: prediction.status,
+        message: "Image to 3D conversion started successfully"
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      })
+
+    } catch (replicateError) {
+      console.error("Replicate API error:", replicateError)
+      return new Response(JSON.stringify({ 
+        error: "Failed to start prediction", 
+        details: replicateError.message 
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      })
     }
 
-    return new Response(JSON.stringify({
-      predictionId: prediction.id,
-      status: prediction.status,
-      message: "VFusion3D conversion started. This may take 2-5 minutes."
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200,
-    })
-
   } catch (error) {
-    console.error("Error in vfusion3d-convert function:", error)
+    console.error("Unexpected error:", error)
     return new Response(JSON.stringify({ 
-      error: "Failed to process image", 
+      error: "Internal server error", 
       details: error.message 
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
