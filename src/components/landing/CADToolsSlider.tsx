@@ -1,5 +1,6 @@
 
 import { useEffect, useState } from "react";
+import { ComprehensiveCADViewer } from "../three/ComprehensiveCADViewer";
 
 interface CADTool {
   name: string;
@@ -153,6 +154,29 @@ export function CADToolsSlider() {
                 }`}
               />
             ))}
+          </div>
+        </div>
+
+        {/* Demo CAD Preview */}
+        <div className="text-center space-y-8">
+          <div className="elegant-glass border border-white/10 rounded-2xl p-8 max-w-4xl mx-auto">
+            <div className="space-y-6">
+              <h3 className="text-2xl font-bold text-white matrix-text elegant-text-glow">
+                Experience Our 3D CAD Viewer
+              </h3>
+              <p className="text-white/70 leading-relaxed">
+                See how your CAD models will look with our advanced Three.js-powered viewer
+              </p>
+              
+              {/* Demo 3D Viewer */}
+              <div className="h-[400px] rounded-xl overflow-hidden border border-white/20">
+                <ComprehensiveCADViewer 
+                  fileUrl="https://threejs.org/examples/models/stl/ascii/slotted_disk.stl"
+                  fileName="Demo CAD Model"
+                  fileType="stl"
+                />
+              </div>
+            </div>
           </div>
         </div>
 
