@@ -74,6 +74,31 @@ serve(async (req) => {
         const prediction = await replicate.predictions.get(body.predictionId)
         console.log("Prediction status:", prediction.status, "output:", prediction.output)
         
+        // Update database with current status
+        if (prediction.status === 'succeeded' || prediction.status === 'failed') {
+          try {
+            const updateData: any = { 
+              status: prediction.status,
+              updated_at: new Date().toISOString()
+            };
+
+            if (prediction.status === 'succeeded' && prediction.output) {
+              updateData.result_url = prediction.output;
+            }
+
+            if (prediction.status === 'failed' && prediction.error) {
+              updateData.error_message = prediction.error;
+            }
+
+            await supabase
+              .from('vfusion3d_jobs')
+              .update(updateData)
+              .eq('prediction_id', prediction.id);
+          } catch (dbError) {
+            console.error("Failed to update database:", dbError)
+          }
+        }
+        
         return new Response(JSON.stringify({
           predictionId: prediction.id,
           status: prediction.status,
@@ -107,13 +132,13 @@ serve(async (req) => {
     console.log("Starting image conversion for:", body.imageUrl)
 
     try {
-      // Use TripoSR for reliable image to 3D conversion
+      // Use a simple image to 3D model (InstantMesh works well)
       const prediction = await replicate.predictions.create({
-        version: "stabilityai/triposr:4b93b45b1ac4e0ce5faab5c76b2e3d5a90bb7bb62b78ba93e53fd26ad0b4b65e",
+        version: "tencentarc/instantmesh:5ddd56c5583ad28b8db119261829ef875a875b3d9a51a0fd3e3b25f3c16ca4b2",
         input: {
           image: body.imageUrl,
-          do_remove_background: true,
-          foreground_ratio: 0.85
+          sample_steps: 75,
+          sample_seed: 42
         }
       })
 

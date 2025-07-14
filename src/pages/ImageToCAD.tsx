@@ -10,6 +10,8 @@ import { Upload, Image, Zap, Download, ArrowRight, AlertCircle, CheckCircle, Clo
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { VFusion3DService, type VFusion3DResponse } from "@/services/vfusion3d";
+import { removeBackground, loadImage } from "@/services/backgroundRemoval";
+import { Switch } from "@/components/ui/switch";
 
 const ImageToCAD = () => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
@@ -19,8 +21,51 @@ const ImageToCAD = () => {
   const [jobStatus, setJobStatus] = useState<string>('');
   const [resultUrl, setResultUrl] = useState<string | null>(null);
   const [processingProgress, setProcessingProgress] = useState(0);
+  const [removeBackgroundEnabled, setRemoveBackgroundEnabled] = useState(true);
   const { toast } = useToast();
   const { user } = useAuth();
+
+  // Test with a sample working image
+  const testSampleImage = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to test conversion.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+    setProcessingProgress(10);
+    
+    try {
+      // Use a known working sample image URL
+      const sampleImageUrl = "https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?w=400";
+      
+      const response = await VFusion3DService.convertImageTo3D(
+        new File([new Blob()], 'sample.jpg'), 
+        user.id
+      );
+      
+      setCurrentJob(response);
+      setJobStatus(response.status);
+      setProcessingProgress(20);
+      
+      toast({
+        title: "Sample conversion started!",
+        description: "Testing with sample image. This may take 2-5 minutes.",
+      });
+    } catch (error) {
+      setIsProcessing(false);
+      console.error('Error testing conversion:', error);
+      toast({
+        title: "Test failed",
+        description: error instanceof Error ? error.message : "An unexpected error occurred.",
+        variant: "destructive"
+      });
+    }
+  };
 
   // Poll job status every 10 seconds while processing
   useEffect(() => {
@@ -241,6 +286,17 @@ const ImageToCAD = () => {
                       Convert to 3D Model
                     </>
                   )}
+                </Button>
+
+                <Button
+                  onClick={testSampleImage}
+                  disabled={isProcessing}
+                  variant="secondary"
+                  className="w-full"
+                  size="lg"
+                >
+                  <Zap className="h-4 w-4 mr-2" />
+                  Test with Sample Image
                 </Button>
 
                 {resultUrl && !isProcessing && (
