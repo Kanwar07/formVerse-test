@@ -159,11 +159,11 @@ export function SignInForm() {
     <Card className="w-full max-w-md">
       <CardHeader>
         <div className="flex items-center justify-center mb-4">
-          <div className="relative h-8 w-8 mr-2">
+          <div className="relative h-16 w-16 mr-2">
             <img 
               src="/lovable-uploads/7ba397cf-e713-44e7-8854-a7fdf2ac3f49.png" 
               alt="FormVerse Logo" 
-              className="h-8 w-8"
+              className="h-16 w-16"
             />
           </div>
           <span className="font-semibold text-lg">

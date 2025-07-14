@@ -6,11 +6,11 @@ export function Footer() {
       <div className="container grid grid-cols-1 md:grid-cols-4 gap-8">
         <div className="space-y-4">
           <div className="flex items-center space-x-2">
-            <div className="relative h-8 w-8">
+            <div className="relative h-16 w-16">
               <img 
                 src="/lovable-uploads/7ba397cf-e713-44e7-8854-a7fdf2ac3f49.png" 
                 alt="FormVerse Logo" 
-                className="h-8 w-8"
+                className="h-16 w-16"
               />
             </div>
             <span className="font-semibold text-lg">

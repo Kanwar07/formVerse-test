@@ -68,11 +68,11 @@ const FormIQ = () => {
                   <div className="w-3/4 h-3/4 rounded-xl bg-gradient-to-br from-[hsl(var(--formiq-blue))] to-[hsl(var(--formiq-purple))] shadow-xl flex items-center justify-center">
                     <div className="flex flex-col items-center space-y-4">
                       <Brain className="w-20 h-20 text-white" />
-                      <div className="relative h-8 w-8">
+                      <div className="relative h-16 w-16">
                         <img 
                           src="/lovable-uploads/7ba397cf-e713-44e7-8854-a7fdf2ac3f49.png" 
                           alt="FormVerse Logo" 
-                          className="h-8 w-8"
+                          className="h-16 w-16"
                         />
                       </div>
                     </div>
