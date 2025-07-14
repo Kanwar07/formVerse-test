@@ -45,6 +45,8 @@ export class VFusion3DService {
         .from('model-images')
         .getPublicUrl(filePath);
 
+      console.log('Calling VFusion3D with image URL:', publicUrl);
+
       // Call the VFusion3D edge function for 3D conversion
       const { data, error } = await supabase.functions.invoke('vfusion3d-convert', {
         body: {
@@ -53,6 +55,8 @@ export class VFusion3DService {
           seed: Math.floor(Math.random() * 1000000)
         }
       });
+
+      console.log('VFusion3D response:', { data, error });
 
       if (error) {
         throw new Error(`VFusion3D conversion failed: ${error.message}`);
@@ -70,11 +74,15 @@ export class VFusion3DService {
    */
   static async checkJobStatus(predictionId: string): Promise<VFusion3DResponse> {
     try {
+      console.log('Checking status for prediction:', predictionId);
+      
       const { data, error } = await supabase.functions.invoke('vfusion3d-convert', {
         body: {
           predictionId: predictionId
         }
       });
+
+      console.log('Status check response:', { data, error });
 
       if (error) {
         throw new Error(`Failed to check status: ${error.message}`);
