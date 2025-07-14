@@ -1,26 +1,75 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Upload, Image, Zap, Download, ArrowRight } from "lucide-react";
+import { Upload, Image, Zap, Download, ArrowRight, AlertCircle, CheckCircle, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/AuthContext";
+import { VFusion3DService, type VFusion3DResponse } from "@/services/vfusion3d";
 
 const ImageToCAD = () => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isCompleted, setIsCompleted] = useState(false);
+  const [currentJob, setCurrentJob] = useState<VFusion3DResponse | null>(null);
+  const [jobStatus, setJobStatus] = useState<string>('');
+  const [resultUrl, setResultUrl] = useState<string | null>(null);
+  const [processingProgress, setProcessingProgress] = useState(0);
   const { toast } = useToast();
+  const { user } = useAuth();
+
+  // Poll job status every 10 seconds while processing
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (currentJob && isProcessing) {
+      interval = setInterval(async () => {
+        try {
+          const statusResponse = await VFusion3DService.checkJobStatus(currentJob.predictionId);
+          setJobStatus(statusResponse.status);
+          
+          if (statusResponse.status === 'succeeded') {
+            setIsProcessing(false);
+            setResultUrl(statusResponse.output?.[0] || null);
+            setProcessingProgress(100);
+            toast({
+              title: "3D model generated successfully!",
+              description: "Your CAD model is ready for download.",
+            });
+          } else if (statusResponse.status === 'failed') {
+            setIsProcessing(false);
+            toast({
+              title: "Conversion failed",
+              description: statusResponse.error || "An error occurred during processing.",
+              variant: "destructive"
+            });
+          } else if (statusResponse.status === 'processing') {
+            // Simulate progress (VFusion3D doesn't provide actual progress)
+            setProcessingProgress(prev => Math.min(prev + 5, 90));
+          }
+        } catch (error) {
+          console.error('Error checking job status:', error);
+        }
+      }, 10000); // Check every 10 seconds
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [currentJob, isProcessing, toast]);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       setSelectedImage(file);
-      setIsCompleted(false);
+      setCurrentJob(null);
+      setResultUrl(null);
+      setJobStatus('');
+      setProcessingProgress(0);
       const reader = new FileReader();
       reader.onload = (e) => {
         setPreviewUrl(e.target?.result as string);
@@ -39,24 +88,63 @@ const ImageToCAD = () => {
       return;
     }
 
-    setIsProcessing(true);
-    
-    // Simulate processing time
-    setTimeout(() => {
-      setIsProcessing(false);
-      setIsCompleted(true);
+    if (!user) {
       toast({
-        title: "CAD conversion completed!",
-        description: "Your 3D model has been generated successfully.",
+        title: "Authentication required",
+        description: "Please sign in to convert images to 3D models.",
+        variant: "destructive"
       });
-    }, 4000);
+      return;
+    }
+
+    setIsProcessing(true);
+    setProcessingProgress(10);
+    
+    try {
+      const response = await VFusion3DService.convertImageTo3D(selectedImage, user.id);
+      setCurrentJob(response);
+      setJobStatus(response.status);
+      setProcessingProgress(20);
+      
+      toast({
+        title: "Conversion started!",
+        description: "Your image is being converted to a 3D model. This may take 2-5 minutes.",
+      });
+    } catch (error) {
+      setIsProcessing(false);
+      console.error('Error starting conversion:', error);
+      toast({
+        title: "Conversion failed",
+        description: error instanceof Error ? error.message : "An unexpected error occurred.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleDownload = () => {
-    toast({
-      title: "Download started",
-      description: "Your CAD file is being prepared for download.",
-    });
+  const handleDownload = async () => {
+    if (!resultUrl) {
+      toast({
+        title: "No model available",
+        description: "Please wait for the conversion to complete.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      await VFusion3DService.downloadModel(resultUrl, `formverse_3d_model_${Date.now()}.obj`);
+      toast({
+        title: "Download started",
+        description: "Your 3D model file is being downloaded.",
+      });
+    } catch (error) {
+      console.error('Error downloading model:', error);
+      toast({
+        title: "Download failed",
+        description: "There was an error downloading your model.",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
@@ -106,6 +194,36 @@ const ImageToCAD = () => {
                   </div>
                 )}
                 
+                
+                {/* Status and Progress */}
+                {isProcessing && (
+                  <div className="mt-4 space-y-3">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Clock className="h-4 w-4 animate-spin" />
+                      <span>Status: {jobStatus || 'Starting conversion...'}</span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-2">
+                      <div 
+                        className="bg-primary h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${processingProgress}%` }}
+                      ></div>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      This process typically takes 2-5 minutes. Please keep this page open.
+                    </p>
+                  </div>
+                )}
+
+                {/* Success State */}
+                {resultUrl && !isProcessing && (
+                  <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                    <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
+                      <CheckCircle className="h-4 w-4" />
+                      <span className="text-sm font-medium">3D Model Generated Successfully!</span>
+                    </div>
+                  </div>
+                )}
+                
                 <Button
                   onClick={handleConvertToCAD}
                   disabled={!selectedImage || isProcessing}
@@ -115,17 +233,17 @@ const ImageToCAD = () => {
                   {isProcessing ? (
                     <>
                       <Zap className="h-4 w-4 mr-2 animate-spin" />
-                      Converting to CAD...
+                      Converting to 3D Model...
                     </>
                   ) : (
                     <>
                       <Zap className="h-4 w-4 mr-2" />
-                      Convert to CAD
+                      Convert to 3D Model
                     </>
                   )}
                 </Button>
 
-                {isCompleted && (
+                {resultUrl && !isProcessing && (
                   <Button
                     onClick={handleDownload}
                     variant="outline"
@@ -133,7 +251,7 @@ const ImageToCAD = () => {
                     size="lg"
                   >
                     <Download className="h-4 w-4 mr-2" />
-                    Download CAD File
+                    Download 3D Model (OBJ)
                   </Button>
                 )}
               </CardContent>
@@ -161,9 +279,9 @@ const ImageToCAD = () => {
                     2
                   </div>
                   <div>
-                    <h4 className="font-medium">AI Analysis</h4>
+                    <h4 className="font-medium">VFusion3D AI Processing</h4>
                     <p className="text-sm text-muted-foreground">
-                      Our AI analyzes the image to understand geometry, dimensions, and features
+                      Advanced VFusion3D neural network analyzes your image and reconstructs 3D geometry
                     </p>
                   </div>
                 </div>
@@ -200,7 +318,7 @@ const ImageToCAD = () => {
                     <span className="font-medium">Supported Formats</span>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    JPG, PNG, WEBP • Export as STL, OBJ, STEP, IGES
+                    JPG, PNG, WEBP • Export as OBJ, STL, PLY formats
                   </p>
                 </CardContent>
               </Card>

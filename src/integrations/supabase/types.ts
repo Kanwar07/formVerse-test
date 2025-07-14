@@ -578,6 +578,42 @@ export type Database = {
           },
         ]
       }
+      vfusion3d_jobs: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          image_url: string
+          prediction_id: string
+          result_url: string | null
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          image_url: string
+          prediction_id: string
+          result_url?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          image_url?: string
+          prediction_id?: string
+          result_url?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       sales_analytics: {

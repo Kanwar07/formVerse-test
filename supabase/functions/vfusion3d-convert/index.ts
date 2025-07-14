@@ -65,13 +65,13 @@ serve(async (req) => {
 
     console.log("Starting VFusion3D conversion for image:", body.imageUrl.substring(0, 50) + "...")
     
-    // Start the VFusion3D prediction
+    // Start the VFusion3D prediction using the correct model
     const prediction = await replicate.predictions.create({
-      version: "c7ad7def7f1b1b7a6dcf7b0ccecfef1ec7e4a1b8b6e5e3e0f1e8e9b5a6e3b0e1", // VFusion3D model version
+      version: "63dae0a2d1a35ea5be91e1bdae3df3e5e0c50dc78eb2c7e34e74e6b86b8b7fb2", // VFusion3D model
       input: {
-        image_path: body.imageUrl,
-        guidance_scale: 3.0,
+        image: body.imageUrl,
         num_inference_steps: 45,
+        guidance_scale: 3.0,
         seed: body.seed || Math.floor(Math.random() * 1000000)
       }
     })
