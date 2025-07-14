@@ -3,9 +3,9 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 import Replicate from "https://esm.sh/replicate@0.25.2"
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
 serve(async (req) => {
@@ -107,11 +107,13 @@ serve(async (req) => {
     console.log("Starting image conversion for:", body.imageUrl)
 
     try {
-      // Use a simpler model that works reliably
+      // Use TripoSR for reliable image to 3D conversion
       const prediction = await replicate.predictions.create({
-        version: "jadechoghari/vfusion3d:63dae0a2d1a35ea5be91e1bdae3df3e5e0c50dc78eb2c7e34e74e6b86b8b7fb2",
+        version: "stabilityai/triposr:4b93b45b1ac4e0ce5faab5c76b2e3d5a90bb7bb62b78ba93e53fd26ad0b4b65e",
         input: {
-          image: body.imageUrl
+          image: body.imageUrl,
+          do_remove_background: true,
+          foreground_ratio: 0.85
         }
       })
 
