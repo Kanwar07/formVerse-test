@@ -67,13 +67,13 @@ export const FileUploader = ({
     console.log('File info extracted:', extractedInfo);
     
     // Validate file type
-    const validTypes = ['.stl', '.obj', '.step'];
+    const validTypes = ['.stl', '.obj', '.step', '.gltf', '.glb', '.iges', '.igs', '.stp'];
     const fileExt = `.${extractedInfo.extension}`;
     
     if (!validTypes.includes(fileExt)) {
       toast({
         title: "Invalid file format",
-        description: "Please upload an STL, OBJ, or STEP file.",
+        description: "Please upload a CAD model file (STL, OBJ, GLTF, GLB, STEP, IGES).",
         variant: "destructive"
       });
       return;
@@ -186,13 +186,13 @@ export const FileUploader = ({
         <UploadIcon className="h-12 w-12 text-muted-foreground mb-4" />
         <h3 className="font-medium mb-2">Upload your 3D model</h3>
         <p className="text-sm text-muted-foreground mb-4">
-          Supported formats: STL, OBJ, STEP (Max 50MB)
+          Supported formats: STL, OBJ, GLTF, GLB, STEP, IGES (Max 50MB)
         </p>
         <Input 
           type="file" 
           className="hidden" 
           id="file-upload" 
-          accept=".stl,.obj,.step" 
+          accept=".stl,.obj,.step,.gltf,.glb,.iges,.igs,.stp" 
           onChange={handleFileChange}
           disabled={uploading}
         />

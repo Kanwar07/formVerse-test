@@ -5,8 +5,9 @@ import { Eye, Box, Image, Download, Lock, Info, Zap } from 'lucide-react';
 import { ModelViewer3D } from './ModelViewer3D';
 import { ForgeViewer } from './ForgeViewer';
 import { WatermarkCanvas } from './WatermarkCanvas';
+import { ComprehensiveCADViewer } from '../three/ComprehensiveCADViewer';
 
-type PreviewMode = 'image' | '3d' | 'forge';
+type PreviewMode = 'image' | '3d' | 'forge' | 'advanced';
 
 interface PreviewSelectorProps {
   modelName: string;
@@ -61,6 +62,12 @@ export const PreviewSelector = ({
     }
   };
 
+  const handleAdvancedPreview = () => {
+    if (canView3D && hasFileAccess) {
+      setPreviewMode('advanced');
+    }
+  };
+
   const handleModelInfo = (info: any) => {
     setModelInfo(info);
     console.log('Model information received:', info);
@@ -103,6 +110,19 @@ export const PreviewSelector = ({
             <Badge variant="secondary" className="ml-2 text-xs">Pro</Badge>
             {!canView3D && <Lock className="h-3 w-3 ml-1" />}
           </Button>
+
+          <Button
+            variant={previewMode === 'advanced' ? 'default' : 'outline'}
+            size="sm"
+            onClick={handleAdvancedPreview}
+            disabled={!canView3D || !hasFileAccess}
+            className="relative"
+          >
+            <Box className="h-4 w-4 mr-2" />
+            Advanced 3D
+            <Badge variant="default" className="ml-2 text-xs bg-primary">New</Badge>
+            {!canView3D && <Lock className="h-3 w-3 ml-1" />}
+          </Button>
         </div>
 
         <div className="flex gap-2">
@@ -133,11 +153,12 @@ export const PreviewSelector = ({
         {!isOwner && !isPurchased && <Badge variant="destructive">Preview Mode</Badge>}
         {previewMode === '3d' && canView3D && <Badge variant="default">Basic 3D View</Badge>}
         {previewMode === 'forge' && canView3D && <Badge variant="default" className="bg-orange-500">Forge CAD Viewer</Badge>}
+        {previewMode === 'advanced' && canView3D && <Badge variant="default" className="bg-primary">Advanced CAD Viewer</Badge>}
         {modelInfo && <Badge variant="outline">{modelInfo.fileType.toUpperCase()}</Badge>}
       </div>
 
       {/* Model Information Display */}
-      {modelInfo && (previewMode === '3d' || previewMode === 'forge') && (
+      {modelInfo && (previewMode === '3d' || previewMode === 'forge' || previewMode === 'advanced') && (
         <div className="bg-muted/50 rounded-lg p-3 text-sm">
           <h4 className="font-medium mb-2 flex items-center">
             <Info className="h-4 w-4 mr-2" />
@@ -147,7 +168,7 @@ export const PreviewSelector = ({
             <div><strong>File Name:</strong> {modelInfo.fileName}</div>
             <div><strong>File Size:</strong> {modelInfo.fileSizeFormatted}</div>
             <div><strong>Format:</strong> {modelInfo.fileType.toUpperCase()}</div>
-            <div><strong>Viewer:</strong> {previewMode === 'forge' ? 'Autodesk Forge' : 'Three.js'}</div>
+            <div><strong>Viewer:</strong> {previewMode === 'forge' ? 'Autodesk Forge' : previewMode === 'advanced' ? 'Advanced CAD Viewer' : 'Three.js'}</div>
           </div>
         </div>
       )}
@@ -219,6 +240,26 @@ export const PreviewSelector = ({
             </div>
           </div>
         )
+      ) : previewMode === 'advanced' ? (
+        /* Advanced CAD Viewer */
+        hasFileAccess && canView3D ? (
+          <ComprehensiveCADViewer
+            fileUrl={fileUrl!}
+            fileName={fileName!}
+            fileType={fileType!}
+            onClose={() => setPreviewMode('image')}
+          />
+        ) : (
+          <div className="border rounded-lg aspect-square flex items-center justify-center bg-muted/50">
+            <div className="text-center">
+              <Lock className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <p className="text-muted-foreground font-medium">Advanced CAD Viewer Locked</p>
+              <p className="text-sm text-muted-foreground">
+                {!canView3D ? 'Purchase required for advanced CAD analysis' : 'Model file not available'}
+              </p>
+            </div>
+          </div>
+        )
       ) : (
         /* Basic 3D Viewer */
         hasFileAccess && canView3D ? (
@@ -264,11 +305,13 @@ export const PreviewSelector = ({
           ? (showWatermark && !isOwner && !isPurchased 
               ? 'Preview mode - watermarked for protection' 
               : 'Full quality preview')
-          : previewMode === 'forge'
-            ? 'Professional CAD viewer with industry-standard accuracy'
-            : modelInfo 
-              ? `Basic 3D viewer - ${modelInfo.fileSizeFormatted} ${modelInfo.fileType.toUpperCase()} file`
-              : 'Basic 3D model viewer - interact with the model above'
+           : previewMode === 'forge'
+             ? 'Professional CAD viewer with industry-standard accuracy'
+             : previewMode === 'advanced'
+               ? 'Advanced CAD viewer with automatic analysis and issue detection'
+               : modelInfo 
+                 ? `Basic 3D viewer - ${modelInfo.fileSizeFormatted} ${modelInfo.fileType.toUpperCase()} file`
+                 : 'Basic 3D model viewer - interact with the model above'
         }
       </p>
     </div>
