@@ -7,22 +7,11 @@ export function Footer() {
         <div className="space-y-4">
           <div className="flex items-center space-x-2">
             <div className="relative h-8 w-8">
-              {/* Updated FormVerse logo - 3D cube with blue to purple gradient */}
-              <svg width="32" height="32" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M20 25L50 5L80 25V75L50 95L20 75V25Z" fill="url(#logo-gradient-footer)" />
-                <path d="M50 50V95L20 75V25L50 5" stroke="url(#logo-stroke-footer)" strokeWidth="3" fill="none" />
-                <path d="M50 50H80V75L50 95" stroke="url(#logo-stroke-footer)" strokeWidth="3" fill="none" />
-                <defs>
-                  <linearGradient id="logo-gradient-footer" x1="20" y1="25" x2="80" y2="75" gradientUnits="userSpaceOnUse">
-                    <stop offset="0%" stopColor="#1EAEDB" />
-                    <stop offset="100%" stopColor="#8B5CF6" />
-                  </linearGradient>
-                  <linearGradient id="logo-stroke-footer" x1="20" y1="25" x2="80" y2="75" gradientUnits="userSpaceOnUse">
-                    <stop offset="0%" stopColor="#1EAEDB" />
-                    <stop offset="100%" stopColor="#8B5CF6" />
-                  </linearGradient>
-                </defs>
-              </svg>
+              <img 
+                src="/lovable-uploads/7ba397cf-e713-44e7-8854-a7fdf2ac3f49.png" 
+                alt="FormVerse Logo" 
+                className="h-8 w-8"
+              />
             </div>
             <span className="font-semibold text-lg">
               <span className="text-foreground">FORM</span>
