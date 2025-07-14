@@ -1,166 +1,12 @@
-
-import { Suspense, useRef, useState, useEffect } from 'react';
-import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber';
-import { OrbitControls, Environment, Center } from '@react-three/drei';
-import { STLLoader } from 'three-stdlib';
-import { OBJLoader } from 'three-stdlib';
-import * as THREE from 'three';
+import { useState, Suspense } from 'react';
+import { Canvas } from '@react-three/fiber';
+import { OrbitControls, Environment } from '@react-three/drei';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Loader2, RotateCcw, Info, AlertCircle } from 'lucide-react';
-
-interface Model3DProps {
-  fileUrl: string;
-  fileType: string;
-  onGeometryLoaded?: (geometry: THREE.BufferGeometry) => void;
-  onLoadError?: (error: string) => void;
-}
-
-const Model3D = ({ fileUrl, fileType, onGeometryLoaded, onLoadError }: Model3DProps) => {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const [geometry, setGeometry] = useState<THREE.BufferGeometry | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  
-  console.log('Model3D: Starting to load', fileUrl, fileType);
-  
-  useEffect(() => {
-    const loadModel = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        // Verify file accessibility first
-        const response = await fetch(fileUrl, { method: 'HEAD' });
-        if (!response.ok) {
-          throw new Error(`File not accessible: ${response.status}`);
-        }
-        
-        console.log('Model3D: File is accessible, loading geometry...');
-        
-        let loadedGeometry: THREE.BufferGeometry;
-        
-        if (fileType.toLowerCase().includes('stl') || fileUrl.toLowerCase().includes('.stl')) {
-          console.log('Model3D: Loading STL file');
-          const loader = new STLLoader();
-          loadedGeometry = await new Promise<THREE.BufferGeometry>((resolve, reject) => {
-            loader.load(
-              fileUrl,
-              (geometry) => {
-                console.log('Model3D: STL loaded successfully', geometry);
-                resolve(geometry);
-              },
-              (progress) => {
-                console.log('Model3D: Loading progress', progress);
-              },
-              (error) => {
-                console.error('Model3D: STL loading error', error);
-                reject(error);
-              }
-            );
-          });
-        } else if (fileType.toLowerCase().includes('obj') || fileUrl.toLowerCase().includes('.obj')) {
-          console.log('Model3D: Loading OBJ file');
-          const loader = new OBJLoader();
-          const obj = await new Promise<THREE.Group>((resolve, reject) => {
-            loader.load(
-              fileUrl,
-              (object) => {
-                console.log('Model3D: OBJ loaded successfully', object);
-                resolve(object);
-              },
-              (progress) => {
-                console.log('Model3D: Loading progress', progress);
-              },
-              (error) => {
-                console.error('Model3D: OBJ loading error', error);
-                reject(error);
-              }
-            );
-          });
-          
-          const mesh = obj.children.find(child => child instanceof THREE.Mesh) as THREE.Mesh;
-          if (!mesh || !mesh.geometry) {
-            throw new Error('No valid geometry found in OBJ file');
-          }
-          loadedGeometry = mesh.geometry;
-        } else {
-          throw new Error(`Unsupported file format: ${fileType}`);
-        }
-        
-        // Process the geometry
-        loadedGeometry.computeBoundingBox();
-        loadedGeometry.computeVertexNormals();
-        
-        if (loadedGeometry.boundingBox) {
-          const center = new THREE.Vector3();
-          loadedGeometry.boundingBox.getCenter(center);
-          loadedGeometry.translate(-center.x, -center.y, -center.z);
-          
-          const size = new THREE.Vector3();
-          loadedGeometry.boundingBox.getSize(size);
-          const maxDimension = Math.max(size.x, size.y, size.z);
-          
-          if (maxDimension > 0) {
-            const scale = 2 / maxDimension;
-            loadedGeometry.scale(scale, scale, scale);
-          }
-          
-          console.log('Model3D: Geometry processed successfully', {
-            vertices: loadedGeometry.attributes.position?.count,
-            size: size,
-            maxDimension
-          });
-        }
-        
-        setGeometry(loadedGeometry);
-        onGeometryLoaded?.(loadedGeometry);
-        setLoading(false);
-        
-      } catch (error) {
-        console.error('Model3D: Failed to load model', error);
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-        setError(errorMessage);
-        onLoadError?.(errorMessage);
-        setLoading(false);
-      }
-    };
-    
-    if (fileUrl) {
-      loadModel();
-    }
-  }, [fileUrl, fileType, onGeometryLoaded, onLoadError]);
-
-  if (loading) {
-    return (
-      <mesh>
-        <boxGeometry args={[0.1, 0.1, 0.1]} />
-        <meshStandardMaterial color="#888888" transparent opacity={0.3} />
-      </mesh>
-    );
-  }
-
-  if (error || !geometry) {
-    return (
-      <mesh>
-        <boxGeometry args={[1, 1, 1]} />
-        <meshStandardMaterial color="#ff4444" />
-      </mesh>
-    );
-  }
-
-  return (
-    <Center>
-      <mesh ref={meshRef} geometry={geometry}>
-        <meshStandardMaterial 
-          color="#666666" 
-          metalness={0.1}
-          roughness={0.3}
-        />
-      </mesh>
-    </Center>
-  );
-};
+import { Loader2, RotateCcw, AlertCircle } from 'lucide-react';
+import { Model3DRenderer } from './Model3DRenderer';
+import { LoadingIndicator3D } from './LoadingIndicator3D';
+import { CADAnalysisResult } from './CADAnalyzer';
 
 interface ModelViewer3DProps {
   fileUrl: string;
@@ -175,24 +21,18 @@ export const ModelViewer3D = ({ fileUrl, fileName, fileType, onClose, onModelInf
   const [error, setError] = useState<string | null>(null);
   const [modelInfo, setModelInfo] = useState<any>(null);
 
-  const handleGeometryLoaded = (geometry: THREE.BufferGeometry) => {
-    console.log('ModelViewer3D: Geometry loaded successfully');
+  const handleGeometryLoaded = (analysis: CADAnalysisResult) => {
+    console.log('ModelViewer3D: Analysis completed successfully');
     
-    const vertices = geometry.attributes.position ? geometry.attributes.position.count : 0;
-    const faces = geometry.index ? geometry.index.count / 3 : vertices / 3;
-    
-    geometry.computeBoundingBox();
-    const boundingBox = geometry.boundingBox;
-    const size = boundingBox ? new THREE.Vector3() : new THREE.Vector3();
-    if (boundingBox) {
-      boundingBox.getSize(size);
-    }
+    const vertices = analysis.vertices;
+    const faces = analysis.faces;
+    const size = analysis.scale;
     
     const info = {
       fileName,
       fileType: fileType.toUpperCase(),
       vertices: vertices.toLocaleString(),
-      faces: Math.floor(faces).toLocaleString(),
+      faces: faces.toLocaleString(),
       dimensions: `${size.x.toFixed(2)} × ${size.y.toFixed(2)} × ${size.z.toFixed(2)}`,
       isValid: vertices > 0 && faces > 0
     };
@@ -226,10 +66,6 @@ export const ModelViewer3D = ({ fileUrl, fileName, fileType, onClose, onModelInf
 
         {modelInfo && (
           <div className="absolute bottom-4 right-4 z-10 bg-background/95 backdrop-blur rounded-md p-3 text-xs max-w-xs">
-            <div className="flex items-center mb-2">
-              <Info className="h-4 w-4 mr-2" />
-              <span className="font-medium">Model Info</span>
-            </div>
             <div className="space-y-1">
               <div><strong>Format:</strong> {modelInfo.fileType}</div>
               <div><strong>Vertices:</strong> {modelInfo.vertices}</div>
@@ -273,16 +109,16 @@ export const ModelViewer3D = ({ fileUrl, fileName, fileType, onClose, onModelInf
             gl.setClearColor('#f8f9fa');
           }}
         >
-          <Suspense fallback={null}>
+          <Suspense fallback={<LoadingIndicator3D />}>
             <Environment preset="studio" />
             <ambientLight intensity={0.6} />
             <directionalLight position={[10, 10, 5]} intensity={0.8} />
             <directionalLight position={[-10, -10, -5]} intensity={0.4} />
             
-            <Model3D 
+            <Model3DRenderer 
               fileUrl={fileUrl} 
               fileType={fileType}
-              onGeometryLoaded={handleGeometryLoaded}
+              onAnalysisComplete={handleGeometryLoaded}
               onLoadError={handleLoadError}
             />
             
