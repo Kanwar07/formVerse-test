@@ -44,6 +44,124 @@ export type Database = {
         }
         Relationships: []
       }
+      creator_onboarding: {
+        Row: {
+          cad_software_skills: Json | null
+          collaboration_platforms: string[] | null
+          commercial_project_experience: boolean | null
+          created_at: string | null
+          customer_service_approach: string | null
+          design_categories:
+            | Database["public"]["Enums"]["design_category"][]
+            | null
+          design_complexity_level: string[] | null
+          expected_upload_frequency: string | null
+          file_formats: string[] | null
+          id: string
+          industry_focus: Database["public"]["Enums"]["industry_focus"][] | null
+          ip_understanding_level: number | null
+          manufacturing_processes:
+            | Database["public"]["Enums"]["manufacturing_process"][]
+            | null
+          onboarding_completed: boolean | null
+          onboarding_step: number | null
+          portfolio_samples: Json | null
+          pricing_strategy_experience: boolean | null
+          primary_goals: string[] | null
+          printing_experience: Json | null
+          quality_control_knowledge: string[] | null
+          rendering_software: string[] | null
+          revenue_expectations: string | null
+          revision_willingness: number | null
+          simulation_tools: string[] | null
+          standards_compliance: string[] | null
+          target_audience: string[] | null
+          team_collaboration_experience: boolean | null
+          total_experience_years: number | null
+          updated_at: string | null
+          user_id: string
+          user_role: Database["public"]["Enums"]["creator_role"]
+        }
+        Insert: {
+          cad_software_skills?: Json | null
+          collaboration_platforms?: string[] | null
+          commercial_project_experience?: boolean | null
+          created_at?: string | null
+          customer_service_approach?: string | null
+          design_categories?:
+            | Database["public"]["Enums"]["design_category"][]
+            | null
+          design_complexity_level?: string[] | null
+          expected_upload_frequency?: string | null
+          file_formats?: string[] | null
+          id?: string
+          industry_focus?:
+            | Database["public"]["Enums"]["industry_focus"][]
+            | null
+          ip_understanding_level?: number | null
+          manufacturing_processes?:
+            | Database["public"]["Enums"]["manufacturing_process"][]
+            | null
+          onboarding_completed?: boolean | null
+          onboarding_step?: number | null
+          portfolio_samples?: Json | null
+          pricing_strategy_experience?: boolean | null
+          primary_goals?: string[] | null
+          printing_experience?: Json | null
+          quality_control_knowledge?: string[] | null
+          rendering_software?: string[] | null
+          revenue_expectations?: string | null
+          revision_willingness?: number | null
+          simulation_tools?: string[] | null
+          standards_compliance?: string[] | null
+          target_audience?: string[] | null
+          team_collaboration_experience?: boolean | null
+          total_experience_years?: number | null
+          updated_at?: string | null
+          user_id: string
+          user_role: Database["public"]["Enums"]["creator_role"]
+        }
+        Update: {
+          cad_software_skills?: Json | null
+          collaboration_platforms?: string[] | null
+          commercial_project_experience?: boolean | null
+          created_at?: string | null
+          customer_service_approach?: string | null
+          design_categories?:
+            | Database["public"]["Enums"]["design_category"][]
+            | null
+          design_complexity_level?: string[] | null
+          expected_upload_frequency?: string | null
+          file_formats?: string[] | null
+          id?: string
+          industry_focus?:
+            | Database["public"]["Enums"]["industry_focus"][]
+            | null
+          ip_understanding_level?: number | null
+          manufacturing_processes?:
+            | Database["public"]["Enums"]["manufacturing_process"][]
+            | null
+          onboarding_completed?: boolean | null
+          onboarding_step?: number | null
+          portfolio_samples?: Json | null
+          pricing_strategy_experience?: boolean | null
+          primary_goals?: string[] | null
+          printing_experience?: Json | null
+          quality_control_knowledge?: string[] | null
+          rendering_software?: string[] | null
+          revenue_expectations?: string | null
+          revision_willingness?: number | null
+          simulation_tools?: string[] | null
+          standards_compliance?: string[] | null
+          target_audience?: string[] | null
+          team_collaboration_experience?: boolean | null
+          total_experience_years?: number | null
+          updated_at?: string | null
+          user_id?: string
+          user_role?: Database["public"]["Enums"]["creator_role"]
+        }
+        Relationships: []
+      }
       formiq_analyses: {
         Row: {
           created_at: string | null
@@ -643,7 +761,60 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      cad_software:
+        | "solidworks"
+        | "autocad"
+        | "fusion360"
+        | "inventor"
+        | "catia"
+        | "creo"
+        | "rhino"
+        | "sketchup"
+        | "blender"
+        | "onshape"
+        | "freecad"
+        | "tinkercad"
+        | "other"
+      creator_role:
+        | "professional_designer"
+        | "freelancer"
+        | "student"
+        | "hobbyist"
+        | "entrepreneur"
+        | "other"
+      design_category:
+        | "functional_parts"
+        | "decorative_items"
+        | "prototypes"
+        | "replacement_parts"
+        | "custom_components"
+        | "assemblies"
+        | "tools_fixtures"
+      industry_focus:
+        | "mechanical_engineering"
+        | "automotive"
+        | "aerospace"
+        | "architecture"
+        | "product_design"
+        | "medical_devices"
+        | "electronics"
+        | "jewelry_design"
+        | "toys_games"
+        | "industrial_equipment"
+        | "consumer_products"
+        | "other"
+      manufacturing_process:
+        | "fdm_fff"
+        | "sla_resin"
+        | "sls"
+        | "metal_printing"
+        | "multi_material"
+        | "cnc_machining"
+        | "injection_molding"
+        | "sheet_metal"
+        | "casting_forging"
+        | "other"
+      proficiency_level: "beginner" | "intermediate" | "advanced" | "expert"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -770,6 +941,66 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      cad_software: [
+        "solidworks",
+        "autocad",
+        "fusion360",
+        "inventor",
+        "catia",
+        "creo",
+        "rhino",
+        "sketchup",
+        "blender",
+        "onshape",
+        "freecad",
+        "tinkercad",
+        "other",
+      ],
+      creator_role: [
+        "professional_designer",
+        "freelancer",
+        "student",
+        "hobbyist",
+        "entrepreneur",
+        "other",
+      ],
+      design_category: [
+        "functional_parts",
+        "decorative_items",
+        "prototypes",
+        "replacement_parts",
+        "custom_components",
+        "assemblies",
+        "tools_fixtures",
+      ],
+      industry_focus: [
+        "mechanical_engineering",
+        "automotive",
+        "aerospace",
+        "architecture",
+        "product_design",
+        "medical_devices",
+        "electronics",
+        "jewelry_design",
+        "toys_games",
+        "industrial_equipment",
+        "consumer_products",
+        "other",
+      ],
+      manufacturing_process: [
+        "fdm_fff",
+        "sla_resin",
+        "sls",
+        "metal_printing",
+        "multi_material",
+        "cnc_machining",
+        "injection_molding",
+        "sheet_metal",
+        "casting_forging",
+        "other",
+      ],
+      proficiency_level: ["beginner", "intermediate", "advanced", "expert"],
+    },
   },
 } as const
