@@ -45,17 +45,16 @@ export class VFusion3DService {
         .from('model-images')
         .getPublicUrl(filePath);
 
-      // Call the VFusion3D edge function
+      // Call the TripoSR edge function for 3D conversion
       const { data, error } = await supabase.functions.invoke('vfusion3d-convert', {
         body: {
           imageUrl: publicUrl,
-          userId: userId,
-          seed: Math.floor(Math.random() * 1000000)
+          userId: userId
         }
       });
 
       if (error) {
-        throw new Error(`VFusion3D conversion failed: ${error.message}`);
+        throw new Error(`TripoSR conversion failed: ${error.message}`);
       }
 
       return data;

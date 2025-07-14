@@ -63,20 +63,19 @@ serve(async (req) => {
       )
     }
 
-    console.log("Starting VFusion3D conversion for image:", body.imageUrl.substring(0, 50) + "...")
+    console.log("Starting TripoSR 3D conversion for image:", body.imageUrl.substring(0, 50) + "...")
     
-    // Start the VFusion3D prediction using the correct model
+    // Start the TripoSR prediction using the correct model
     const prediction = await replicate.predictions.create({
-      version: "63dae0a2d1a35ea5be91e1bdae3df3e5e0c50dc78eb2c7e34e74e6b86b8b7fb2", // VFusion3D model
+      version: "e0d3fe8abce3ba86497ea3530d9eae59af7b2231b6c82bedfc32b0732d35ec3a", // TripoSR model latest version
       input: {
-        image: body.imageUrl,
-        num_inference_steps: 45,
-        guidance_scale: 3.0,
-        seed: body.seed || Math.floor(Math.random() * 1000000)
+        image_path: body.imageUrl,
+        do_remove_background: true,
+        foreground_ratio: 0.85
       }
     })
 
-    console.log("VFusion3D prediction started:", prediction.id)
+    console.log("TripoSR prediction started:", prediction.id)
 
     // Store the prediction info in database for tracking
     const { error: dbError } = await supabase
@@ -97,7 +96,7 @@ serve(async (req) => {
     return new Response(JSON.stringify({
       predictionId: prediction.id,
       status: prediction.status,
-      message: "VFusion3D conversion started. This may take 2-5 minutes."
+      message: "TripoSR 3D conversion started. This may take 1-2 minutes."
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
