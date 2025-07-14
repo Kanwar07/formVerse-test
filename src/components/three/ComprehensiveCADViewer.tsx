@@ -246,7 +246,6 @@ export const ComprehensiveCADViewer = ({
             <GizmoHelper alignment="bottom-right" margin={[80, 80]}>
               <GizmoViewport 
                 axisColors={['#ff0000', '#00ff00', '#0000ff']} 
-                labelColor="white"
               />
             </GizmoHelper>
           </Suspense>
