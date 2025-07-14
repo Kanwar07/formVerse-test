@@ -54,7 +54,7 @@ export function Navbar() {
             >
               <div className="relative h-16 w-16">
                 <img 
-                  src="/lovable-uploads/7ba397cf-e713-44e7-8854-a7fdf2ac3f49.png" 
+                  src="/lovable-uploads/02a4ca94-e61c-4f7c-9ef0-942b8abb8bb3.png" 
                   alt="FormVerse Logo" 
                   className="h-16 w-16 elegant-glow-effect group-hover:animate-glow-pulse transition-all duration-500"
                 />

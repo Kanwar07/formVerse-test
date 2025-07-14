@@ -22,9 +22,9 @@ export function AboutSection() {
           <div className="relative">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 rounded-3xl transform rotate-3"></div>
             <img 
-              src="https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?auto=format&fit=crop&q=80&w=2072&ixlib=rb-4.0.3" 
+              src="/lovable-uploads/02a4ca94-e61c-4f7c-9ef0-942b8abb8bb3.png" 
               alt="About FormVerse" 
-              className="relative z-10 rounded-3xl shadow-xl"
+              className="relative z-10 rounded-3xl shadow-xl bg-white p-8"
             />
           </div>
         </div>
