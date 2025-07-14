@@ -32,22 +32,30 @@ export const Model3DRenderer = ({
   useEffect(() => {
     const loadModel = async () => {
       try {
+        console.log('Model3DRenderer: Starting to load model', { fileUrl, fileType });
         setLoading(true);
         
         // Load the model
+        console.log('Model3DRenderer: About to call CADModelLoader.loadModel');
         const { geometry: loadedGeometry, materials: loadedMaterials } = await CADModelLoader.loadModel(fileUrl, fileType);
+        console.log('Model3DRenderer: Model loaded successfully', { geometry: loadedGeometry, materials: loadedMaterials });
         
         // Process the geometry
+        console.log('Model3DRenderer: Processing geometry');
         const processedGeometry = CADAnalyzer.processGeometry(loadedGeometry);
+        console.log('Model3DRenderer: Geometry processed');
         
         // Analyze the geometry
+        console.log('Model3DRenderer: Analyzing geometry');
         const analysisResult = CADAnalyzer.analyzeGeometry(processedGeometry);
+        console.log('Model3DRenderer: Analysis complete', analysisResult);
         setAnalysis(analysisResult);
         onAnalysisComplete?.(analysisResult);
 
         setGeometry(processedGeometry);
         setMaterials(loadedMaterials);
         setLoading(false);
+        console.log('Model3DRenderer: Model loading complete');
 
       } catch (error) {
         console.error('Model3DRenderer loading error:', error);
@@ -58,7 +66,10 @@ export const Model3DRenderer = ({
     };
 
     if (fileUrl) {
+      console.log('Model3DRenderer: fileUrl provided, starting load');
       loadModel();
+    } else {
+      console.log('Model3DRenderer: No fileUrl provided');
     }
   }, [fileUrl, fileType, onAnalysisComplete, onLoadError]);
 

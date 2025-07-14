@@ -10,17 +10,23 @@ export interface LoadedCADModel {
 
 export class CADModelLoader {
   static async loadModel(fileUrl: string, fileType: string): Promise<LoadedCADModel> {
+    console.log('CADModelLoader: Starting loadModel', { fileUrl, fileType });
+    
     // Detect file type
     const extension = fileType.toLowerCase() || fileUrl.split('.').pop()?.toLowerCase();
+    console.log('CADModelLoader: Detected extension:', extension);
+    
     let loadedGeometry: THREE.BufferGeometry;
     let loadedMaterials: THREE.Material[] = [];
 
     switch (extension) {
       case 'stl':
+        console.log('CADModelLoader: Loading STL file');
         loadedGeometry = await CADModelLoader.loadSTL(fileUrl);
         break;
 
       case 'obj':
+        console.log('CADModelLoader: Loading OBJ file');
         const objResult = await CADModelLoader.loadOBJ(fileUrl);
         loadedGeometry = objResult.geometry;
         loadedMaterials = objResult.materials;
@@ -28,15 +34,23 @@ export class CADModelLoader {
 
       case 'gltf':
       case 'glb':
+        console.log('CADModelLoader: Loading GLTF/GLB file');
         const gltfResult = await CADModelLoader.loadGLTF(fileUrl);
         loadedGeometry = gltfResult.geometry;
         loadedMaterials = gltfResult.materials;
         break;
 
       default:
+        console.error('CADModelLoader: Unsupported file format:', extension);
         throw new Error(`Unsupported file format: ${extension}`);
     }
 
+    console.log('CADModelLoader: Model loaded successfully', { 
+      geometry: loadedGeometry, 
+      materials: loadedMaterials,
+      vertices: loadedGeometry.attributes.position?.count || 0
+    });
+    
     return { geometry: loadedGeometry, materials: loadedMaterials };
   }
 
