@@ -29,7 +29,19 @@ serve(async (req) => {
       auth: REPLICATE_API_KEY,
     })
 
-    const body = await req.json()
+    let body;
+    try {
+      body = await req.json()
+    } catch (error) {
+      console.error("Invalid JSON in request body:", error)
+      return new Response(JSON.stringify({ 
+        error: "Invalid JSON in request body" 
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400,
+      })
+    }
+    
     console.log("Received request:", { 
       hasImageUrl: !!body.imageUrl, 
       predictionId: body.predictionId 
@@ -38,17 +50,28 @@ serve(async (req) => {
     // If it's a status check request
     if (body.predictionId) {
       console.log("Checking status for prediction:", body.predictionId)
-      const prediction = await replicate.predictions.get(body.predictionId)
-      console.log("Status check response:", prediction.status)
+      try {
+        const prediction = await replicate.predictions.get(body.predictionId)
+        console.log("Status check response:", prediction.status)
       
-      return new Response(JSON.stringify({
-        id: prediction.id,
-        status: prediction.status,
-        output: prediction.output,
-        error: prediction.error
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+        return new Response(JSON.stringify({
+          id: prediction.id,
+          status: prediction.status,
+          output: prediction.output,
+          error: prediction.error
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      } catch (error) {
+        console.error("Error checking prediction status:", error)
+        return new Response(JSON.stringify({ 
+          error: "Failed to check prediction status", 
+          details: error.message 
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500,
+        })
+      }
     }
 
     // If it's a generation request
@@ -65,15 +88,15 @@ serve(async (req) => {
 
     console.log("Starting VFusion3D conversion for image:", body.imageUrl.substring(0, 50) + "...")
     
-    // Start the VFusion3D prediction using the correct model with optimized parameters
+    // Start the VFusion3D prediction using the working model version
     const prediction = await replicate.predictions.create({
-      version: "63dae0a2d1a35ea5be91e1bdae3df3e5e0c50dc78eb2c7e34e74e6b86b8b7fb2", // VFusion3D model
+      version: "jadechoghari/vfusion3d:63dae0a2d1a35ea5be91e1bdae3df3e5e0c50dc78eb2c7e34e74e6b86b8b7fb2",
       input: {
         image: body.imageUrl,
-        num_inference_steps: 50, // Higher steps for better quality
-        guidance_scale: 4.0, // Better guidance for mesh generation
-        export_mesh: true, // Ensure mesh export
-        export_video: false, // Disable video for faster processing
+        num_inference_steps: 50,
+        guidance_scale: 4.0,
+        export_mesh: true,
+        export_video: false,
         seed: body.seed || Math.floor(Math.random() * 1000000)
       }
     })
