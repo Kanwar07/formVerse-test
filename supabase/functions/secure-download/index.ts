@@ -28,15 +28,17 @@ serve(async (req) => {
       })
     }
 
-    // Validate download token
+    // Validate download token and get download record with relationships
     const { data: downloadRecord, error: downloadError } = await supabaseClient
       .from('model_downloads')
       .select(`
         *,
         user_licenses!inner(
+          id,
           is_revoked,
           expires_at,
-          model_id
+          model_id,
+          download_count
         ),
         models!inner(
           file_path,

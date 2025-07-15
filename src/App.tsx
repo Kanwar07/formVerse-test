@@ -18,6 +18,7 @@ import Creators from "./pages/Creators";
 import CreatorProfile from "./pages/CreatorProfile";
 import BuyerInterface from "./pages/BuyerInterface";
 import ModelDetails from "./pages/ModelDetails";
+import TestDownload from "./pages/TestDownload";
 import Services from "./pages/Services";
 import Pricing from "./pages/Pricing";
 import PrintabilityReport from "./pages/PrintabilityReport";
@@ -71,6 +72,7 @@ function App() {
                 <Route path="/image-to-cad" element={<ImageToCAD />} />
                 <Route path="/signin" element={<SignIn />} />
                 <Route path="/signup" element={<SignUp />} />
+                <Route path="/test-download" element={<TestDownload />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
