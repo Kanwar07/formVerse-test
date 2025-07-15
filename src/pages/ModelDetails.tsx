@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { APIService } from "@/services/api";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
@@ -72,14 +74,43 @@ const ModelDetails = () => {
   const handleDownload = async () => {
     setDownloading(true);
     try {
-      // Simulate download
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      if (!purchased) {
+        toast({
+          title: "Purchase required",
+          description: "Please purchase a license before downloading.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // For demo purposes, simulate purchasing personal license and download
+      // In real implementation, use actual license from purchase
+      const { data: license } = await supabase
+        .from('model_licenses')
+        .select('*')
+        .eq('model_id', modelId)
+        .eq('license_type_id', 'e3fb40c4-51a7-42d2-b768-5c60be04d0de') // Personal license
+        .single();
+
+      if (!license) {
+        throw new Error('License not found');
+      }
+
+      // Generate download token
+      const token = await APIService.generateDownloadToken(modelId!, license.id);
+      
+      // Create download URL using secure download function
+      const downloadUrl = `https://zqnzxpbthldfqqbzzjct.supabase.co/functions/v1/secure-download/${token}`;
+      
+      // Trigger download
+      window.open(downloadUrl, '_blank');
       
       toast({
         title: "Download started",
         description: "Your model files are being downloaded.",
       });
     } catch (error) {
+      console.error('Download error:', error);
       toast({
         title: "Download failed",
         description: "Please try again.",
