@@ -19,6 +19,7 @@ import CreatorProfile from "./pages/CreatorProfile";
 import BuyerInterface from "./pages/BuyerInterface";
 import ModelDetails from "./pages/ModelDetails";
 import TestDownload from "./pages/TestDownload";
+import Auth from "./pages/Auth";
 import Services from "./pages/Services";
 import Pricing from "./pages/Pricing";
 import PrintabilityReport from "./pages/PrintabilityReport";
@@ -70,6 +71,7 @@ function App() {
                 <Route path="/printability/:id" element={<PrintabilityReport />} />
                 <Route path="/version-history/:id" element={<VersionHistory />} />
                 <Route path="/image-to-cad" element={<ImageToCAD />} />
+                <Route path="/auth" element={<Auth />} />
                 <Route path="/signin" element={<SignIn />} />
                 <Route path="/signup" element={<SignUp />} />
                 <Route path="/test-download" element={<TestDownload />} />

@@ -4,14 +4,56 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { APIService } from "@/services/api";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/AuthContext";
+import { Link } from "react-router-dom";
 
 const TestDownload = () => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { user, loading: authLoading } = useAuth();
+
+  // Show loading while checking auth
+  if (authLoading) {
+    return (
+      <div className="container mx-auto py-8">
+        <Card className="max-w-md mx-auto">
+          <CardContent className="flex items-center justify-center py-6">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show login prompt if not authenticated
+  if (!user) {
+    return (
+      <div className="container mx-auto py-8">
+        <Card className="max-w-md mx-auto">
+          <CardHeader>
+            <CardTitle>Authentication Required</CardTitle>
+            <CardDescription>
+              You need to be logged in to test the download system.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Button asChild className="w-full">
+              <Link to="/auth">Sign In / Sign Up</Link>
+            </Button>
+            <p className="text-sm text-muted-foreground text-center">
+              Create an account or sign in to test model downloads.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const testDownload = async () => {
     setLoading(true);
     try {
+      console.log('Starting download test for user:', user?.email);
+      
       // Use the test model and license we created
       const modelId = 'b2d4865d-041e-40c1-800e-4ae1eb5f8818'; // MAIN CLOUSER PTS
       

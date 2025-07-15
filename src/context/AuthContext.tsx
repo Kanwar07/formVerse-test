@@ -7,6 +7,8 @@ type AuthContextType = {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  signUp: (email: string, password: string, userData?: any) => Promise<{ error: any }>;
+  signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
 };
 
@@ -71,6 +73,41 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
+  const signUp = async (email: string, password: string, userData?: any) => {
+    try {
+      const redirectUrl = `${window.location.origin}/`;
+      
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: userData
+        }
+      });
+      
+      return { error };
+    } catch (error) {
+      return { error };
+    }
+  };
+
+  const signIn = async (email: string, password: string) => {
+    try {
+      // Clean up any existing state first
+      cleanupAuthState();
+      
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      return { error };
+    } catch (error) {
+      return { error };
+    }
+  };
+
   const handleSignOut = async () => {
     try {
       console.log('Signing out...');
@@ -102,6 +139,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         user,
         session,
         loading,
+        signUp,
+        signIn,
         signOut: handleSignOut
       }}
     >
