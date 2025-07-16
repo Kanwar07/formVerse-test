@@ -115,13 +115,34 @@ serve(async (req) => {
         })
       }
 
+      // Get user from auth header for GET requests too
+      const authHeader = req.headers.get('Authorization')
+      if (!authHeader) {
+        return new Response(JSON.stringify({ error: 'Authentication required' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
+      }
+
+      const token = authHeader.replace('Bearer ', '')
+      const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+      
+      if (authError || !user) {
+        return new Response(JSON.stringify({ error: 'Invalid authentication' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
+      }
+
       const { data: job, error } = await supabase
         .from('cad_conversion_jobs')
         .select('*')
         .eq('id', jobId)
+        .eq('user_id', user.id) // Ensure user can only access their own jobs
         .single()
 
       if (error || !job) {
+        console.error('Job fetch error:', error)
         return new Response(JSON.stringify({ error: 'Job not found' }), {
           status: 404,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }

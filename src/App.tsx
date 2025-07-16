@@ -19,6 +19,7 @@ import CreatorProfile from "./pages/CreatorProfile";
 import BuyerInterface from "./pages/BuyerInterface";
 import ModelDetails from "./pages/ModelDetails";
 import TestDownload from "./pages/TestDownload";
+import TestImageToCAD from "./pages/TestImageToCAD";
 import Auth from "./pages/Auth";
 import Services from "./pages/Services";
 import Pricing from "./pages/Pricing";
@@ -75,6 +76,7 @@ function App() {
                 <Route path="/signin" element={<SignIn />} />
                 <Route path="/signup" element={<SignUp />} />
                 <Route path="/test-download" element={<TestDownload />} />
+                <Route path="/test-image-to-cad" element={<TestImageToCAD />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>

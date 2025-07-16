@@ -82,6 +82,13 @@ const ImageToCAD = () => {
         .getPublicUrl(fileName);
 
       // Start conversion job
+      console.log('Starting conversion with:', { 
+        image_url: publicUrl, 
+        output_format: outputFormat, 
+        resolution: resolution[0], 
+        thickness: thickness[0] 
+      });
+      
       const { data, error } = await supabase.functions.invoke('image-to-cad', {
         body: {
           image_url: publicUrl,
@@ -90,6 +97,8 @@ const ImageToCAD = () => {
           thickness: thickness[0]
         }
       });
+
+      console.log('Conversion response:', { data, error });
 
       if (error) throw error;
 
@@ -133,14 +142,38 @@ const ImageToCAD = () => {
   const pollJobStatus = async (jobId: string) => {
     const pollInterval = setInterval(async () => {
       try {
-        const { data, error } = await supabase.functions.invoke('image-to-cad', {
-          body: { job_id: jobId },
-          method: 'GET'
-        });
+        // Call edge function with proper URL parameters and auth
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session?.access_token) {
+          console.error('No access token available for polling');
+          clearInterval(pollInterval);
+          return;
+        }
+        
+        console.log('Polling job status for:', jobId);
+        
+        const response = await fetch(
+          `https://zqnzxpbthldfqqbzzjct.supabase.co/functions/v1/image-to-cad?job_id=${jobId}`,
+          {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
 
-        if (error) throw error;
+        console.log('Polling response status:', response.status);
 
-        const updatedJob = data as ConversionJob;
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Polling error response:', errorText);
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const updatedJob = await response.json();
+        console.log('Updated job status:', updatedJob);
         setJobs(prev => 
           prev.map(job => 
             job.id === jobId ? updatedJob : job
