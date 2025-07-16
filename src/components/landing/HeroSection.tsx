@@ -62,20 +62,17 @@ export function HeroSection() {
               <div className="relative w-full h-full elegant-glass rounded-3xl border-2 border-white/20 shadow-2xl overflow-hidden elegant-glow">
                 <div className="w-full h-full bg-gradient-to-br from-cyber-dark/80 via-black/60 to-cyber-darker/80 flex items-center justify-center relative">
                   {/* Video Background */}
-                  <video 
-                    autoPlay 
-                    loop 
-                    muted 
-                    playsInline
+                  <iframe
+                    src="https://www.youtube.com/embed/H6I3wHN4Yo4?autoplay=1&mute=1&loop=1&playlist=H6I3wHN4Yo4&controls=0&showinfo=0&rel=0&modestbranding=1"
                     className="absolute inset-0 w-full h-full object-cover opacity-70"
                     style={{
                       filter: 'brightness(0.8) contrast(1.2) saturate(1.1)',
                     }}
-                  >
-                    <source src="/videos/explainer-video.mp4" type="video/mp4" />
-                    {/* Fallback for when video is not available */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-cyber-blue/20 to-cyber-purple/20 animate-pulse"></div>
-                  </video>
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    title="Explainer Video"
+                  />
                   
                   {/* Animated Overlay Graphics */}
                   <div className="absolute inset-0 z-10">
