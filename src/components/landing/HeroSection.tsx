@@ -74,21 +74,16 @@ export function HeroSection() {
                     title="Explainer Video"
                   />
                   
-                  {/* Animated Overlay Graphics */}
+                  {/* Simplified overlay */}
                   <div className="absolute inset-0 z-10">
-                    {/* Floating geometric shapes */}
-                    <div className="absolute top-1/4 left-1/4 w-16 h-16 border-2 border-cyber-blue/40 rounded-lg animate-float"></div>
-                    <div className="absolute top-1/3 right-1/3 w-12 h-12 border-2 border-cyber-purple/40 rounded-full animate-float" style={{animationDelay: '1s'}}></div>
-                    <div className="absolute bottom-1/3 left-1/3 w-8 h-8 bg-gradient-to-r from-cyber-blue/30 to-cyber-purple/30 rounded-sm animate-float" style={{animationDelay: '2s'}}></div>
-                    
-                    {/* Grid lines */}
-                    <div className="absolute inset-0 opacity-20">
+                    {/* Subtle grid overlay */}
+                    <div className="absolute inset-0 opacity-10">
                       <div className="w-full h-full" style={{
                         backgroundImage: `
-                          linear-gradient(rgba(0, 212, 255, 0.1) 1px, transparent 1px),
-                          linear-gradient(90deg, rgba(0, 212, 255, 0.1) 1px, transparent 1px)
+                          linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+                          linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px)
                         `,
-                        backgroundSize: '40px 40px'
+                        backgroundSize: '50px 50px'
                       }}></div>
                     </div>
                   </div>
