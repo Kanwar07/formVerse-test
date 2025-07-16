@@ -191,13 +191,13 @@ export function Navbar() {
               <div className="flex items-center space-x-2 elegant-glass rounded-full p-1 border border-white/10">
                 <Button
                   variant="ghost"
-                  onClick={() => navigate("/signin")}
+                  onClick={() => navigate("/auth")}
                   className="text-white/80 hover:text-white hover:bg-white/10 text-sm rounded-full px-4 py-2 h-8 font-medium transition-all duration-300"
                 >
                   Sign In
                 </Button>
                 <Button
-                  onClick={() => navigate("/signup")}
+                  onClick={() => navigate("/auth")}
                   className="group relative overflow-hidden bg-gradient-to-r from-cyber-blue/20 to-cyber-purple/20 border border-white/20 text-white hover:from-cyber-blue/30 hover:to-cyber-purple/30 hover:border-white/30 text-sm rounded-full px-4 py-2 h-8 font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-cyber-blue/20"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-cyber-blue/40 to-cyber-purple/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full"></div>

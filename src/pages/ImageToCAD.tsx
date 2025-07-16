@@ -253,6 +253,14 @@ const ImageToCAD = () => {
                 Please sign in to use the Image to CAD converter.
               </CardDescription>
             </CardHeader>
+            <CardContent>
+              <Button 
+                onClick={() => window.location.href = '/auth'}
+                className="w-full"
+              >
+                Go to Sign In
+              </Button>
+            </CardContent>
           </Card>
         </main>
         <Footer />
