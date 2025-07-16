@@ -63,7 +63,7 @@ export function HeroSection() {
                 <div className="w-full h-full bg-gradient-to-br from-cyber-dark/80 via-black/60 to-cyber-darker/80 flex items-center justify-center relative">
                   {/* Video Background */}
                   <iframe
-                    src="https://www.youtube.com/embed/H6I3wHN4Yo4?autoplay=1&mute=1&loop=1&playlist=H6I3wHN4Yo4&controls=0&showinfo=0&rel=0&modestbranding=1"
+                    src="https://www.youtube.com/embed/H6I3wHN4Yo4?autoplay=1&mute=0&loop=1&playlist=H6I3wHN4Yo4&controls=0&showinfo=0&rel=0&modestbranding=1"
                     className="absolute inset-0 w-full h-full object-cover opacity-70"
                     style={{
                       filter: 'brightness(0.8) contrast(1.2) saturate(1.1)',
