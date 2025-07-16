@@ -44,6 +44,42 @@ export type Database = {
         }
         Relationships: []
       }
+      cad_conversion_jobs: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          image_url: string
+          parameters: Json | null
+          result_url: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          image_url: string
+          parameters?: Json | null
+          result_url?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          image_url?: string
+          parameters?: Json | null
+          result_url?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       creator_onboarding: {
         Row: {
           cad_software_skills: Json | null
