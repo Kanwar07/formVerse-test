@@ -16,7 +16,7 @@ export function HeroSection() {
       
       <div className="container flex flex-col items-center text-center space-y-12 relative z-10">
         <div className="inline-flex items-center rounded-full elegant-glass border border-white/20 px-8 py-4 text-sm backdrop-blur-xl elegant-scan-line">
-          <span className="matrix-text font-medium text-white/90">India's First AI-Powered CAD Launchpad</span>
+          <span className="matrix-text font-medium text-white/90">Your cad files just got a brain</span>
         </div>
         
         <h1 className="text-5xl md:text-8xl font-bold tracking-tight max-w-6xl leading-[0.9]">
