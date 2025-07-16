@@ -52,11 +52,11 @@ export function Navbar() {
               className="flex items-center space-x-3 cursor-pointer group" 
               onClick={() => navigate("/")}
             >
-              <div className="relative h-16 w-16">
+              <div className="relative h-32 w-32">
                 <img 
                   src="/lovable-uploads/02a4ca94-e61c-4f7c-9ef0-942b8abb8bb3.png" 
                   alt="FormVerse Logo" 
-                  className="h-16 w-16 elegant-glow-effect group-hover:animate-glow-pulse transition-all duration-500"
+                  className="h-32 w-32 elegant-glow-effect group-hover:animate-glow-pulse transition-all duration-500"
                 />
               </div>
               <span className="font-space-grotesk font-bold text-xl tracking-tight">
