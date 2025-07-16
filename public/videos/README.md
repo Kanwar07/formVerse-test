@@ -1,17 +1,19 @@
 # Videos Directory
 
-Place your CAD design motion video here:
-- File name: `cad-design-motion.mp4`
-- Recommended format: MP4 (H.264)
-- Recommended duration: 10-30 seconds
-- Recommended resolution: 1920x1080 or higher
-- File size: Keep under 10MB for optimal loading
+This directory contains video files for the landing page.
 
-## Suggested Video Content:
-- 3D CAD modeling in progress
-- Geometric shapes being designed
-- Engineering blueprints coming to life
-- Technical drawing animations
-- Product design workflows
+## Files:
+- `explainer-video.mp4` - Main explainer video for the hero section
 
-The video will auto-play, loop, and be muted by default for the best user experience.
+## Usage:
+Videos in this directory can be referenced in React components using the path `/videos/filename.mp4`
+
+## Supported Formats:
+- MP4 (recommended)
+- WebM
+- OGV
+
+## Guidelines:
+- Keep video file sizes optimized for web (under 10MB recommended)
+- Use appropriate compression settings
+- Consider providing multiple formats for better browser compatibility

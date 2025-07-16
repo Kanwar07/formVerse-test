@@ -72,7 +72,7 @@ export function HeroSection() {
                       filter: 'brightness(0.8) contrast(1.2) saturate(1.1)',
                     }}
                   >
-                    <source src="/videos/cad-design-motion.mp4" type="video/mp4" />
+                    <source src="/videos/explainer-video.mp4" type="video/mp4" />
                     {/* Fallback for when video is not available */}
                     <div className="absolute inset-0 bg-gradient-to-br from-cyber-blue/20 to-cyber-purple/20 animate-pulse"></div>
                   </video>
