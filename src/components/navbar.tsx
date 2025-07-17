@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { Upload, Brain, Users, Search, User, LogOut, Plus, Image } from "lucide-react";
+import { Upload, Brain, Users, Search, User, LogOut, Plus, Image, Twitter } from "lucide-react";
 
 import {
   DropdownMenu,
@@ -127,8 +127,17 @@ export function Navbar() {
             </div>
           </div>
 
-          {/* Right Section - Auth */}
+          {/* Right Section - Twitter & Auth */}
           <div className="flex items-center space-x-3 flex-shrink-0">
+            {/* Twitter/X Link */}
+            <a 
+              href="https://x.com/FormverseD" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="group elegant-glass rounded-full p-2 border border-white/10 hover:border-white/20 transition-all duration-300 hover:scale-105"
+            >
+              <Twitter className="h-4 w-4 text-white/70 group-hover:text-white transition-colors duration-300" />
+            </a>
             
             {user ? (
               <div className="flex items-center space-x-3">
