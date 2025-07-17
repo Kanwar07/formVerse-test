@@ -85,32 +85,9 @@ export function HeroSection() {
                     </div>
                   </div>
                   
-                  {/* Central Logo/Brand */}
-                  <div className="relative z-20 text-center">
-                    <div className="w-32 h-32 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-white/10 to-white/5 border border-white/20 flex items-center justify-center elegant-glass">
-                      <div className="text-4xl font-bold matrix-text bg-gradient-to-r from-cyber-blue to-cyber-purple bg-clip-text text-transparent">
-                        3D
-                      </div>
-                    </div>
-                    <h3 className="text-xl font-semibold text-white/90 matrix-text elegant-text-glow">CAD Revolution</h3>
-                    <p className="text-sm text-white/60 mt-2">AI-Powered Design Intelligence</p>
-                  </div>
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-black/5"></div>
                 <div className="absolute inset-0 elegant-scan-line"></div>
-                
-                {/* Floating UI elements */}
-                <div className="absolute top-8 left-8 elegant-glass px-6 py-3 rounded-2xl border border-white/20">
-                  <span className="text-white/90 text-sm font-medium elegant-text-glow">AI Analysis: 97%</span>
-                </div>
-                
-                <div className="absolute bottom-8 right-8 elegant-glass px-6 py-3 rounded-2xl border border-white/20">
-                  <span className="text-white/90 text-sm font-medium elegant-text-glow">Printability: Optimal</span>
-                </div>
-                
-                <div className="absolute top-1/2 right-8 elegant-glass px-6 py-3 rounded-2xl border border-white/20">
-                  <span className="text-white/90 text-sm font-medium elegant-text-glow">FormIQ Active</span>
-                </div>
               </div>
             </div>
           </div>
