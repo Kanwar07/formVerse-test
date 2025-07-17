@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
@@ -22,10 +24,29 @@ import {
   BarChart3,
   Rocket
 } from "lucide-react";
-import { Link } from "react-router-dom";
 
 const FormIQFeatures = () => {
   const [visibleFeatures, setVisibleFeatures] = useState<number[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubscription = async () => {
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase.functions.invoke('create-checkout');
+      
+      if (error) throw error;
+      
+      if (data?.url) {
+        // Open Stripe checkout in a new tab
+        window.open(data.url, '_blank');
+      }
+    } catch (error) {
+      console.error('Error creating checkout session:', error);
+      alert('There was an error starting the subscription process. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     // Animate features appearing one by one
@@ -269,9 +290,15 @@ const FormIQFeatures = () => {
                   <Rocket className="mr-2 h-5 w-5" />
                   Start Free Trial
                 </Button>
-                <Button variant="outline" size="lg" className="animate-scale-in hover-scale">
+                <Button 
+                  variant="outline" 
+                  size="lg" 
+                  className="animate-scale-in hover-scale"
+                  onClick={handleSubscription}
+                  disabled={isLoading}
+                >
                   <BarChart3 className="mr-2 h-5 w-5" />
-                  View Pricing
+                  {isLoading ? "Processing..." : "Subscribe $5/month"}
                 </Button>
               </div>
             </div>
