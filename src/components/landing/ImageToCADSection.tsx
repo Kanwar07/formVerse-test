@@ -49,6 +49,34 @@ export function ImageToCADSection() {
     }, 3000);
   };
 
+  const handleDownload = () => {
+    // Create a mock STL file content for demo purposes
+    const mockSTLContent = `solid model
+  facet normal 0 0 1
+    outer loop
+      vertex 0 0 0
+      vertex 1 0 0
+      vertex 0.5 1 0
+    endloop
+  endfacet
+endsolid model`;
+
+    const blob = new Blob([mockSTLContent], { type: 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'converted-model.stl';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "Download started!",
+      description: "Your STL file is being downloaded.",
+    });
+  };
+
   return (
     <section className="py-20 bg-gradient-to-br from-accent/5 via-background to-primary/5">
       <div className="container">
@@ -124,7 +152,7 @@ export function ImageToCADSection() {
                     Your 3D CAD model has been generated successfully. You can now download it or view it in 3D.
                   </p>
                   <div className="flex gap-3">
-                    <Button size="sm" className="flex-1">
+                    <Button size="sm" className="flex-1" onClick={handleDownload}>
                       <Download className="h-4 w-4 mr-2" />
                       Download STL
                     </Button>
