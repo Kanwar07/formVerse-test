@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Upload, Brain, Users, Search, User, LogOut, Plus, Image } from "lucide-react";
-import { ThemeToggle } from "./theme-toggle";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -127,11 +127,8 @@ export function Navbar() {
             </div>
           </div>
 
-          {/* Right Section - Theme Toggle & Auth */}
+          {/* Right Section - Auth */}
           <div className="flex items-center space-x-3 flex-shrink-0">
-            <div className="elegant-glass rounded-full p-1 border border-white/10">
-              <ThemeToggle />
-            </div>
             
             {user ? (
               <div className="flex items-center space-x-3">
