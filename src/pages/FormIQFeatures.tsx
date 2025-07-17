@@ -132,7 +132,7 @@ const FormIQFeatures = () => {
             </div>
             
             <h1 className="text-4xl sm:text-5xl font-bold mb-6 animate-fade-in">
-              FormIQ Features in <span className="formiq-gradient-text">Motion</span>
+              <span className="formiq-gradient-text">FormIQ Features</span>
             </h1>
             
             <p className="text-xl text-muted-foreground mb-8 animate-fade-in">
@@ -261,7 +261,11 @@ const FormIQFeatures = () => {
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" className="animate-scale-in hover-scale">
+                <Button 
+                  size="lg" 
+                  className="animate-scale-in hover-scale"
+                  onClick={() => window.open('https://calendly.com/partner-cadqua3d/30min', '_blank')}
+                >
                   <Rocket className="mr-2 h-5 w-5" />
                   Start Free Trial
                 </Button>
