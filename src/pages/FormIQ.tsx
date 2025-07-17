@@ -577,7 +577,7 @@ const FormIQ = () => {
         </Tabs>
         
         {/* Call to Action Section */}
-        <div className="mt-10">
+        <div className="mt-10 space-y-6">
           <Card className="bg-gradient-to-r from-primary/5 to-accent/5">
             <CardContent className="p-8">
               <div className="flex flex-col md:flex-row items-center justify-between">
@@ -592,6 +592,72 @@ const FormIQ = () => {
                   Get Started with FormIQ
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* SDK Integration Section */}
+          <Card className="border-2 border-dashed border-primary/20 bg-gradient-to-br from-muted/30 to-accent/5">
+            <CardContent className="p-8">
+              <div className="text-center mb-6">
+                <div className="inline-flex items-center mb-4 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium">
+                  <Brain className="mr-2 h-4 w-4" />
+                  <span>FormIQ SDK Integration</span>
+                </div>
+                <h2 className="text-2xl font-bold mb-3">Integrate FormIQ Intelligence into Your CAD Platform</h2>
+                <p className="text-muted-foreground max-w-3xl mx-auto">
+                  CAD software companies can now embed FormIQ's AI validation directly into their platforms. 
+                  Provide real-time printability analysis, design optimization, and intelligent recommendations 
+                  to your users without leaving your environment.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div className="bg-background/50 backdrop-blur-sm p-6 rounded-lg border">
+                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                    <Check className="h-6 w-6 text-primary" />
+                  </div>
+                  <h3 className="font-semibold mb-2">Real-time Validation</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Instant printability checks and design recommendations as users create models
+                  </p>
+                </div>
+                
+                <div className="bg-background/50 backdrop-blur-sm p-6 rounded-lg border">
+                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                    <Settings className="h-6 w-6 text-primary" />
+                  </div>
+                  <h3 className="font-semibold mb-2">Easy Integration</h3>
+                  <p className="text-sm text-muted-foreground">
+                    RESTful APIs and SDKs for seamless integration into existing CAD workflows
+                  </p>
+                </div>
+                
+                <div className="bg-background/50 backdrop-blur-sm p-6 rounded-lg border">
+                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                    <BarChart className="h-6 w-6 text-primary" />
+                  </div>
+                  <h3 className="font-semibold mb-2">Enhanced User Experience</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Boost user satisfaction with intelligent design assistance and validation
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90">
+                  Request SDK Access
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="lg">
+                  View API Documentation
+                </Button>
+              </div>
+
+              <div className="mt-6 pt-6 border-t border-muted/50">
+                <p className="text-xs text-center text-muted-foreground">
+                  Join leading CAD platforms like SolidWorks, Fusion 360, and Inventor partners in revolutionizing design validation
+                </p>
               </div>
             </CardContent>
           </Card>
