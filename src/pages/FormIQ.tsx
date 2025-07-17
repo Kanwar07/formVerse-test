@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
@@ -58,7 +59,9 @@ const FormIQ = () => {
                   transforming passive CAD libraries into intelligent, monetizable, and print-ready product workflows.
                 </p>
                 <div className="flex flex-wrap gap-4">
-                  <Button>Explore FormIQ Features</Button>
+                  <Link to="/formiq/features">
+                    <Button>Explore FormIQ Features</Button>
+                  </Link>
                   <Button variant="outline">View Documentation</Button>
                 </div>
               </div>
