@@ -11,6 +11,7 @@ export function ImageToCADSection() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [modelReady, setModelReady] = useState(false);
   const { toast } = useToast();
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -40,9 +41,10 @@ export function ImageToCADSection() {
     // Simulate processing time
     setTimeout(() => {
       setIsProcessing(false);
+      setModelReady(true);
       toast({
         title: "CAD conversion completed!",
-        description: "Your 3D model has been generated successfully.",
+        description: "Your 3D model is ready for download and viewing.",
       });
     }, 3000);
   };
@@ -108,8 +110,30 @@ export function ImageToCADSection() {
                     <Zap className="h-4 w-4 mr-2" />
                     Convert to CAD
                   </>
-                )}
+              )}
               </Button>
+              
+              {/* Model Ready Section */}
+              {modelReady && (
+                <div className="mt-6 p-4 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg border border-primary/20">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Download className="h-5 w-5 text-primary" />
+                    <span className="font-medium text-primary">Model Ready!</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Your 3D CAD model has been generated successfully. You can now download it or view it in 3D.
+                  </p>
+                  <div className="flex gap-3">
+                    <Button size="sm" className="flex-1">
+                      <Download className="h-4 w-4 mr-2" />
+                      Download STL
+                    </Button>
+                    <Button size="sm" variant="outline" className="flex-1">
+                      View 3D Model
+                    </Button>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
