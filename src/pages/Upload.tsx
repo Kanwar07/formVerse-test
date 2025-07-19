@@ -151,7 +151,7 @@ const Upload = () => {
   // Handle metadata submission
   const handleMetadataSubmit = (metadata: ModelMetadata) => {
     setModelMetadata(metadata);
-    setCurrentStep(3);
+    setCurrentStep(4);
   };
 
   // Handle model details submission
@@ -159,7 +159,7 @@ const Upload = () => {
     setModelName(name);
     setModelDescription(description);
     setCustomTags(tags);
-    setCurrentStep(4);
+    setCurrentStep(3);
   };
 
   // Handle pricing submission
@@ -216,7 +216,7 @@ const Upload = () => {
           design_issues: designIssues,
           oem_compatibility: oemCompatibility,
           preview_image: thumbnailUrl,
-          status: 'published', // Auto-publish new models
+          status: 'draft', // Initially not public to hirers
           category: category,
           difficulty_level: modelMetadata.complexity,
           view_count: 0,
@@ -262,9 +262,9 @@ const Upload = () => {
         description: "Your model has been uploaded and is now available in the marketplace.",
       });
       
-      // Redirect to discover page after successful upload
+      // Redirect to creator profile after successful upload
       setTimeout(() => {
-        navigate("/discover");
+        navigate(`/creator/${user.id}`);
       }, 2000);
     } catch (error) {
       console.error("Error publishing model:", error);
@@ -297,8 +297,8 @@ const Upload = () => {
           <div className="flex items-center justify-between">
             {[
               { step: 1, label: "Upload & Analysis" },
-              { step: 2, label: "Metadata" },
-              { step: 3, label: "Details & Tags" },
+              { step: 2, label: "Model Details" },
+              { step: 3, label: "Metadata" },
               { step: 4, label: "Pricing" },
               { step: 5, label: "Review" }
             ].map((item, index) => (
@@ -404,31 +404,32 @@ const Upload = () => {
           </Card>
         )}
         
-        {/* Step 2: Metadata Collection */}
+        {/* Step 2: Model Name & Details (MOVED TO FRONT) */}
         {currentStep === 2 && (
-          <Card>
-            <CardContent className="pt-6">
-              <MetadataForm 
-                onBack={() => setCurrentStep(1)}
-                onContinue={handleMetadataSubmit}
-                initialData={modelMetadata || undefined}
-              />
-            </CardContent>
-          </Card>
-        )}
-        
-        {/* Step 3: Details & Tags */}
-        {currentStep === 3 && (
           <Card>
             <CardContent className="pt-6">
               <DetailsForm 
                 aiGeneratedTags={aiGeneratedTags}
-                onBack={() => setCurrentStep(2)}
+                onBack={() => setCurrentStep(1)}
                 onContinue={(name, description, tags) => {
                   handleDetailsSubmit(name, description, tags);
                 }}
                 initialName={modelName}
                 initialDescription={modelDescription}
+                required={true}
+              />
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Step 3: Metadata Collection */}
+        {currentStep === 3 && (
+          <Card>
+            <CardContent className="pt-6">
+              <MetadataForm 
+                onBack={() => setCurrentStep(2)}
+                onContinue={handleMetadataSubmit}
+                initialData={modelMetadata || undefined}
               />
             </CardContent>
           </Card>

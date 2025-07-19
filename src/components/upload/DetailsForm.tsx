@@ -15,6 +15,7 @@ interface DetailsFormProps {
   onContinue: (name: string, description: string, tags: string[]) => void;
   initialName?: string;
   initialDescription?: string;
+  required?: boolean;
 }
 
 export const DetailsForm = ({ 
@@ -22,7 +23,8 @@ export const DetailsForm = ({
   onBack, 
   onContinue,
   initialName = "",
-  initialDescription = ""
+  initialDescription = "",
+  required = false
 }: DetailsFormProps) => {
   const [name, setName] = useState(initialName);
   const [description, setDescription] = useState(initialDescription);
@@ -41,19 +43,29 @@ export const DetailsForm = ({
   };
 
   const handleSubmit = () => {
+    if (required && !name.trim()) {
+      return; // Don't proceed if name is required but empty
+    }
     onContinue(name, description, customTags);
   };
 
   return (
     <div className="space-y-6">
       <div>
-        <Label htmlFor="model-name">Model Name</Label>
+        <Label htmlFor="model-name">
+          Model Name {required && <span className="text-destructive">*</span>}
+        </Label>
         <Input 
           id="model-name" 
           placeholder="Enter a descriptive name for your model"
           value={name}
           onChange={(e) => setName(e.target.value)}
+          required={required}
+          className={required && !name.trim() ? "border-destructive" : ""}
         />
+        {required && !name.trim() && (
+          <p className="text-sm text-destructive mt-1">Model name is required</p>
+        )}
       </div>
       
       <div>
@@ -140,7 +152,10 @@ export const DetailsForm = ({
       
       <div className="flex justify-between">
         <Button variant="outline" onClick={onBack}>Back</Button>
-        <Button onClick={handleSubmit}>
+        <Button 
+          onClick={handleSubmit}
+          disabled={required && !name.trim()}
+        >
           Continue
           <ChevronRight className="ml-2 h-4 w-4" />
         </Button>

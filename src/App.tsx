@@ -17,6 +17,7 @@ import FormIQ from "./pages/FormIQ";
 import FormIQFeatures from "./pages/FormIQFeatures";
 import Creators from "./pages/Creators";
 import CreatorProfile from "./pages/CreatorProfile";
+import CreatorDashboard from "./pages/CreatorDashboard";
 import BuyerInterface from "./pages/BuyerInterface";
 import ModelDetails from "./pages/ModelDetails";
 import TestDownload from "./pages/TestDownload";
@@ -66,7 +67,8 @@ function App() {
                 <Route path="/formiq" element={<FormIQ />} />
                 <Route path="/formiq/features" element={<FormIQFeatures />} />
                 <Route path="/creators" element={<Creators />} />
-                <Route path="/creator/:id" element={<CreatorProfile />} />
+                <Route path="/creator/:id" element={<CreatorDashboard />} />
+                <Route path="/creator-profile/:id" element={<CreatorProfile />} />
                 <Route path="/buyer/:id" element={<BuyerInterface />} />
                 <Route path="/model/:id" element={<ModelDetails />} />
                 <Route path="/services" element={<Services />} />
