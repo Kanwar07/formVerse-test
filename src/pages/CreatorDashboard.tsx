@@ -63,8 +63,11 @@ const CreatorDashboard = () => {
   const canEdit = user?.id === id;
 
   useEffect(() => {
-    if (id) {
+    if (id && id !== ':id') {
       fetchCreatorModels();
+    } else {
+      console.error('Invalid creator ID:', id);
+      setLoading(false);
     }
   }, [id]);
 
