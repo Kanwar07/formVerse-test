@@ -3,6 +3,7 @@ import { Progress } from "@/components/ui/progress";
 import { Link } from "react-router-dom";
 import { Brain } from "lucide-react";
 import { PreviewSelector } from "@/components/preview/PreviewSelector";
+import { Enhanced3DViewer } from "@/components/three/Enhanced3DViewer";
 
 interface DesignIssue {
   issue: string;
@@ -15,6 +16,8 @@ interface ReviewFormProps {
   materialRecommendations: string[];
   designIssues: DesignIssue[];
   actualPrice: number;
+  modelFile?: File;
+  modelName?: string;
   onBack: () => void;
   onSubmit: () => void;
 }
@@ -25,6 +28,8 @@ export const ReviewForm = ({
   materialRecommendations, 
   designIssues, 
   actualPrice,
+  modelFile,
+  modelName = "Industrial Gear Assembly",
   onBack, 
   onSubmit
 }: ReviewFormProps) => {
@@ -34,16 +39,30 @@ export const ReviewForm = ({
     <div className="space-y-6">
       <div className="border rounded-xl overflow-hidden">
         <div className="bg-muted p-4">
-          <h3 className="font-semibold">Model Preview</h3>
+          <h3 className="font-semibold">Interactive 3D Preview</h3>
         </div>
         <div className="p-6">
-          <PreviewSelector
-            modelName="Industrial Gear Assembly"
-            thumbnail={originalImage}
-            isOwner={true}
-            isPurchased={false}
-            className="max-w-md mx-auto"
-          />
+          {modelFile ? (
+            <Enhanced3DViewer
+              modelUrl={URL.createObjectURL(modelFile)}
+              fileName={modelName}
+              fileType={modelFile.type}
+              width={800}
+              height={500}
+              showControls={true}
+              autoRotate={false}
+              onModelLoad={(info) => console.log('Model loaded:', info)}
+              onError={(error) => console.error('Model load error:', error)}
+            />
+          ) : (
+            <PreviewSelector
+              modelName={modelName}
+              thumbnail={originalImage}
+              isOwner={true}
+              isPurchased={false}
+              className="max-w-md mx-auto"
+            />
+          )}
         </div>
       </div>
       
@@ -53,15 +72,15 @@ export const ReviewForm = ({
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Name:</span>
-              <span className="font-medium">Industrial Gear Assembly</span>
+              <span className="font-medium">{modelName}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">File Type:</span>
-              <span className="font-medium">STL</span>
+              <span className="font-medium">{modelFile?.type || 'STL'}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">File Size:</span>
-              <span className="font-medium">24.3 MB</span>
+              <span className="font-medium">{modelFile ? (modelFile.size / (1024 * 1024)).toFixed(1) + ' MB' : '24.3 MB'}</span>
             </div>
           </div>
         </div>

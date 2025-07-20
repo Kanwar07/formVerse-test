@@ -11,6 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CadQuaPricing } from "@/components/printing/CadQuaPricing";
 import { ModelPreview } from "@/components/preview/ModelPreview";
+import { Enhanced3DViewer } from "@/components/three/Enhanced3DViewer";
 import { EngagementGate } from "@/components/buyer/EngagementGate";
 import { PreviewSelector } from "@/components/preview/PreviewSelector";
 import { 
@@ -136,17 +137,31 @@ const ModelDetails = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Enhanced Model Preview */}
           <div className="space-y-4">
-            <PreviewSelector
-              modelName={model.name}
-              thumbnail={model.thumbnail}
-              fileUrl={purchased ? model.fileUrl : undefined}
-              fileName={purchased ? "industrial-gear-assembly.stl" : undefined}
-              fileType={purchased ? model.fileFormat : undefined}
-              isOwner={false}
-              isPurchased={purchased}
-              price={model.price}
-              onPurchase={handlePurchase}
-            />
+            {purchased ? (
+              <Enhanced3DViewer
+                modelUrl={model.fileUrl}
+                fileName="industrial-gear-assembly.stl"
+                fileType={model.fileFormat}
+                width={600}
+                height={400}
+                showControls={true}
+                autoRotate={true}
+                onModelLoad={(info) => console.log('Model loaded:', info)}
+                onError={(error) => console.error('Model load error:', error)}
+              />
+            ) : (
+              <PreviewSelector
+                modelName={model.name}
+                thumbnail={model.thumbnail}
+                fileUrl={purchased ? model.fileUrl : undefined}
+                fileName={purchased ? "industrial-gear-assembly.stl" : undefined}
+                fileType={purchased ? model.fileFormat : undefined}
+                isOwner={false}
+                isPurchased={purchased}
+                price={model.price}
+                onPurchase={handlePurchase}
+              />
+            )}
             
             {/* Engagement Gate for Downloads/Licensing */}
             {purchased && (

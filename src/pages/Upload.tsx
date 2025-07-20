@@ -460,6 +460,8 @@ const Upload = () => {
                 materialRecommendations={materialRecommendations}
                 designIssues={designIssues}
                 actualPrice={actualPrice}
+                modelFile={modelFile}
+                modelName={modelName}
                 onBack={() => setCurrentStep(4)}
                 onSubmit={handleSubmit}
               />
