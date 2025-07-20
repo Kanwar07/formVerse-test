@@ -11,13 +11,15 @@ import { Loader2, RotateCcw, ZoomIn, ZoomOut, Move, RotateCw } from 'lucide-reac
 import { useToast } from '@/hooks/use-toast';
 
 interface Enhanced3DViewerProps {
-  modelUrl: string;
-  fileName: string;
-  fileType: string;
+  modelUrl?: string;
+  modelFile?: File;
+  fileName?: string;
+  fileType?: string;
   width?: number;
   height?: number;
   showControls?: boolean;
   autoRotate?: boolean;
+  className?: string;
   onModelLoad?: (modelInfo: any) => void;
   onError?: (error: string) => void;
 }
@@ -36,12 +38,14 @@ interface ModelInfo {
 
 export const Enhanced3DViewer: React.FC<Enhanced3DViewerProps> = ({
   modelUrl,
+  modelFile,
   fileName,
   fileType,
   width = 800,
   height = 600,
   showControls = true,
   autoRotate = false,
+  className,
   onModelLoad,
   onError
 }) => {
@@ -203,9 +207,24 @@ export const Enhanced3DViewer: React.FC<Enhanced3DViewerProps> = ({
     setError(null);
     setLoadingProgress(0);
 
+    let fileUrl: string | null = null;
+
     try {
       let loader;
-      const extension = fileType.toLowerCase() || fileName.split('.').pop()?.toLowerCase();
+      let actualFileName: string;
+      
+      // Handle File object or URL
+      if (modelFile) {
+        fileUrl = URL.createObjectURL(modelFile);
+        actualFileName = modelFile.name;
+      } else if (modelUrl) {
+        fileUrl = modelUrl;
+        actualFileName = fileName || 'model';
+      } else {
+        throw new Error('No model file or URL provided');
+      }
+      
+      const extension = fileType?.toLowerCase() || actualFileName.split('.').pop()?.toLowerCase();
 
       // Choose appropriate loader based on file type
       switch (extension) {
@@ -228,7 +247,7 @@ export const Enhanced3DViewer: React.FC<Enhanced3DViewerProps> = ({
 
       // Load model with progress tracking
       loader.load(
-        modelUrl,
+        fileUrl,
         (loadedModel: any) => {
           // Remove previous model
           if (modelRef.current) {
@@ -280,7 +299,7 @@ export const Enhanced3DViewer: React.FC<Enhanced3DViewerProps> = ({
               height: size.y,
               depth: size.z
             },
-            fileSize: fileName
+            fileSize: actualFileName
           };
 
           model.traverse((child: any) => {
@@ -328,8 +347,13 @@ export const Enhanced3DViewer: React.FC<Enhanced3DViewerProps> = ({
       setError(errorMessage);
       setIsLoading(false);
       onError?.(errorMessage);
+    } finally {
+      // Clean up object URL if we created one
+      if (modelFile && fileUrl) {
+        URL.revokeObjectURL(fileUrl);
+      }
     }
-  }, [modelUrl, fileName, fileType, onModelLoad, onError, toast]);
+  }, [modelUrl, modelFile, fileName, fileType, onModelLoad, onError, toast]);
 
   // Animation loop
   const animate = useCallback(() => {
@@ -401,12 +425,12 @@ export const Enhanced3DViewer: React.FC<Enhanced3DViewerProps> = ({
     };
   }, [initScene]);
 
-  // Load model when URL changes
+  // Load model when URL or file changes
   useEffect(() => {
-    if (modelUrl && sceneRef.current) {
+    if ((modelUrl || modelFile) && sceneRef.current) {
       loadModel();
     }
-  }, [modelUrl, loadModel]);
+  }, [modelUrl, modelFile, loadModel]);
 
   // Start animation loop
   useEffect(() => {
@@ -478,7 +502,7 @@ export const Enhanced3DViewer: React.FC<Enhanced3DViewerProps> = ({
 
         <div 
           ref={containerRef}
-          className="relative border rounded-lg overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100"
+          className={`relative border rounded-lg overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 ${className || ''}`}
           style={{ width, height }}
         >
           {isLoading && (
