@@ -25,7 +25,6 @@ export interface ModelMetadata {
   customTags: string[];
   functionalRequirements: string[];
   targetAudience: string;
-  estimatedPrintTime: string;
   supportStructures: boolean;
   assemblyRequired: boolean;
   notes: string;
@@ -62,7 +61,6 @@ export const MetadataForm = ({ onBack, onContinue, initialData }: MetadataFormPr
     customTags: initialData?.customTags || [],
     functionalRequirements: initialData?.functionalRequirements || [],
     targetAudience: initialData?.targetAudience || "",
-    estimatedPrintTime: initialData?.estimatedPrintTime || "",
     supportStructures: initialData?.supportStructures || false,
     assemblyRequired: initialData?.assemblyRequired || false,
     notes: initialData?.notes || ""
@@ -208,14 +206,6 @@ export const MetadataForm = ({ onBack, onContinue, initialData }: MetadataFormPr
               </div>
             </div>
 
-            <div>
-              <Label>Estimated Print Time</Label>
-              <Input 
-                placeholder="e.g., 2-4 hours"
-                value={metadata.estimatedPrintTime}
-                onChange={(e) => setMetadata(prev => ({ ...prev, estimatedPrintTime: e.target.value }))}
-              />
-            </div>
 
             <div className="space-y-2">
               <div className="flex items-center space-x-2">
