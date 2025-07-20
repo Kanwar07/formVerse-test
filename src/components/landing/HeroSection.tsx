@@ -1,8 +1,12 @@
 
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Volume2, VolumeX } from "lucide-react";
 
 export function HeroSection() {
+  const [isMuted, setIsMuted] = useState(false);
+
   return (
     <section className="relative py-24 md:py-40 overflow-hidden bg-gradient-to-br from-cyber-dark via-black to-cyber-darker">
       <div className="absolute inset-0 elegant-grid opacity-30"></div>
@@ -63,13 +67,26 @@ export function HeroSection() {
                 <div className="w-full h-full bg-gradient-to-br from-cyber-dark/80 via-black/60 to-cyber-darker/80 flex items-center justify-center relative">
                   {/* Video Background */}
                   <iframe
-                    src="https://www.youtube.com/embed/wI-bfQNbKrI?autoplay=1&mute=0&loop=1&playlist=wI-bfQNbKrI&controls=1&showinfo=0&rel=0&modestbranding=1&enablejsapi=1"
+                    src={`https://www.youtube.com/embed/wI-bfQNbKrI?autoplay=1&mute=${isMuted ? 1 : 0}&loop=1&playlist=wI-bfQNbKrI&controls=1&showinfo=0&rel=0&modestbranding=1&enablejsapi=1`}
                     className="absolute inset-0 w-full h-full object-cover"
                     frameBorder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     allowFullScreen
                     title="FormVerse Explainer Video"
                   />
+                  
+                  {/* Custom Mute/Unmute Button */}
+                  <button
+                    onClick={() => setIsMuted(!isMuted)}
+                    className="absolute top-4 right-4 z-20 p-3 rounded-full elegant-glass border border-white/20 bg-black/50 hover:bg-black/70 transition-all duration-300 backdrop-blur-sm"
+                    aria-label={isMuted ? "Unmute video" : "Mute video"}
+                  >
+                    {isMuted ? (
+                      <VolumeX className="w-5 h-5 text-white" />
+                    ) : (
+                      <Volume2 className="w-5 h-5 text-white" />
+                    )}
+                  </button>
                   
                   {/* Simplified overlay */}
                   <div className="absolute inset-0 z-10">
