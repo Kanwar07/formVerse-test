@@ -1,13 +1,14 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import * as THREE from 'three';
+import { OrbitControls } from 'three-stdlib';
 import { GLTFLoader } from 'three-stdlib';
-import { OBJLoader } from 'three-stdlib';
+import { OBJLoader, MTLLoader } from 'three-stdlib';
 import { STLLoader } from 'three-stdlib';
 import { PLYLoader } from 'three-stdlib';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, RotateCcw, ZoomIn, ZoomOut, Move, RotateCw } from 'lucide-react';
+import { Loader2, RotateCcw, ZoomIn, ZoomOut, Move, RotateCw, Grid3x3, Eye, Ruler } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface Enhanced3DViewerProps {
@@ -53,8 +54,11 @@ export const Enhanced3DViewer: React.FC<Enhanced3DViewerProps> = ({
   const sceneRef = useRef<THREE.Scene>();
   const cameraRef = useRef<THREE.PerspectiveCamera>();
   const rendererRef = useRef<THREE.WebGLRenderer>();
+  const controlsRef = useRef<OrbitControls>();
   const modelRef = useRef<THREE.Group>();
   const animationIdRef = useRef<number>();
+  const coordinateSystemRef = useRef<THREE.Group>();
+  const wireframeRef = useRef<THREE.Group>();
   
   const [isLoading, setIsLoading] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
@@ -62,6 +66,9 @@ export const Enhanced3DViewer: React.FC<Enhanced3DViewerProps> = ({
   const [modelInfo, setModelInfo] = useState<ModelInfo | null>(null);
   const [isRotating, setIsRotating] = useState(autoRotate);
   const [isDragging, setIsDragging] = useState(false);
+  const [showWireframe, setShowWireframe] = useState(false);
+  const [showCoordinates, setShowCoordinates] = useState(false);
+  const [preserveScale, setPreserveScale] = useState(false);
   
   const { toast } = useToast();
 
@@ -76,60 +83,114 @@ export const Enhanced3DViewer: React.FC<Enhanced3DViewerProps> = ({
   const initScene = useCallback(() => {
     if (!containerRef.current) return;
 
-    // Create scene
+    // Create scene with dark background for CAD visualization
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xf5f5f5);
+    scene.background = new THREE.Color(0x0f0f23);
     sceneRef.current = scene;
 
-    // Create camera
+    // Create camera with 45° FOV as specified
     const camera = new THREE.PerspectiveCamera(
-      75,
+      45,
       width / height,
-      0.1,
+      0.01,
       1000
     );
     camera.position.set(5, 5, 5);
     camera.lookAt(0, 0, 0);
     cameraRef.current = camera;
 
-    // Create renderer
+    // Create renderer with enhanced settings
     const renderer = new THREE.WebGLRenderer({ 
       antialias: true,
-      alpha: true 
+      alpha: true,
+      preserveDrawingBuffer: true
     });
     renderer.setSize(width, height);
-    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1;
     rendererRef.current = renderer;
 
-    // Add lighting
+    // Professional lighting setup for exact CAD visualization
     const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
     scene.add(ambientLight);
 
     const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
     directionalLight.position.set(10, 10, 5);
     directionalLight.castShadow = true;
-    directionalLight.shadow.mapSize.width = 2048;
-    directionalLight.shadow.mapSize.height = 2048;
+    directionalLight.shadow.mapSize.width = 4096;
+    directionalLight.shadow.mapSize.height = 4096;
+    directionalLight.shadow.camera.near = 0.1;
+    directionalLight.shadow.camera.far = 50;
+    directionalLight.shadow.bias = -0.0001;
     scene.add(directionalLight);
 
-    const hemisphereLight = new THREE.HemisphereLight(0x87CEEB, 0x362D1D, 0.5);
-    scene.add(hemisphereLight);
+    // Additional fill lights for even illumination
+    const fillLight1 = new THREE.DirectionalLight(0xffffff, 0.3);
+    fillLight1.position.set(-10, 5, 0);
+    scene.add(fillLight1);
 
-    // Add grid helper
-    const gridHelper = new THREE.GridHelper(20, 20, 0x888888, 0xcccccc);
+    const fillLight2 = new THREE.DirectionalLight(0xffffff, 0.2);
+    fillLight2.position.set(0, -5, 10);
+    scene.add(fillLight2);
+
+    // Add precise grid system
+    const gridHelper = new THREE.GridHelper(20, 20, 0x444444, 0x222222);
     gridHelper.position.y = -2;
     scene.add(gridHelper);
 
+    // Create coordinate system
+    const coordinateSystem = new THREE.Group();
+    const axisLength = 2;
+    
+    // X-axis (red)
+    const xGeometry = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(0, 0, 0),
+      new THREE.Vector3(axisLength, 0, 0)
+    ]);
+    const xLine = new THREE.Line(xGeometry, new THREE.LineBasicMaterial({ color: 0xff0000 }));
+    coordinateSystem.add(xLine);
+    
+    // Y-axis (green)
+    const yGeometry = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(0, 0, 0),
+      new THREE.Vector3(0, axisLength, 0)
+    ]);
+    const yLine = new THREE.Line(yGeometry, new THREE.LineBasicMaterial({ color: 0x00ff00 }));
+    coordinateSystem.add(yLine);
+    
+    // Z-axis (blue)
+    const zGeometry = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(0, 0, 0),
+      new THREE.Vector3(0, 0, axisLength)
+    ]);
+    const zLine = new THREE.Line(zGeometry, new THREE.LineBasicMaterial({ color: 0x0000ff }));
+    coordinateSystem.add(zLine);
+
+    coordinateSystem.visible = showCoordinates;
+    scene.add(coordinateSystem);
+    coordinateSystemRef.current = coordinateSystem;
+
+    // Setup OrbitControls for professional interaction
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.screenSpacePanning = false;
+    controls.enablePan = true;
+    controls.enableZoom = true;
+    controls.enableRotate = true;
+    controls.autoRotate = autoRotate;
+    controls.autoRotateSpeed = 2.0;
+    controls.maxPolarAngle = Math.PI;
+    controls.minDistance = 0.5;
+    controls.maxDistance = 100;
+    controlsRef.current = controls;
+
     // Append renderer to container
     containerRef.current.appendChild(renderer.domElement);
-
-    // Add event listeners for mouse interactions
-    addEventListeners();
-  }, [width, height]);
+  }, [width, height, showCoordinates, autoRotate]);
 
   // Add event listeners for user interactions
   const addEventListeners = useCallback(() => {
@@ -226,7 +287,7 @@ export const Enhanced3DViewer: React.FC<Enhanced3DViewerProps> = ({
       
       const extension = fileType?.toLowerCase() || actualFileName.split('.').pop()?.toLowerCase();
 
-      // Choose appropriate loader based on file type
+      // Choose appropriate loader based on file type with enhanced settings
       switch (extension) {
         case 'gltf':
         case 'glb':
@@ -234,6 +295,19 @@ export const Enhanced3DViewer: React.FC<Enhanced3DViewerProps> = ({
           break;
         case 'obj':
           loader = new OBJLoader();
+          // Try to load materials if available
+          const mtlLoader = new MTLLoader();
+          if (fileUrl.includes('.obj')) {
+            const mtlUrl = fileUrl.replace('.obj', '.mtl');
+            try {
+              mtlLoader.load(mtlUrl, (materials) => {
+                materials.preload();
+                (loader as OBJLoader).setMaterials(materials);
+              });
+            } catch (e) {
+              // MTL file not found, continue without materials
+            }
+          }
           break;
         case 'stl':
           loader = new STLLoader();
@@ -256,34 +330,103 @@ export const Enhanced3DViewer: React.FC<Enhanced3DViewerProps> = ({
 
           let model: THREE.Group;
 
-          // Handle different loader return types
+          // Handle different loader return types with enhanced processing
           if (loadedModel.scene) {
-            // GLTF loader returns { scene, ... }
+            // GLTF loader returns { scene, ... } - preserve materials and animations
             model = loadedModel.scene;
-          } else if (loadedModel.isBufferGeometry) {
-            // STL/PLY loaders return geometry
-            const material = new THREE.MeshLambertMaterial({ 
-              color: 0x888888,
-              side: THREE.DoubleSide
+            // Preserve all materials and textures
+            model.traverse((child: any) => {
+              if (child.isMesh) {
+                if (child.material) {
+                  // Ensure proper material settings for CAD visualization
+                  child.material.side = THREE.DoubleSide;
+                  if (child.material.map) {
+                    child.material.map.flipY = false;
+                  }
+                }
+              }
             });
+          } else if (loadedModel.isBufferGeometry) {
+            // STL/PLY loaders return geometry - apply professional material
+            loadedModel.computeVertexNormals(); // Ensure proper lighting
+            
+            let material;
+            if (extension === 'stl') {
+              // STL files: Use MeshPhongMaterial with proper lighting
+              material = new THREE.MeshPhongMaterial({ 
+                color: 0x888888,
+                side: THREE.DoubleSide,
+                shininess: 30,
+                specular: 0x111111
+              });
+            } else if (extension === 'ply') {
+              // PLY files: Support vertex colors if available
+              material = new THREE.MeshPhongMaterial({ 
+                color: 0x888888,
+                side: THREE.DoubleSide,
+                vertexColors: loadedModel.hasAttribute('color')
+              });
+            }
+            
             const mesh = new THREE.Mesh(loadedModel, material);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
             model = new THREE.Group();
             model.add(mesh);
           } else {
-            // OBJ loader returns object
+            // OBJ loader returns object - enhance materials
             model = loadedModel;
+            model.traverse((child: any) => {
+              if (child.isMesh) {
+                if (!child.material) {
+                  child.material = new THREE.MeshPhongMaterial({ 
+                    color: 0x888888,
+                    side: THREE.DoubleSide
+                  });
+                }
+                child.castShadow = true;
+                child.receiveShadow = true;
+              }
+            });
           }
 
-          // Center and scale model
+          // Auto-center models using precise bounding box calculation
           const box = new THREE.Box3().setFromObject(model);
           const center = box.getCenter(new THREE.Vector3());
           const size = box.getSize(new THREE.Vector3());
           
-          const maxDim = Math.max(size.x, size.y, size.z);
-          const scale = 4 / maxDim;
-          
-          model.scale.setScalar(scale);
-          model.position.sub(center.multiplyScalar(scale));
+          // Scale models to fit viewport while preserving proportions
+          if (!preserveScale) {
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const scale = 4 / maxDim; // Normalize to unit size
+            model.scale.setScalar(scale);
+            model.position.sub(center.multiplyScalar(scale));
+          } else {
+            // Preserve original scale - just center the model
+            model.position.sub(center);
+          }
+
+          // Generate wireframe overlay if needed
+          if (showWireframe) {
+            const wireframeGroup = new THREE.Group();
+            model.traverse((child: any) => {
+              if (child.isMesh && child.geometry) {
+                const wireframeGeometry = new THREE.WireframeGeometry(child.geometry);
+                const wireframeMaterial = new THREE.LineBasicMaterial({ 
+                  color: 0x00ff00,
+                  transparent: true,
+                  opacity: 0.3 
+                });
+                const wireframe = new THREE.LineSegments(wireframeGeometry, wireframeMaterial);
+                wireframe.position.copy(child.position);
+                wireframe.rotation.copy(child.rotation);
+                wireframe.scale.copy(child.scale);
+                wireframeGroup.add(wireframe);
+              }
+            });
+            sceneRef.current?.add(wireframeGroup);
+            wireframeRef.current = wireframeGroup;
+          }
 
           // Add to scene
           sceneRef.current?.add(model);
@@ -353,20 +496,21 @@ export const Enhanced3DViewer: React.FC<Enhanced3DViewerProps> = ({
         URL.revokeObjectURL(fileUrl);
       }
     }
-  }, [modelUrl, modelFile, fileName, fileType, onModelLoad, onError, toast]);
+  }, [modelUrl, modelFile, fileName, fileType, onModelLoad, onError, toast, preserveScale, showWireframe]);
 
-  // Animation loop
+  // Animation loop with OrbitControls
   const animate = useCallback(() => {
     if (!rendererRef.current || !sceneRef.current || !cameraRef.current) return;
 
-    // Auto-rotate model if enabled and not being dragged
-    if (isRotating && !isDragging && modelRef.current) {
-      modelRef.current.rotation.y += 0.005;
+    // Update OrbitControls
+    if (controlsRef.current) {
+      controlsRef.current.autoRotate = isRotating;
+      controlsRef.current.update();
     }
 
     rendererRef.current.render(sceneRef.current, cameraRef.current);
     animationIdRef.current = requestAnimationFrame(animate);
-  }, [isRotating, isDragging]);
+  }, [isRotating]);
 
   // Control functions
   const resetView = () => {
@@ -432,6 +576,42 @@ export const Enhanced3DViewer: React.FC<Enhanced3DViewerProps> = ({
     }
   }, [modelUrl, modelFile, loadModel]);
 
+  // Update coordinate system visibility
+  useEffect(() => {
+    if (coordinateSystemRef.current) {
+      coordinateSystemRef.current.visible = showCoordinates;
+    }
+  }, [showCoordinates]);
+
+  // Update wireframe visibility and regenerate when needed
+  useEffect(() => {
+    if (wireframeRef.current && sceneRef.current) {
+      sceneRef.current.remove(wireframeRef.current);
+      wireframeRef.current = undefined;
+    }
+
+    if (showWireframe && modelRef.current && sceneRef.current) {
+      const wireframeGroup = new THREE.Group();
+      modelRef.current.traverse((child: any) => {
+        if (child.isMesh && child.geometry) {
+          const wireframeGeometry = new THREE.WireframeGeometry(child.geometry);
+          const wireframeMaterial = new THREE.LineBasicMaterial({ 
+            color: 0x00ff00,
+            transparent: true,
+            opacity: 0.3 
+          });
+          const wireframe = new THREE.LineSegments(wireframeGeometry, wireframeMaterial);
+          wireframe.position.copy(child.position);
+          wireframe.rotation.copy(child.rotation);
+          wireframe.scale.copy(child.scale);
+          wireframeGroup.add(wireframe);
+        }
+      });
+      sceneRef.current.add(wireframeGroup);
+      wireframeRef.current = wireframeGroup;
+    }
+  }, [showWireframe, modelRef.current]);
+
   // Start animation loop
   useEffect(() => {
     animate();
@@ -496,6 +676,33 @@ export const Enhanced3DViewer: React.FC<Enhanced3DViewerProps> = ({
             >
               <ZoomOut className="w-4 h-4 mr-1" />
               Zoom Out
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowWireframe(!showWireframe)}
+              disabled={isLoading}
+            >
+              <Grid3x3 className="w-4 h-4 mr-1" />
+              {showWireframe ? 'Hide Wireframe' : 'Show Wireframe'}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowCoordinates(!showCoordinates)}
+              disabled={isLoading}
+            >
+              <Ruler className="w-4 h-4 mr-1" />
+              {showCoordinates ? 'Hide Coordinates' : 'Show Coordinates'}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPreserveScale(!preserveScale)}
+              disabled={isLoading}
+            >
+              <Eye className="w-4 h-4 mr-1" />
+              {preserveScale ? 'Auto Scale' : 'Original Scale'}
             </Button>
           </div>
         )}
