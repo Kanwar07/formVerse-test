@@ -67,12 +67,13 @@ export function HeroSection() {
                 <div className="w-full h-full bg-gradient-to-br from-cyber-dark/80 via-black/60 to-cyber-darker/80 flex items-center justify-center relative">
                   {/* Video Background */}
                   <iframe
-                    src={`https://www.youtube.com/embed/wI-bfQNbKrI?autoplay=1&mute=${isMuted ? 1 : 0}&loop=1&playlist=wI-bfQNbKrI&controls=1&showinfo=0&rel=0&modestbranding=1&enablejsapi=1`}
-                    className="absolute inset-0 w-full h-full object-cover"
+                    src={`https://www.youtube.com/embed/wI-bfQNbKrI?autoplay=1&mute=${isMuted ? 1 : 0}&loop=1&playlist=wI-bfQNbKrI&controls=1&showinfo=0&rel=0&modestbranding=1&enablejsapi=1&iv_load_policy=3`}
+                    className="absolute inset-0 w-full h-full"
                     frameBorder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     allowFullScreen
                     title="FormVerse Explainer Video"
+                    loading="lazy"
                   />
                   
                   {/* Custom Mute/Unmute Button */}
