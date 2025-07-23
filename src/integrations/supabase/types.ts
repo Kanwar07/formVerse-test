@@ -604,14 +604,12 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           created_at: string | null
-          full_name: string | null
+          email: string
           id: string
-          is_verified: boolean | null
+          is_public: boolean | null
           location: string | null
-          razorpay_customer_id: string | null
           role: string | null
           specialties: string[] | null
-          stripe_customer_id: string | null
           updated_at: string | null
           username: string | null
           website: string | null
@@ -620,14 +618,12 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string | null
-          full_name?: string | null
+          email: string
           id: string
-          is_verified?: boolean | null
+          is_public?: boolean | null
           location?: string | null
-          razorpay_customer_id?: string | null
           role?: string | null
           specialties?: string[] | null
-          stripe_customer_id?: string | null
           updated_at?: string | null
           username?: string | null
           website?: string | null
@@ -636,14 +632,12 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string | null
-          full_name?: string | null
+          email?: string
           id?: string
-          is_verified?: boolean | null
+          is_public?: boolean | null
           location?: string | null
-          razorpay_customer_id?: string | null
           role?: string | null
           specialties?: string[] | null
-          stripe_customer_id?: string | null
           updated_at?: string | null
           username?: string | null
           website?: string | null

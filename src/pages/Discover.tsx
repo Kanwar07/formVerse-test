@@ -30,7 +30,7 @@ interface Model {
   user_id: string;
   profiles: {
     username: string;
-    full_name: string;
+    email: string;
     avatar_url: string;
   } | null;
 }
@@ -107,7 +107,7 @@ const Discover = () => {
       for (const model of modelsData || []) {
         const { data: profileData } = await supabase
           .from('profiles')
-          .select('username, full_name, avatar_url')
+          .select('username, email, avatar_url')
           .eq('id', model.user_id)
           .single();
 
@@ -282,7 +282,7 @@ const Discover = () => {
                         {model.profiles?.username ? model.profiles.username[0].toUpperCase() : 'U'}
                       </div>
                       <span className="text-sm text-muted-foreground">
-                        by {model.profiles?.full_name || model.profiles?.username || 'Unknown'}
+                        by {model.profiles?.username || 'Unknown'}
                       </span>
                     </div>
                     

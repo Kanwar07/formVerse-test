@@ -6,12 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { supabase } from '@/integrations/supabase/client';
 import { Brain } from "lucide-react";
 
 export function SignUpForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isCreator, setIsCreator] = useState('false');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -25,7 +27,10 @@ export function SignUpForm() {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/dashboard`
+          emailRedirectTo: `${window.location.origin}/dashboard`,
+          data: {
+            role: isCreator === 'true' ? 'creator' : 'user'
+          }
         }
       });
       
@@ -101,6 +106,23 @@ export function SignUpForm() {
               minLength={6}
               required
             />
+          </div>
+          <div className="space-y-3">
+            <Label className="text-base font-medium">Are you a creator?</Label>
+            <RadioGroup value={isCreator} onValueChange={setIsCreator} className="flex flex-col space-y-2">
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="false" id="user" />
+                <Label htmlFor="user" className="text-sm font-normal cursor-pointer">
+                  No, I want to browse and buy 3D models
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="true" id="creator" />
+                <Label htmlFor="creator" className="text-sm font-normal cursor-pointer">
+                  Yes, I want to sell my 3D models
+                </Label>
+              </div>
+            </RadioGroup>
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Creating account..." : "Sign Up"}
