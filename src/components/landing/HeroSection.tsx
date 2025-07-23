@@ -1,11 +1,36 @@
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Volume2, VolumeX } from "lucide-react";
+import { Volume2, VolumeX, Play, Pause } from "lucide-react";
 
 export function HeroSection() {
-  const [isMuted, setIsMuted] = useState(false);
+  const [isMuted, setIsMuted] = useState(true); // Start muted for better autoplay support
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [videoLoaded, setVideoLoaded] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  useEffect(() => {
+    // Set a timeout to check if video loaded
+    const timer = setTimeout(() => {
+      setVideoLoaded(true);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleVideoInteraction = () => {
+    // Try to reload the iframe if it's not working
+    if (iframeRef.current) {
+      const currentSrc = iframeRef.current.src;
+      iframeRef.current.src = '';
+      setTimeout(() => {
+        if (iframeRef.current) {
+          iframeRef.current.src = currentSrc;
+        }
+      }, 100);
+    }
+  };
 
   return (
     <section className="relative py-24 md:py-40 overflow-hidden bg-gradient-to-br from-cyber-dark via-black to-cyber-darker">
@@ -65,34 +90,63 @@ export function HeroSection() {
               <div className="absolute inset-0 bg-gradient-to-r from-white/5 via-transparent to-cyber-blue/5 rounded-3xl blur-3xl animate-glow-pulse"></div>
               <div className="relative w-full h-full elegant-glass rounded-3xl border-2 border-white/20 shadow-2xl overflow-hidden elegant-glow">
                 <div className="w-full h-full bg-gradient-to-br from-cyber-dark/80 via-black/60 to-cyber-darker/80 flex items-center justify-center relative">
-                  {/* Video Background */}
+                  {/* Video Background with better error handling */}
                   <iframe
-                    src={`https://www.youtube.com/embed/wI-bfQNbKrI?autoplay=1&mute=${isMuted ? 1 : 0}&loop=1&playlist=wI-bfQNbKrI&controls=1&showinfo=0&rel=0&modestbranding=1&enablejsapi=1&iv_load_policy=3`}
+                    ref={iframeRef}
+                    src={`https://www.youtube.com/embed/wI-bfQNbKrI?autoplay=1&mute=1&loop=1&playlist=wI-bfQNbKrI&controls=0&showinfo=0&rel=0&modestbranding=1&enablejsapi=1&iv_load_policy=3&disablekb=1&fs=0`}
                     className="absolute inset-0 w-full h-full"
                     frameBorder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     allowFullScreen
                     title="FormVerse Explainer Video"
-                    loading="lazy"
+                    onLoad={() => setVideoLoaded(true)}
+                    onError={() => console.log('Video failed to load')}
                   />
                   
-                  {/* Custom Mute/Unmute Button */}
-                  <button
-                    onClick={() => setIsMuted(!isMuted)}
-                    className="absolute top-4 right-4 z-20 p-3 rounded-full elegant-glass border border-white/20 bg-black/50 hover:bg-black/70 transition-all duration-300 backdrop-blur-sm"
-                    aria-label={isMuted ? "Unmute video" : "Mute video"}
-                  >
-                    {isMuted ? (
-                      <VolumeX className="w-5 h-5 text-white" />
-                    ) : (
-                      <Volume2 className="w-5 h-5 text-white" />
-                    )}
-                  </button>
+                  {/* Fallback content if video doesn't load */}
+                  {!videoLoaded && (
+                    <div className="absolute inset-0 bg-gradient-to-br from-cyber-dark via-black to-cyber-darker flex items-center justify-center">
+                      <div className="text-center space-y-4">
+                        <div className="w-16 h-16 border-4 border-white/20 border-t-white/60 rounded-full animate-spin mx-auto"></div>
+                        <p className="text-white/60 text-lg">Loading video...</p>
+                        <Button 
+                          onClick={handleVideoInteraction}
+                          variant="outline" 
+                          className="mt-4 border-white/20 text-white/80 hover:bg-white/10"
+                        >
+                          <Play className="w-4 h-4 mr-2" />
+                          Click to load video
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                   
-                  {/* Simplified overlay */}
-                  <div className="absolute inset-0 z-10">
-                    {/* Subtle grid overlay */}
-                    <div className="absolute inset-0 opacity-10">
+                  {/* Video Controls */}
+                  <div className="absolute top-4 right-4 z-20 flex gap-2">
+                    <button
+                      onClick={() => setIsMuted(!isMuted)}
+                      className="p-3 rounded-full elegant-glass border border-white/20 bg-black/50 hover:bg-black/70 transition-all duration-300 backdrop-blur-sm"
+                      aria-label={isMuted ? "Unmute video" : "Mute video"}
+                    >
+                      {isMuted ? (
+                        <VolumeX className="w-5 h-5 text-white" />
+                      ) : (
+                        <Volume2 className="w-5 h-5 text-white" />
+                      )}
+                    </button>
+                    
+                    <button
+                      onClick={handleVideoInteraction}
+                      className="p-3 rounded-full elegant-glass border border-white/20 bg-black/50 hover:bg-black/70 transition-all duration-300 backdrop-blur-sm"
+                      aria-label="Reload video"
+                    >
+                      <Play className="w-5 h-5 text-white" />
+                    </button>
+                  </div>
+                  
+                  {/* Subtle overlay */}
+                  <div className="absolute inset-0 z-10 pointer-events-none">
+                    <div className="absolute inset-0 opacity-5">
                       <div className="w-full h-full" style={{
                         backgroundImage: `
                           linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
