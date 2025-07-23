@@ -5,13 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Volume2, VolumeX, Play, Pause } from "lucide-react";
 
 export function HeroSection() {
-  const [isMuted, setIsMuted] = useState(true); // Start muted for better autoplay support
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
   const [videoLoaded, setVideoLoaded] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
-    // Set a timeout to check if video loaded
     const timer = setTimeout(() => {
       setVideoLoaded(true);
     }, 3000);
@@ -19,8 +17,19 @@ export function HeroSection() {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleVideoInteraction = () => {
-    // Try to reload the iframe if it's not working
+  const toggleMute = () => {
+    if (iframeRef.current) {
+      const newMutedState = !isMuted;
+      setIsMuted(newMutedState);
+      
+      // Update iframe src with new mute parameter
+      const currentSrc = iframeRef.current.src;
+      const newSrc = currentSrc.replace(/mute=[01]/, `mute=${newMutedState ? 1 : 0}`);
+      iframeRef.current.src = newSrc;
+    }
+  };
+
+  const reloadVideo = () => {
     if (iframeRef.current) {
       const currentSrc = iframeRef.current.src;
       iframeRef.current.src = '';
@@ -110,7 +119,7 @@ export function HeroSection() {
                         <div className="w-16 h-16 border-4 border-white/20 border-t-white/60 rounded-full animate-spin mx-auto"></div>
                         <p className="text-white/60 text-lg">Loading video...</p>
                         <Button 
-                          onClick={handleVideoInteraction}
+                          onClick={reloadVideo}
                           variant="outline" 
                           className="mt-4 border-white/20 text-white/80 hover:bg-white/10"
                         >
@@ -124,7 +133,7 @@ export function HeroSection() {
                   {/* Video Controls */}
                   <div className="absolute top-4 right-4 z-20 flex gap-2">
                     <button
-                      onClick={() => setIsMuted(!isMuted)}
+                      onClick={toggleMute}
                       className="p-3 rounded-full elegant-glass border border-white/20 bg-black/50 hover:bg-black/70 transition-all duration-300 backdrop-blur-sm"
                       aria-label={isMuted ? "Unmute video" : "Mute video"}
                     >
@@ -136,7 +145,7 @@ export function HeroSection() {
                     </button>
                     
                     <button
-                      onClick={handleVideoInteraction}
+                      onClick={reloadVideo}
                       className="p-3 rounded-full elegant-glass border border-white/20 bg-black/50 hover:bg-black/70 transition-all duration-300 backdrop-blur-sm"
                       aria-label="Reload video"
                     >
