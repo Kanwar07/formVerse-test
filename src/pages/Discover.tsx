@@ -69,7 +69,8 @@ const Discover = () => {
           created_at,
           user_id
         `)
-        .eq('status', 'published');
+        .eq('status', 'published')
+        .eq('is_published', true);
 
       // Apply sorting
       switch (sortBy) {

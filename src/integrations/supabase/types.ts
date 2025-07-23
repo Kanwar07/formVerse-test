@@ -506,6 +506,7 @@ export type Database = {
           geometry_data: Json | null
           id: string
           is_featured: boolean | null
+          is_published: boolean | null
           is_reported: boolean | null
           license_type: string | null
           material_recommendations: string[] | null
@@ -542,6 +543,7 @@ export type Database = {
           geometry_data?: Json | null
           id?: string
           is_featured?: boolean | null
+          is_published?: boolean | null
           is_reported?: boolean | null
           license_type?: string | null
           material_recommendations?: string[] | null
@@ -578,6 +580,7 @@ export type Database = {
           geometry_data?: Json | null
           id?: string
           is_featured?: boolean | null
+          is_published?: boolean | null
           is_reported?: boolean | null
           license_type?: string | null
           material_recommendations?: string[] | null
