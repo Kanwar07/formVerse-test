@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Brain } from "lucide-react";
 
 export function SignUpForm() {
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -96,6 +97,17 @@ export function SignUpForm() {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
+            <Label htmlFor="fullName">Full Name</Label>
+            <Input
+              id="fullName"
+              type="text"
+              placeholder="John Doe"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              required
+            />
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
@@ -130,27 +142,20 @@ export function SignUpForm() {
               required
             />
           </div>
-          <div className="space-y-4 p-4 bg-muted/20 rounded-lg border border-border/50">
-            <Label className="text-base font-semibold text-foreground">What brings you to FormVerse?</Label>
-            <p className="text-sm text-muted-foreground">This helps us personalize your experience</p>
-            <RadioGroup value={isCreator} onValueChange={setIsCreator} className="flex flex-col space-y-3">
-              <div className="flex items-center space-x-3 p-3 rounded-md border border-border hover:bg-accent/50 transition-colors">
+          <div className="space-y-3">
+            <Label className="text-sm font-medium text-foreground">Are you a creator?</Label>
+            <RadioGroup value={isCreator} onValueChange={setIsCreator} className="flex flex-col space-y-2">
+              <div className="flex items-center space-x-2">
                 <RadioGroupItem value="false" id="user" />
-                <div className="flex-1">
-                  <Label htmlFor="user" className="text-sm font-medium cursor-pointer text-foreground">
-                    Browse & Buy Models
-                  </Label>
-                  <p className="text-xs text-muted-foreground mt-1">I want to discover and purchase 3D models</p>
-                </div>
+                <Label htmlFor="user" className="text-sm font-normal cursor-pointer text-foreground">
+                  Browse & Buy Models
+                </Label>
               </div>
-              <div className="flex items-center space-x-3 p-3 rounded-md border border-border hover:bg-accent/50 transition-colors">
+              <div className="flex items-center space-x-2">
                 <RadioGroupItem value="true" id="creator" />
-                <div className="flex-1">
-                  <Label htmlFor="creator" className="text-sm font-medium cursor-pointer text-foreground">
-                    Sell My Creations
-                  </Label>
-                  <p className="text-xs text-muted-foreground mt-1">I want to upload and sell my 3D models</p>
-                </div>
+                <Label htmlFor="creator" className="text-sm font-normal cursor-pointer text-foreground">
+                  Sell My Creations (Creator)
+                </Label>
               </div>
             </RadioGroup>
           </div>
