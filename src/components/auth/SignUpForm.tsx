@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -107,20 +107,27 @@ export function SignUpForm() {
               required
             />
           </div>
-          <div className="space-y-3">
-            <Label className="text-base font-medium">Are you a creator?</Label>
-            <RadioGroup value={isCreator} onValueChange={setIsCreator} className="flex flex-col space-y-2">
-              <div className="flex items-center space-x-2">
+          <div className="space-y-4 p-4 bg-muted/20 rounded-lg border border-border/50">
+            <Label className="text-base font-semibold text-foreground">What brings you to FormVerse?</Label>
+            <p className="text-sm text-muted-foreground">This helps us personalize your experience</p>
+            <RadioGroup value={isCreator} onValueChange={setIsCreator} className="flex flex-col space-y-3">
+              <div className="flex items-center space-x-3 p-3 rounded-md border border-border hover:bg-accent/50 transition-colors">
                 <RadioGroupItem value="false" id="user" />
-                <Label htmlFor="user" className="text-sm font-normal cursor-pointer">
-                  No, I want to browse and buy 3D models
-                </Label>
+                <div className="flex-1">
+                  <Label htmlFor="user" className="text-sm font-medium cursor-pointer text-foreground">
+                    Browse & Buy Models
+                  </Label>
+                  <p className="text-xs text-muted-foreground mt-1">I want to discover and purchase 3D models</p>
+                </div>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-3 p-3 rounded-md border border-border hover:bg-accent/50 transition-colors">
                 <RadioGroupItem value="true" id="creator" />
-                <Label htmlFor="creator" className="text-sm font-normal cursor-pointer">
-                  Yes, I want to sell my 3D models
-                </Label>
+                <div className="flex-1">
+                  <Label htmlFor="creator" className="text-sm font-medium cursor-pointer text-foreground">
+                    Sell My Creations
+                  </Label>
+                  <p className="text-xs text-muted-foreground mt-1">I want to upload and sell my 3D models</p>
+                </div>
               </div>
             </RadioGroup>
           </div>
