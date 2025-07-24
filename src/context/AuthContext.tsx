@@ -75,7 +75,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signUp = async (email: string, password: string, userData?: any) => {
     try {
-      const redirectUrl = `${window.location.origin}/`;
+      // Redirect to formverse-upload for creators after email verification
+      const redirectUrl = `${window.location.origin}/formverse-upload`;
       
       const { error } = await supabase.auth.signUp({
         email,
