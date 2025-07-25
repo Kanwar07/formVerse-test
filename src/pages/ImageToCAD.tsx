@@ -1,264 +1,195 @@
-import { useState, useCallback } from "react";
-import { useDropzone } from "react-dropzone";
+import { useState, useRef, useEffect } from "react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
-import { Upload, Download, FileImage, Settings, CheckCircle, XCircle, Clock, Zap } from "lucide-react";
+import { VFusion3DService } from "@/services/vfusion3d";
+import { Upload, Download, Eye, Trash2, Search, Grid, List, Sparkles, Zap } from "lucide-react";
 
-interface ConversionJob {
+interface ConvertedModel {
   id: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
-  image_url: string;
-  result_url?: string;
-  error_message?: string;
-  parameters?: {
-    output_format: 'stl' | 'step';
-    resolution: number;
-    thickness: number;
-  };
-  created_at: string;
+  name: string;
+  originalImage: string;
+  modelUrl?: string;
+  status: 'processing' | 'completed' | 'failed';
+  createdAt: string;
+  predictionId?: string;
 }
 
 const ImageToCAD = () => {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string>("");
-  const [outputFormat, setOutputFormat] = useState<'stl' | 'step'>('stl');
-  const [resolution, setResolution] = useState([128]);
-  const [thickness, setThickness] = useState([2]);
-  const [jobs, setJobs] = useState<ConversionJob[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isConverting, setIsConverting] = useState(false);
+  const [convertedModels, setConvertedModels] = useState<ConvertedModel[]>([]);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [searchTerm, setSearchTerm] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { user } = useAuth();
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    const file = acceptedFiles[0];
-    if (file) {
-      setSelectedFile(file);
-      setPreviewUrl(URL.createObjectURL(file));
+  // Load user's existing models on component mount
+  useEffect(() => {
+    if (user) {
+      loadUserModels();
     }
-  }, []);
+  }, [user]);
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: {
-      'image/*': ['.png', '.jpg', '.jpeg', '.webp']
-    },
-    maxFiles: 1
-  });
+  const loadUserModels = async () => {
+    try {
+      const jobs = await VFusion3DService.getUserJobs(user?.id || '');
+      const models: ConvertedModel[] = jobs.map(job => ({
+        id: job.id,
+        name: job.image_url.split('/').pop()?.replace(/\.[^/.]+$/, "") || 'Untitled',
+        originalImage: job.image_url,
+        modelUrl: job.result_url,
+        status: job.status === 'succeeded' ? 'completed' : 
+               job.status === 'failed' ? 'failed' : 'processing',
+        createdAt: job.created_at,
+        predictionId: job.prediction_id
+      }));
+      setConvertedModels(models);
+    } catch (error) {
+      console.error('Error loading user models:', error);
+    }
+  };
 
-  const uploadAndConvert = async () => {
-    if (!selectedFile || !user) {
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      setSelectedImage(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleConvertToCAD = async () => {
+    if (!selectedImage) {
       toast({
-        title: "Error",
-        description: "Please select an image and make sure you're logged in",
+        title: "No image selected",
+        description: "Please select an image to convert",
         variant: "destructive"
       });
       return;
     }
 
-    setIsUploading(true);
-
+    setIsConverting(true);
+    
     try {
-      // Upload image to Supabase storage
-      const fileName = `cad-images/${user.id}/${Date.now()}-${selectedFile.name}`;
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('model-images')
-        .upload(fileName, selectedFile);
-
-      if (uploadError) throw uploadError;
-
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('model-images')
-        .getPublicUrl(fileName);
-
-      // Start conversion job
-      console.log('Starting conversion with:', { 
-        image_url: publicUrl, 
-        output_format: outputFormat, 
-        resolution: resolution[0], 
-        thickness: thickness[0] 
-      });
+      const response = await VFusion3DService.convertImageTo3D(selectedImage, user?.id);
       
-      const { data, error } = await supabase.functions.invoke('image-to-cad', {
-        body: {
-          image_url: publicUrl,
-          output_format: outputFormat,
-          resolution: resolution[0],
-          thickness: thickness[0]
-        }
-      });
-
-      console.log('Conversion response:', { data, error });
-
-      if (error) throw error;
-
-      toast({
-        title: "Conversion Started",
-        description: "Your image is being converted to CAD. This may take a few minutes.",
-      });
-
-      // Add job to list and start polling
-      const newJob: ConversionJob = {
-        id: data.job_id,
-        status: 'pending',
-        image_url: publicUrl,
-        parameters: {
-          output_format: outputFormat,
-          resolution: resolution[0],
-          thickness: thickness[0]
-        },
-        created_at: new Date().toISOString()
+      const newModel: ConvertedModel = {
+        id: response.predictionId,
+        name: selectedImage.name.replace(/\.[^/.]+$/, ""),
+        originalImage: imagePreview!,
+        status: 'processing',
+        createdAt: new Date().toISOString(),
+        predictionId: response.predictionId
       };
 
-      setJobs(prev => [newJob, ...prev]);
-      pollJobStatus(data.job_id);
+      setConvertedModels(prev => [newModel, ...prev]);
+      
+      toast({
+        title: "Conversion started",
+        description: "Your image is being converted to 3D. Check back in a few minutes.",
+      });
 
       // Reset form
-      setSelectedFile(null);
-      setPreviewUrl("");
+      setSelectedImage(null);
+      setImagePreview(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
 
     } catch (error) {
-      console.error('Upload/conversion error:', error);
       toast({
-        title: "Conversion Failed",
-        description: "Failed to start conversion. Please try again.",
+        title: "Conversion failed",
+        description: "There was an error converting your image. Please try again.",
         variant: "destructive"
       });
     } finally {
-      setIsUploading(false);
+      setIsConverting(false);
     }
   };
 
-  const pollJobStatus = async (jobId: string) => {
-    const pollInterval = setInterval(async () => {
-      try {
-        // Call edge function with proper URL parameters and auth
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (!session?.access_token) {
-          console.error('No access token available for polling');
-          clearInterval(pollInterval);
-          return;
-        }
-        
-        console.log('Polling job status for:', jobId);
-        
-        const response = await fetch(
-          `https://zqnzxpbthldfqqbzzjct.supabase.co/functions/v1/image-to-cad?job_id=${jobId}`,
-          {
-            method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${session.access_token}`,
-              'Content-Type': 'application/json'
-            }
-          }
-        );
-
-        console.log('Polling response status:', response.status);
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Polling error response:', errorText);
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        const updatedJob = await response.json();
-        console.log('Updated job status:', updatedJob);
-        setJobs(prev => 
-          prev.map(job => 
-            job.id === jobId ? updatedJob : job
-          )
-        );
-
-        if (updatedJob.status === 'completed' || updatedJob.status === 'failed') {
-          clearInterval(pollInterval);
-          
-          if (updatedJob.status === 'completed') {
-            toast({
-              title: "Conversion Complete",
-              description: "Your CAD file is ready for download!",
-            });
-          } else {
-            toast({
-              title: "Conversion Failed",
-              description: updatedJob.error_message || "Unknown error occurred",
-              variant: "destructive"
-            });
-          }
-        }
-      } catch (error) {
-        console.error('Polling error:', error);
-        clearInterval(pollInterval);
-      }
-    }, 2000);
-
-    // Clear interval after 10 minutes
-    setTimeout(() => clearInterval(pollInterval), 600000);
-  };
-
-  const downloadCADFile = (job: ConversionJob) => {
-    if (job.result_url) {
-      window.open(job.result_url, '_blank');
+  const checkJobStatus = async (predictionId: string) => {
+    try {
+      const status = await VFusion3DService.checkJobStatus(predictionId);
+      
+      setConvertedModels(prev => 
+        prev.map(model => 
+          model.predictionId === predictionId 
+            ? { 
+                ...model, 
+                status: status.status === 'succeeded' ? 'completed' : 
+                       status.status === 'failed' ? 'failed' : 'processing',
+                modelUrl: status.output || model.modelUrl
+              }
+            : model
+        )
+      );
+    } catch (error) {
+      console.error('Error checking job status:', error);
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'pending':
-      case 'processing':
-        return <Clock className="h-4 w-4 text-yellow-500" />;
-      case 'completed':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'failed':
-        return <XCircle className="h-4 w-4 text-red-500" />;
-      default:
-        return null;
+  const handleDownloadModel = async (modelUrl: string, filename: string) => {
+    try {
+      await VFusion3DService.downloadModel(modelUrl, `${filename}.obj`);
+      toast({
+        title: "Download started",
+        description: "Your 3D model is being downloaded.",
+      });
+    } catch (error) {
+      toast({
+        title: "Download failed",
+        description: "There was an error downloading the model.",
+        variant: "destructive"
+      });
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'processing':
-        return 'bg-blue-100 text-blue-800';
-      case 'completed':
-        return 'bg-green-100 text-green-800';
-      case 'failed':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
+  const removeModel = (id: string) => {
+    setConvertedModels(prev => prev.filter(model => model.id !== id));
+    toast({
+      title: "Model removed",
+      description: "The model has been removed from your library.",
+    });
   };
+
+  const filteredModels = convertedModels.filter(model =>
+    model.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   if (!user) {
     return (
-      <div className="min-h-screen flex flex-col">
+      <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-primary/10 flex flex-col">
         <Navbar />
-        <main className="flex-grow container mx-auto py-8">
-          <Card className="max-w-md mx-auto">
-            <CardHeader>
-              <CardTitle>Authentication Required</CardTitle>
-              <CardDescription>
-                Please sign in to use the Image to CAD converter.
-              </CardDescription>
+        <main className="flex-grow container mx-auto py-16 flex items-center justify-center">
+          <Card className="max-w-md glass-card border-primary/20">
+            <CardHeader className="text-center">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-r from-primary to-accent flex items-center justify-center mx-auto mb-4">
+                <Sparkles className="h-8 w-8 text-white" />
+              </div>
+              <CardTitle className="text-2xl">Transform Images to 3D</CardTitle>
+              <p className="text-muted-foreground">
+                Sign in to access our AI-powered image to CAD converter
+              </p>
             </CardHeader>
             <CardContent>
               <Button 
                 onClick={() => window.location.href = '/auth'}
-                className="w-full"
+                className="w-full h-12 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90"
               >
-                Go to Sign In
+                Get Started
               </Button>
             </CardContent>
           </Card>
@@ -269,193 +200,319 @@ const ImageToCAD = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-primary/10 flex flex-col">
       <Navbar />
       
-      <main className="flex-grow container mx-auto py-8 space-y-8">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold">Image to CAD Converter</h1>
-          <p className="text-muted-foreground mt-2">
-            Convert your 2D images to 3D CAD models using AI-powered GenCAD technology
-          </p>
+      {/* Hero Section */}
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-transparent to-accent/20 opacity-50" />
+        <div className="container mx-auto px-4 py-16 relative">
+          <div className="text-center max-w-4xl mx-auto">
+            <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
+              Transform Images into <span className="text-accent">3D Models</span>
+            </h1>
+            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+              Upload any image and watch our AI convert it into a detailed 3D CAD model in seconds
+            </p>
+          </div>
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <main className="flex-grow container mx-auto px-4 pb-16">
+        <div className="grid lg:grid-cols-2 gap-8 mb-16">
           {/* Upload Section */}
-          <Card>
+          <Card className="glass-card border-primary/20">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Upload className="h-5 w-5" />
                 Upload Image
               </CardTitle>
-              <CardDescription>
-                Upload an image to convert to a 3D CAD model
-              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* File Upload */}
-              <div
-                {...getRootProps()}
-                className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
-                  isDragActive ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
-                }`}
-              >
-                <input {...getInputProps()} />
-                <FileImage className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                {isDragActive ? (
-                  <p>Drop the image here...</p>
-                ) : (
-                  <div>
-                    <p className="text-lg font-medium mb-2">
-                      Drag & drop an image here, or click to select
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Supports PNG, JPG, JPEG, WEBP
-                    </p>
-                  </div>
-                )}
+              <div className="border-2 border-dashed border-primary/30 rounded-lg p-8 text-center hover:border-primary/50 transition-colors">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                  id="image-upload"
+                />
+                <Label htmlFor="image-upload" className="cursor-pointer">
+                  {imagePreview ? (
+                    <div className="space-y-4">
+                      <img 
+                        src={imagePreview} 
+                        alt="Preview" 
+                        className="max-h-48 mx-auto rounded-lg shadow-lg"
+                      />
+                      <p className="text-sm text-muted-foreground">
+                        Click to change image
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <Upload className="h-12 w-12 mx-auto text-primary/50" />
+                      <div>
+                        <p className="text-lg font-medium">Click to upload image</p>
+                        <p className="text-sm text-muted-foreground">
+                          Supports JPG, PNG, GIF up to 10MB
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </Label>
               </div>
 
-              {/* Preview */}
-              {previewUrl && (
-                <div className="space-y-4">
-                  <img
-                    src={previewUrl}
-                    alt="Preview"
-                    className="w-full h-48 object-cover rounded-lg border"
-                  />
-                  <p className="text-sm text-muted-foreground">
-                    Selected: {selectedFile?.name}
+              <Button 
+                onClick={handleConvertToCAD}
+                disabled={!selectedImage || isConverting}
+                className="w-full h-12 text-lg font-medium bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90"
+              >
+                {isConverting ? (
+                  <div className="flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                    Converting...
+                  </div>
+                ) : (
+                  <>
+                    <Zap className="h-5 w-5 mr-2" />
+                    Convert to 3D
+                  </>
+                )}
+              </Button>
+
+              {isConverting && (
+                <div className="space-y-2">
+                  <Progress value={33} className="h-2" />
+                  <p className="text-sm text-muted-foreground text-center">
+                    Processing your image...
                   </p>
                 </div>
               )}
             </CardContent>
           </Card>
 
-          {/* Settings Section */}
-          <Card>
+          {/* Feature Info */}
+          <Card className="glass-card border-primary/20">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Settings className="h-5 w-5" />
-                Conversion Settings
+                <Sparkles className="h-5 w-5" />
+                How it works
               </CardTitle>
-              <CardDescription>
-                Configure the output parameters
-              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Output Format */}
-              <div className="space-y-2">
-                <Label>Output Format</Label>
-                <Select value={outputFormat} onValueChange={(value: 'stl' | 'step') => setOutputFormat(value)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="stl">STL (3D Printing)</SelectItem>
-                    <SelectItem value="step">STEP (CAD Design)</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="space-y-4">
+                <div className="flex gap-4">
+                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm font-semibold text-primary">1</span>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">Upload Image</h3>
+                    <p className="text-sm text-muted-foreground">Upload any image you want to convert to 3D</p>
+                  </div>
+                </div>
+                
+                <div className="flex gap-4">
+                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm font-semibold text-primary">2</span>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">AI Processing</h3>
+                    <p className="text-sm text-muted-foreground">Our AI analyzes your image and generates a 3D model</p>
+                  </div>
+                </div>
+                
+                <div className="flex gap-4">
+                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm font-semibold text-primary">3</span>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">Download</h3>
+                    <p className="text-sm text-muted-foreground">Get your 3D model file ready for CAD or 3D printing</p>
+                  </div>
+                </div>
               </div>
-
-              {/* Resolution */}
-              <div className="space-y-2">
-                <Label>Resolution: {resolution[0]}px</Label>
-                <Slider
-                  value={resolution}
-                  onValueChange={setResolution}
-                  max={512}
-                  min={64}
-                  step={64}
-                  className="w-full"
-                />
-                <p className="text-sm text-muted-foreground">
-                  Higher resolution = better quality, longer processing time
+              
+              <div className="p-4 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg border border-primary/20">
+                <p className="text-sm text-center">
+                  <strong>Supported formats:</strong> JPG, PNG, GIF • <strong>Output:</strong> OBJ, STL
                 </p>
               </div>
-
-              {/* Thickness */}
-              <div className="space-y-2">
-                <Label>Model Thickness: {thickness[0]}mm</Label>
-                <Slider
-                  value={thickness}
-                  onValueChange={setThickness}
-                  max={10}
-                  min={0.5}
-                  step={0.5}
-                  className="w-full"
-                />
-              </div>
-
-              {/* Convert Button */}
-              <Button 
-                onClick={uploadAndConvert}
-                disabled={!selectedFile || isUploading}
-                className="w-full"
-                size="lg"
-              >
-                <Zap className="h-4 w-4 mr-2" />
-                {isUploading ? "Converting..." : "Convert to CAD"}
-              </Button>
             </CardContent>
           </Card>
         </div>
 
-        {/* Jobs Section */}
-        {jobs.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Conversion Jobs</CardTitle>
-              <CardDescription>
-                Track your image-to-CAD conversion progress
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {jobs.map((job) => (
-                  <div key={job.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center space-x-4">
-                      <img
-                        src={job.image_url}
-                        alt="Source"
-                        className="w-16 h-16 object-cover rounded"
-                      />
-                      <div>
-                        <div className="flex items-center gap-2">
-                          {getStatusIcon(job.status)}
-                          <Badge className={getStatusColor(job.status)}>
-                            {job.status}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {job.parameters?.output_format?.toUpperCase()} • {job.parameters?.resolution}px
-                        </p>
-                        {job.error_message && (
-                          <p className="text-sm text-red-500 mt-1">{job.error_message}</p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      {job.status === 'processing' && (
-                        <Progress value={50} className="w-24" />
-                      )}
-                      {job.status === 'completed' && job.result_url && (
-                        <Button
-                          onClick={() => downloadCADFile(job)}
-                          size="sm"
-                          variant="outline"
-                        >
-                          <Download className="h-4 w-4 mr-2" />
-                          Download
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                ))}
+        {/* Library Section */}
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <h2 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              Your 3D Library
+            </h2>
+            
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search models..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 w-64"
+                />
               </div>
-            </CardContent>
-          </Card>
-        )}
+              
+              <div className="flex border rounded-lg p-1">
+                <Button
+                  variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('grid')}
+                >
+                  <Grid className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={viewMode === 'list' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('list')}
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {filteredModels.length === 0 ? (
+            <Card className="glass-card border-primary/20">
+              <CardContent className="py-16 text-center">
+                <div className="max-w-md mx-auto space-y-4">
+                  <div className="h-16 w-16 rounded-full bg-gradient-to-r from-primary/20 to-accent/20 flex items-center justify-center mx-auto">
+                    <Upload className="h-8 w-8 text-primary/50" />
+                  </div>
+                  <h3 className="text-xl font-semibold">No models yet</h3>
+                  <p className="text-muted-foreground">
+                    Upload your first image to start building your 3D library
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className={
+              viewMode === 'grid' 
+                ? "grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+                : "space-y-4"
+            }>
+              {filteredModels.map((model) => (
+                <Card key={model.id} className="glass-card border-primary/20 group hover:scale-105 transition-transform">
+                  <CardContent className="p-4">
+                    {viewMode === 'grid' ? (
+                      <div className="space-y-4">
+                        <div className="aspect-square rounded-lg overflow-hidden bg-muted">
+                          <img 
+                            src={model.originalImage} 
+                            alt={model.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <h3 className="font-semibold truncate">{model.name}</h3>
+                          <div className="flex items-center justify-between">
+                            <Badge variant={
+                              model.status === 'completed' ? 'default' :
+                              model.status === 'processing' ? 'secondary' : 'destructive'
+                            }>
+                              {model.status}
+                            </Badge>
+                            <div className="flex gap-1">
+                              {model.status === 'processing' && model.predictionId && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => checkJobStatus(model.predictionId!)}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                              )}
+                              {model.status === 'completed' && model.modelUrl && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleDownloadModel(model.modelUrl!, model.name)}
+                                >
+                                  <Download className="h-4 w-4" />
+                                </Button>
+                              )}
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => removeModel(model.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-4">
+                        <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                          <img 
+                            src={model.originalImage} 
+                            alt={model.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold truncate">{model.name}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {new Date(model.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          <Badge variant={
+                            model.status === 'completed' ? 'default' :
+                            model.status === 'processing' ? 'secondary' : 'destructive'
+                          }>
+                            {model.status}
+                          </Badge>
+                          
+                          <div className="flex gap-1">
+                            {model.status === 'processing' && model.predictionId && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => checkJobStatus(model.predictionId!)}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {model.status === 'completed' && model.modelUrl && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleDownloadModel(model.modelUrl!, model.name)}
+                              >
+                                <Download className="h-4 w-4" />
+                              </Button>
+                            )}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => removeModel(model.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
       </main>
 
       <Footer />
