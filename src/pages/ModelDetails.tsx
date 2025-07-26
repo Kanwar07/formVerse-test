@@ -14,6 +14,7 @@ import { ModelPreview } from "@/components/preview/ModelPreview";
 import { Enhanced3DViewer } from "@/components/three/Enhanced3DViewer";
 import { EngagementGate } from "@/components/buyer/EngagementGate";
 import { PreviewSelector } from "@/components/preview/PreviewSelector";
+import { ModelAnalysisReport } from "@/components/analysis/ModelAnalysisReport";
 import { 
   Download, 
   Eye, 
@@ -31,6 +32,8 @@ const ModelDetails = () => {
   const { modelId } = useParams();
   const [purchased, setPurchased] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [showAnalysis, setShowAnalysis] = useState(false);
+  const [analysisStep, setAnalysisStep] = useState<'preview' | 'analysis'>('preview');
   const { toast } = useToast();
 
   // Mock model data - replace with actual data fetching
@@ -129,174 +132,174 @@ const ModelDetails = () => {
     });
   };
 
+  const handleAnalyzeModel = () => {
+    setShowAnalysis(true);
+    setAnalysisStep('analysis');
+  };
+
+  const handleAnalysisComplete = (canPrint: boolean) => {
+    if (canPrint) {
+      toast({
+        title: "Analysis Complete",
+        description: "Your model is ready for 3D printing!",
+      });
+    } else {
+      toast({
+        title: "Issues Found",
+        description: "Please fix critical issues before proceeding.",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-muted/30">
       <Navbar />
       
       <div className="container py-8 max-w-6xl">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Enhanced Model Preview */}
-          <div className="space-y-4">
-            {purchased ? (
-              <Enhanced3DViewer
-                modelUrl={model.fileUrl}
-                fileName="industrial-gear-assembly.stl"
-                fileType={model.fileFormat}
-                width={600}
-                height={400}
-                showControls={true}
-                autoRotate={true}
-                onModelLoad={(info) => console.log('Model loaded:', info)}
-                onError={(error) => console.error('Model load error:', error)}
-              />
-            ) : (
-              <PreviewSelector
-                modelName={model.name}
-                thumbnail={model.thumbnail}
-                fileUrl={purchased ? model.fileUrl : undefined}
-                fileName={purchased ? "industrial-gear-assembly.stl" : undefined}
-                fileType={purchased ? model.fileFormat : undefined}
-                isOwner={false}
-                isPurchased={purchased}
-                price={model.price}
-                onPurchase={handlePurchase}
-              />
-            )}
-            
-            {/* Engagement Gate for Downloads/Licensing */}
-            {purchased && (
-              <EngagementGate 
-                modelId={model.id!}
-                modelName={model.name}
-                previewImage={model.thumbnail}
-              />
-            )}
-            
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Model Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">File Format:</span>
-                  <span className="font-medium">{model.fileFormat}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">File Size:</span>
-                  <span className="font-medium">{model.fileSize}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Upload Date:</span>
-                  <span className="font-medium">{model.uploadDate}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Downloads:</span>
-                  <span className="font-medium">{model.downloads}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Printability Score:</span>
-                  <div className="flex items-center space-x-2">
-                    <Progress value={model.printabilityScore} className="w-20 h-2" />
-                    <span className="text-sm font-medium text-green-600">
-                      {model.printabilityScore}
-                    </span>
+        {!showAnalysis ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Enhanced Model Preview */}
+            <div className="space-y-4">
+              {purchased ? (
+                <Enhanced3DViewer
+                  modelUrl={model.fileUrl}
+                  fileName="industrial-gear-assembly.stl"
+                  fileType={model.fileFormat}
+                  width={600}
+                  height={400}
+                  showControls={true}
+                  autoRotate={true}
+                  onModelLoad={(info) => console.log('Model loaded:', info)}
+                  onError={(error) => console.error('Model load error:', error)}
+                />
+              ) : (
+                <PreviewSelector
+                  modelName={model.name}
+                  thumbnail={model.thumbnail}
+                  fileUrl={purchased ? model.fileUrl : undefined}
+                  fileName={purchased ? "industrial-gear-assembly.stl" : undefined}
+                  fileType={purchased ? model.fileFormat : undefined}
+                  isOwner={false}
+                  isPurchased={purchased}
+                  price={model.price}
+                  onPurchase={handlePurchase}
+                />
+              )}
+              
+              {/* Engagement Gate for Downloads/Licensing */}
+              {purchased && (
+                <EngagementGate 
+                  modelId={model.id!}
+                  modelName={model.name}
+                  previewImage={model.thumbnail}
+                />
+              )}
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Model Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">File Format:</span>
+                    <span className="font-medium">{model.fileFormat}</span>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-          
-          {/* Model Details */}
-          <div className="space-y-6">
-            <div>
-              <h1 className="text-3xl font-bold mb-2">{model.name}</h1>
-              <div className="flex items-center space-x-4 mb-4">
-                <div className="flex items-center">
-                  <img 
-                    src={model.creatorAvatar} 
-                    alt={model.creator}
-                    className="w-8 h-8 rounded-full mr-2"
-                  />
-                  <Link to={`/creator/${model.creator}`} className="text-sm hover:underline">
-                    {model.creator}
-                  </Link>
-                </div>
-                <Badge>{model.licenseType}</Badge>
-              </div>
-              
-              <div className="flex flex-wrap gap-2 mb-4">
-                {model.tags.map((tag, index) => (
-                  <Badge key={index} variant="secondary">
-                    {tag}
-                  </Badge>
-                ))}
-              </div>
-              
-              <p className="text-muted-foreground mb-6">{model.description}</p>
-              
-              <div className="flex items-center justify-between mb-6">
-                <div className="text-3xl font-bold">₹{model.price}</div>
-                <div className="flex space-x-2">
-                  <Button variant="outline" size="sm">
-                    <Heart className="h-4 w-4" />
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    <Share className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">File Size:</span>
+                    <span className="font-medium">{model.fileSize}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Upload Date:</span>
+                    <span className="font-medium">{model.uploadDate}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Downloads:</span>
+                    <span className="font-medium">{model.downloads}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Printability Score:</span>
+                    <div className="flex items-center space-x-2">
+                      <Progress value={model.printabilityScore} className="w-20 h-2" />
+                      <span className="text-sm font-medium text-green-600">
+                        {model.printabilityScore}
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
             
-            {!purchased ? (
+            {/* Model Details */}
+            <div className="space-y-6">
+              <div>
+                <h1 className="text-3xl font-bold mb-2">{model.name}</h1>
+                <div className="flex items-center space-x-4 mb-4">
+                  <div className="flex items-center">
+                    <img 
+                      src={model.creatorAvatar} 
+                      alt={model.creator}
+                      className="w-8 h-8 rounded-full mr-2"
+                    />
+                    <Link to={`/creator/${model.creator}`} className="text-sm hover:underline">
+                      {model.creator}
+                    </Link>
+                  </div>
+                  <Badge>{model.licenseType}</Badge>
+                </div>
+                
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {model.tags.map((tag, index) => (
+                    <Badge key={index} variant="secondary">
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+                
+                <p className="text-muted-foreground mb-6">{model.description}</p>
+                
+                <div className="flex items-center justify-between mb-6">
+                  <div className="text-3xl font-bold">₹{model.price}</div>
+                  <div className="flex space-x-2">
+                    <Button variant="outline" size="sm">
+                      <Heart className="h-4 w-4" />
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      <Share className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+              
               <Card>
-                <CardContent className="pt-6">
-                  <Button className="w-full" size="lg" onClick={handlePurchase}>
-                    Purchase Model - ₹{model.price}
+                <CardContent className="pt-6 space-y-4">
+                  <Button 
+                    className="w-full" 
+                    size="lg" 
+                    onClick={handleAnalyzeModel}
+                    variant="default"
+                  >
+                    <Eye className="h-4 w-4 mr-2" />
+                    Analyze Model for Printing
                   </Button>
-                  <p className="text-xs text-muted-foreground text-center mt-2">
-                    Includes commercial license and all source files
+                  <p className="text-xs text-muted-foreground text-center">
+                    Get detailed analysis, error detection, and pricing for 3D printing
                   </p>
                 </CardContent>
               </Card>
-            ) : (
-              <div className="space-y-4">
-                <Card className="border-green-200 bg-green-50">
-                  <CardContent className="pt-6">
-                    <div className="flex items-center mb-3">
-                      <CheckCircle className="h-5 w-5 text-green-600 mr-2" />
-                      <span className="font-medium text-green-800">Purchase Complete!</span>
-                    </div>
-                    <Button 
-                      className="w-full" 
-                      onClick={handleDownload}
-                      disabled={downloading}
-                    >
-                      {downloading ? (
-                        <>
-                          <Download className="h-4 w-4 mr-2 animate-bounce" />
-                          Downloading...
-                        </>
-                      ) : (
-                        <>
-                          <Download className="h-4 w-4 mr-2" />
-                          Download Files
-                        </>
-                      )}
-                    </Button>
-                  </CardContent>
-                </Card>
-                
-                {/* CadQua 3D Printing Integration */}
-                <CadQuaPricing 
-                  modelId={model.id!}
-                  modelName={model.name}
-                  fileUrl={model.fileUrl}
-                  onOrderPlaced={handleOrderPlaced}
-                />
-              </div>
-            )}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="max-w-4xl mx-auto">
+            <ModelAnalysisReport
+              modelId={model.id!}
+              modelName={model.name}
+              fileUrl={model.fileUrl}
+              onPurchase={handlePurchase}
+              onAnalysisComplete={handleAnalysisComplete}
+            />
+          </div>
+        )}
         
         {/* Additional Tabs */}
         <div className="mt-12">
