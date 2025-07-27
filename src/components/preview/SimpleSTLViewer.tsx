@@ -11,7 +11,7 @@ interface SimpleSTLViewerProps {
   className?: string;
 }
 
-// Camera auto-fit component
+// Camera auto-fit component with better clipping prevention
 const CameraController = ({ geometry }: { geometry: THREE.BufferGeometry | null }) => {
   const { camera, scene } = useThree();
   
@@ -26,14 +26,21 @@ const CameraController = ({ geometry }: { geometry: THREE.BufferGeometry | null 
     const center = box.getCenter(new THREE.Vector3());
     const size = box.getSize(new THREE.Vector3());
     
-    // Calculate the distance needed to fit the model
+    // Calculate the distance needed to fit the model with extra padding
     const maxDim = Math.max(size.x, size.y, size.z);
-    const distance = maxDim / (2 * Math.tan((camera as THREE.PerspectiveCamera).fov * Math.PI / 360));
+    const distance = maxDim * 2.5; // Increased distance to prevent clipping
+    
+    // Set camera near/far to prevent clipping
+    const cam = camera as THREE.PerspectiveCamera;
+    cam.near = maxDim * 0.01; // Very close to model
+    cam.far = maxDim * 10; // Very far from model
     
     // Position camera to view the entire model
-    camera.position.set(distance * 1.5, distance * 1.5, distance * 1.5);
-    camera.lookAt(center);
-    camera.updateProjectionMatrix();
+    cam.position.set(distance, distance, distance);
+    cam.lookAt(center);
+    cam.updateProjectionMatrix();
+    
+    console.log('Camera setup:', { maxDim, distance, near: cam.near, far: cam.far });
   }, [geometry, camera, scene]);
   
   return null;
@@ -135,13 +142,26 @@ export const SimpleSTLViewer = ({ fileUrl, className = "" }: SimpleSTLViewerProp
   return (
     <div className={`relative w-full h-[400px] ${className}`}>
       <Canvas
-        camera={{ position: [5, 5, 5], fov: 50 }}
+        camera={{ 
+          position: [5, 5, 5], 
+          fov: 50,
+          near: 0.1,
+          far: 1000
+        }}
         style={{ background: 'linear-gradient(to bottom, #f0f0f0, #ffffff)' }}
       >
         <ambientLight intensity={0.6} />
         <directionalLight position={[10, 10, 5]} intensity={1} />
         <STLModel fileUrl={fileUrl} />
-        <OrbitControls enablePan={true} enableZoom={true} enableRotate={true} />
+        <OrbitControls 
+          enablePan={true} 
+          enableZoom={true} 
+          enableRotate={true}
+          minDistance={1}
+          maxDistance={50}
+          enableDamping={true}
+          dampingFactor={0.05}
+        />
       </Canvas>
       
       {/* User Instructions Overlay */}
@@ -156,9 +176,9 @@ export const SimpleSTLViewer = ({ fileUrl, className = "" }: SimpleSTLViewerProp
         </div>
       )}
       
-      {/* Persistent Control Hint */}
+      {/* Persistent Control Hint - Fixed visibility */}
       <div className="absolute bottom-4 right-4 z-10">
-        <Badge variant="outline" className="text-xs opacity-75">
+        <Badge variant="outline" className="text-xs bg-white/90 text-gray-800 border-gray-300 shadow-sm">
           Interactive 3D Model
         </Badge>
       </div>
