@@ -1,13 +1,11 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Eye, Box, Image, Download, Lock, Info, Zap } from 'lucide-react';
-import { ModelViewer3D } from './ModelViewer3D';
-import { ForgeViewer } from './ForgeViewer';
+import { Eye, Box, Image, Download, Lock, Info } from 'lucide-react';
 import { WatermarkCanvas } from './WatermarkCanvas';
 import { SimpleSTLViewer } from './SimpleSTLViewer';
 
-type PreviewMode = 'image' | '3d' | 'forge' | 'advanced';
+type PreviewMode = 'image' | 'advanced';
 
 interface PreviewSelectorProps {
   modelName: string;
@@ -45,7 +43,6 @@ export const PreviewSelector = ({
   const [previewMode, setPreviewMode] = useState<PreviewMode>(getInitialMode);
   const [showWatermark, setShowWatermark] = useState(!isOwner && !isPurchased);
   const [watermarkedImage, setWatermarkedImage] = useState<string>("");
-  const [modelInfo, setModelInfo] = useState<any>(null);
 
   const canView3D = isOwner || isPurchased;
   const hasFileAccess = fileUrl && fileName && fileType;
@@ -58,27 +55,10 @@ export const PreviewSelector = ({
     setShowWatermark(!showWatermark);
   };
 
-  const handle3DPreview = () => {
-    if (canView3D && hasFileAccess) {
-      setPreviewMode('3d');
-    }
-  };
-
-  const handleForgePreview = () => {
-    if (canView3D && hasFileAccess) {
-      setPreviewMode('forge');
-    }
-  };
-
   const handleAdvancedPreview = () => {
     if (canView3D && hasFileAccess) {
       setPreviewMode('advanced');
     }
-  };
-
-  const handleModelInfo = (info: any) => {
-    setModelInfo(info);
-    console.log('Model information received:', info);
   };
 
   return (
@@ -94,30 +74,6 @@ export const PreviewSelector = ({
             <Image className="h-4 w-4 mr-2" />
             Image Preview
           </Button>
-          
-          <Button
-            variant={previewMode === '3d' ? 'default' : 'outline'}
-            size="sm"
-            onClick={handle3DPreview}
-            disabled={!canView3D || !hasFileAccess}
-          >
-            <Box className="h-4 w-4 mr-2" />
-            Basic 3D
-            {!canView3D && <Lock className="h-3 w-3 ml-1" />}
-          </Button>
-
-          <Button
-            variant={previewMode === 'forge' ? 'default' : 'outline'}
-            size="sm"
-            onClick={handleForgePreview}
-            disabled={!canView3D || !hasFileAccess}
-            className="relative"
-          >
-            <Zap className="h-4 w-4 mr-2" />
-            CAD Viewer
-            <Badge variant="secondary" className="ml-2 text-xs">Pro</Badge>
-            {!canView3D && <Lock className="h-3 w-3 ml-1" />}
-          </Button>
 
           <Button
             variant={previewMode === 'advanced' ? 'default' : 'outline'}
@@ -128,7 +84,7 @@ export const PreviewSelector = ({
           >
             <Box className="h-4 w-4 mr-2" />
             Advanced 3D
-            <Badge variant="default" className="ml-2 text-xs bg-primary">New</Badge>
+            <Badge variant="default" className="ml-2 text-xs bg-primary">Interactive</Badge>
             {!canView3D && <Lock className="h-3 w-3 ml-1" />}
           </Button>
         </div>
@@ -144,13 +100,6 @@ export const PreviewSelector = ({
               {showWatermark && !isOwner && !isPurchased ? 'Show Preview' : 'Toggle View'}
             </Button>
           )}
-          
-          {modelInfo && (
-            <Button variant="outline" size="sm">
-              <Info className="h-4 w-4 mr-2" />
-              {modelInfo.fileSizeFormatted}
-            </Button>
-          )}
         </div>
       </div>
 
@@ -159,27 +108,9 @@ export const PreviewSelector = ({
         {isOwner && <Badge variant="secondary">Your Model</Badge>}
         {isPurchased && !isOwner && <Badge variant="outline">Purchased</Badge>}
         {!isOwner && !isPurchased && <Badge variant="destructive">Preview Mode</Badge>}
-        {previewMode === '3d' && canView3D && <Badge variant="default">Basic 3D View</Badge>}
-        {previewMode === 'forge' && canView3D && <Badge variant="default" className="bg-orange-500">Forge CAD Viewer</Badge>}
-        {previewMode === 'advanced' && canView3D && <Badge variant="default" className="bg-primary">Advanced CAD Viewer</Badge>}
-        {modelInfo && <Badge variant="outline">{modelInfo.fileType.toUpperCase()}</Badge>}
+        {previewMode === 'advanced' && canView3D && <Badge variant="default" className="bg-primary">3D Viewer Active</Badge>}
+        {fileType && <Badge variant="outline">{fileType.toUpperCase()}</Badge>}
       </div>
-
-      {/* Model Information Display */}
-      {modelInfo && (previewMode === '3d' || previewMode === 'forge' || previewMode === 'advanced') && (
-        <div className="bg-muted/50 rounded-lg p-3 text-sm">
-          <h4 className="font-medium mb-2 flex items-center">
-            <Info className="h-4 w-4 mr-2" />
-            Model Information
-          </h4>
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <div><strong>File Name:</strong> {modelInfo.fileName}</div>
-            <div><strong>File Size:</strong> {modelInfo.fileSizeFormatted}</div>
-            <div><strong>Format:</strong> {modelInfo.fileType.toUpperCase()}</div>
-            <div><strong>Viewer:</strong> {previewMode === 'forge' ? 'Autodesk Forge' : previewMode === 'advanced' ? 'Advanced CAD Viewer' : 'Three.js'}</div>
-          </div>
-        </div>
-      )}
 
       {/* Preview Content */}
       {previewMode === 'image' ? (
@@ -227,29 +158,8 @@ export const PreviewSelector = ({
             </div>
           )}
         </div>
-      ) : previewMode === 'forge' ? (
-        /* Autodesk Forge Viewer */
-        hasFileAccess && canView3D ? (
-          <ForgeViewer
-            fileUrl={fileUrl!}
-            fileName={fileName!}
-            fileType={fileType!}
-            onClose={() => setPreviewMode('image')}
-            onModelInfo={handleModelInfo}
-          />
-        ) : (
-          <div className="border rounded-lg aspect-square flex items-center justify-center bg-muted/50">
-            <div className="text-center">
-              <Lock className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-muted-foreground font-medium">CAD Viewer Locked</p>
-              <p className="text-sm text-muted-foreground">
-                {!canView3D ? 'Purchase required for professional CAD viewer' : 'Model file not available'}
-              </p>
-            </div>
-          </div>
-        )
-      ) : previewMode === 'advanced' ? (
-        /* Simple STL Viewer */
+      ) : (
+        /* Advanced 3D Viewer */
         hasFileAccess && canView3D ? (
           <div className="border rounded-lg overflow-hidden">
             <SimpleSTLViewer fileUrl={fileUrl!} />
@@ -258,28 +168,7 @@ export const PreviewSelector = ({
           <div className="border rounded-lg aspect-square flex items-center justify-center bg-muted/50">
             <div className="text-center">
               <Lock className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-muted-foreground font-medium">Advanced CAD Viewer Locked</p>
-              <p className="text-sm text-muted-foreground">
-                {!canView3D ? 'Purchase required for advanced CAD analysis' : 'Model file not available'}
-              </p>
-            </div>
-          </div>
-        )
-      ) : (
-        /* Basic 3D Viewer */
-        hasFileAccess && canView3D ? (
-          <ModelViewer3D
-            fileUrl={fileUrl!}
-            fileName={fileName!}
-            fileType={fileType!}
-            onClose={() => setPreviewMode('image')}
-            onModelInfo={handleModelInfo}
-          />
-        ) : (
-          <div className="border rounded-lg aspect-square flex items-center justify-center bg-muted/50">
-            <div className="text-center">
-              <Lock className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-muted-foreground font-medium">3D Preview Locked</p>
+              <p className="text-muted-foreground font-medium">3D Viewer Locked</p>
               <p className="text-sm text-muted-foreground">
                 {!canView3D ? 'Purchase required for 3D preview' : 'Model file not available'}
               </p>
@@ -310,13 +199,7 @@ export const PreviewSelector = ({
           ? (showWatermark && !isOwner && !isPurchased 
               ? 'Preview mode - watermarked for protection' 
               : 'Full quality preview')
-           : previewMode === 'forge'
-             ? 'Professional CAD viewer with industry-standard accuracy'
-             : previewMode === 'advanced'
-               ? 'Advanced CAD viewer with automatic analysis and issue detection'
-               : modelInfo 
-                 ? `Basic 3D viewer - ${modelInfo.fileSizeFormatted} ${modelInfo.fileType.toUpperCase()} file`
-                 : 'Basic 3D model viewer - interact with the model above'
+          : 'Advanced 3D viewer - Pinch to zoom, drag to rotate'
         }
       </p>
     </div>
