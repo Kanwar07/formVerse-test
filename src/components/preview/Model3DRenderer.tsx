@@ -87,26 +87,38 @@ export const Model3DRenderer = ({
     );
   }
 
-  // Create material based on mode
-  const material = wireframeMode
-    ? new THREE.MeshBasicMaterial({ 
-        color: '#00d4ff', 
-        wireframe: true,
-        transparent: true,
-        opacity: 0.8
-      })
-    : materials.length > 0 
-      ? materials[0]
-      : new THREE.MeshStandardMaterial({ 
-          color: '#666666',
-          metalness: 0.1,
-          roughness: 0.3
-        });
+  // Create material based on mode - use React Three Fiber compatible approach
+  const getMaterial = () => {
+    if (wireframeMode) {
+      return (
+        <meshBasicMaterial 
+          color="#00d4ff" 
+          wireframe={true}
+          transparent={true}
+          opacity={0.8}
+        />
+      );
+    }
+    
+    if (materials.length > 0) {
+      // Use the loaded material directly
+      return null; // Let Three.js handle the original material
+    }
+    
+    return (
+      <meshStandardMaterial 
+        color="#666666"
+        metalness={0.1}
+        roughness={0.3}
+      />
+    );
+  };
 
   return (
     <Center>
       <group ref={groupRef}>
-        <mesh ref={meshRef} geometry={geometry} material={material}>
+        <mesh ref={meshRef} geometry={geometry}>
+          {getMaterial()}
           {showIssues && analysis?.issues.length > 0 && (
             <Edges threshold={15} color="#ff4444" />
           )}
