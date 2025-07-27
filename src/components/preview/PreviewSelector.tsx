@@ -5,7 +5,7 @@ import { Eye, Box, Image, Download, Lock, Info, Zap } from 'lucide-react';
 import { ModelViewer3D } from './ModelViewer3D';
 import { ForgeViewer } from './ForgeViewer';
 import { WatermarkCanvas } from './WatermarkCanvas';
-import { ComprehensiveCADViewer } from '../three/ComprehensiveCADViewer';
+import { SimpleSTLViewer } from './SimpleSTLViewer';
 
 type PreviewMode = 'image' | '3d' | 'forge' | 'advanced';
 
@@ -249,14 +249,11 @@ export const PreviewSelector = ({
           </div>
         )
       ) : previewMode === 'advanced' ? (
-        /* Advanced CAD Viewer */
+        /* Simple STL Viewer */
         hasFileAccess && canView3D ? (
-          <ComprehensiveCADViewer
-            fileUrl={fileUrl!}
-            fileName={fileName!}
-            fileType={fileType!}
-            onClose={() => setPreviewMode('image')}
-          />
+          <div className="border rounded-lg overflow-hidden">
+            <SimpleSTLViewer fileUrl={fileUrl!} />
+          </div>
         ) : (
           <div className="border rounded-lg aspect-square flex items-center justify-center bg-muted/50">
             <div className="text-center">

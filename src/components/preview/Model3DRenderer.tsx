@@ -49,6 +49,11 @@ export const Model3DRenderer = ({
         const processedGeometry = CADAnalyzer.processGeometry(loadedGeometry);
         console.log('Model3DRenderer: Geometry processed');
         
+        // Clean the geometry to avoid prop conflicts
+        const cleanGeometry = processedGeometry.clone();
+        cleanGeometry.computeBoundingBox();
+        cleanGeometry.computeBoundingSphere();
+        
         // Analyze the geometry
         console.log('Model3DRenderer: Analyzing geometry');
         const analysisResult = CADAnalyzer.analyzeGeometry(processedGeometry);
@@ -56,7 +61,7 @@ export const Model3DRenderer = ({
         setAnalysis(analysisResult);
         onAnalysisComplete?.(analysisResult);
 
-        setGeometry(processedGeometry);
+        setGeometry(cleanGeometry);
         setMaterials(loadedMaterials);
         setLoading(false);
         console.log('Model3DRenderer: Model loading complete');
