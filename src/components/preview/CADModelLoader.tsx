@@ -55,9 +55,26 @@ export class CADModelLoader {
   }
 
   private static async loadSTL(fileUrl: string): Promise<THREE.BufferGeometry> {
+    console.log('=== CADModelLoader: Loading STL file ===');
+    console.log('STL URL:', fileUrl);
+    
     const stlLoader = new STLLoader();
     return new Promise<THREE.BufferGeometry>((resolve, reject) => {
-      stlLoader.load(fileUrl, resolve, undefined, reject);
+      console.log('STLLoader: Starting to load file...');
+      stlLoader.load(
+        fileUrl, 
+        (geometry) => {
+          console.log('STLLoader: File loaded successfully!', geometry);
+          resolve(geometry);
+        }, 
+        (progress) => {
+          console.log('STLLoader: Loading progress:', progress);
+        }, 
+        (error) => {
+          console.error('STLLoader: Failed to load file:', error);
+          reject(error);
+        }
+      );
     });
   }
 

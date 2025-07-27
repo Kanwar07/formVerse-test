@@ -34,7 +34,15 @@ export const PreviewSelector = ({
   onPurchase,
   className = ""
 }: PreviewSelectorProps) => {
-  const [previewMode, setPreviewMode] = useState<PreviewMode>('image');
+  // Auto-default to 3D view for owners with file access, otherwise image
+  const getInitialMode = (): PreviewMode => {
+    if (isOwner && fileUrl && fileName && fileType) {
+      return 'advanced'; // Default to best viewer for uploaded files
+    }
+    return 'image';
+  };
+  
+  const [previewMode, setPreviewMode] = useState<PreviewMode>(getInitialMode);
   const [showWatermark, setShowWatermark] = useState(!isOwner && !isPurchased);
   const [watermarkedImage, setWatermarkedImage] = useState<string>("");
   const [modelInfo, setModelInfo] = useState<any>(null);

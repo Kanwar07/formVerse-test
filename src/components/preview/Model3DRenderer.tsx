@@ -32,7 +32,11 @@ export const Model3DRenderer = ({
   useEffect(() => {
     const loadModel = async () => {
       try {
-        console.log('Model3DRenderer: Starting to load model', { fileUrl, fileType });
+        console.log('=== MODEL3D RENDERER: Starting to load model ===');
+        console.log('File URL:', fileUrl);
+        console.log('File Type:', fileType);
+        console.log('Expected STL extension:', fileType === 'stl');
+        
         setLoading(true);
         
         // Load the model
