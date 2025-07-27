@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { APIService } from "@/services/api";
+import { FileUploadService } from "@/services/fileUpload";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,7 @@ const ModelDetails = () => {
   const [downloading, setDownloading] = useState(false);
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [analysisStep, setAnalysisStep] = useState<'preview' | 'analysis'>('preview');
+  const [secureModelUrl, setSecureModelUrl] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Mock model data - replace with actual data fetching
@@ -53,7 +55,8 @@ const ModelDetails = () => {
     uploadDate: "2024-01-15",
     downloads: 234,
     likes: 45,
-    fileUrl: "/models/industrial-gear-assembly.stl"
+    fileUrl: "/models/industrial-gear-assembly.stl",
+    filePath: "models/sample/industrial-gear-assembly.stl" // Supabase storage path
   };
 
   const handlePurchase = async () => {
@@ -62,6 +65,15 @@ const ModelDetails = () => {
       await new Promise(resolve => setTimeout(resolve, 1500));
       
       setPurchased(true);
+      
+      // Generate secure URL for 3D viewing after purchase
+      try {
+        const secureUrl = await FileUploadService.getSecureFileUrl('3d-models', model.filePath);
+        setSecureModelUrl(secureUrl);
+      } catch (error) {
+        console.error('Failed to generate secure URL:', error);
+      }
+      
       toast({
         title: "Purchase successful!",
         description: "You can now download the model files and order 3D prints.",
@@ -163,7 +175,7 @@ const ModelDetails = () => {
             <div className="space-y-4">
               {purchased ? (
                 <Enhanced3DViewer
-                  modelUrl={model.fileUrl}
+                  modelUrl={secureModelUrl || model.fileUrl}
                   fileName="industrial-gear-assembly.stl"
                   fileType={model.fileFormat}
                   width={600}

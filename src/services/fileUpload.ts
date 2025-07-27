@@ -188,6 +188,15 @@ export class FileUploadService {
     return data.publicUrl;
   }
 
+  static async getSecureFileUrl(bucket: string, path: string, expiresIn = 3600) {
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .createSignedUrl(path, expiresIn);
+    
+    if (error) throw error;
+    return data.signedUrl;
+  }
+
   static async generateSecureDownloadUrl(modelId: string, licenseId: string) {
     try {
       // Generate download token
