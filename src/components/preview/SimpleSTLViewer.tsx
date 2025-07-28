@@ -117,32 +117,46 @@ const STLModel = ({ fileUrl, onCameraSetup }: { fileUrl: string; onCameraSetup?:
     
     const loader = new STLLoader();
     
-    // Add CORS headers and better error handling
+    // Use XMLHttpRequest for better cross-origin support
     const loadModel = async () => {
       try {
         console.log('Starting STL loading for:', fileUrl);
         setProgress(10);
         
-        const response = await fetch(fileUrl, { 
-          mode: 'cors',
-          credentials: 'omit' 
+        // Use XMLHttpRequest for better CORS handling
+        const xhr = new XMLHttpRequest();
+        xhr.responseType = 'arraybuffer';
+        
+        const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+          xhr.addEventListener('load', () => {
+            if (xhr.status === 200) {
+              console.log('File loaded successfully, size:', xhr.response.byteLength, 'bytes');
+              setProgress(50);
+              resolve(xhr.response);
+            } else {
+              reject(new Error(`HTTP ${xhr.status}: ${xhr.statusText}`));
+            }
+          });
+          
+          xhr.addEventListener('error', () => {
+            reject(new Error('Network error occurred'));
+          });
+          
+          xhr.addEventListener('progress', (event) => {
+            if (event.lengthComputable) {
+              const progressPercent = Math.round((event.loaded / event.total) * 40) + 10; // 10-50%
+              setProgress(progressPercent);
+            }
+          });
+          
+          xhr.open('GET', fileUrl);
+          xhr.send();
         });
         
-        console.log('Response status:', response.status, response.statusText);
-        setProgress(30);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        
-        console.log('Reading file content...');
-        const arrayBuffer = await response.arrayBuffer();
-        console.log('File size:', arrayBuffer.byteLength, 'bytes');
-        setProgress(60);
-        
         console.log('Parsing STL geometry...');
+        setProgress(70);
         const loadedGeometry = loader.parse(arrayBuffer);
-        setProgress(80);
+        setProgress(90);
         
         console.log('Processing geometry...');
         // Create a clean copy of the geometry to avoid prop conflicts
