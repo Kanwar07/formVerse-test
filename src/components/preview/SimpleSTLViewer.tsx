@@ -1,11 +1,12 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, Suspense } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls, Center } from '@react-three/drei';
 import { STLLoader } from 'three-stdlib';
 import * as THREE from 'three';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Move3D, ZoomIn, RotateCcw } from 'lucide-react';
+import { Move3D, ZoomIn, RotateCcw, Loader2 } from 'lucide-react';
+import { LoadingIndicator3D } from './LoadingIndicator3D';
 
 interface SimpleSTLViewerProps {
   fileUrl: string;
@@ -103,59 +104,69 @@ const STLModel = ({ fileUrl, onCameraSetup }: { fileUrl: string; onCameraSetup?:
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!fileUrl) {
+      setError('No file URL provided');
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    
     const loader = new STLLoader();
     
-    loader.load(
-      fileUrl,
-      (loadedGeometry) => {
-        try {
-          // Create a clean copy of the geometry to avoid prop conflicts
-          const bufferGeometry = loadedGeometry.clone();
-          bufferGeometry.computeBoundingBox();
-          bufferGeometry.computeBoundingSphere();
-          if (!bufferGeometry.attributes.normal) {
-            bufferGeometry.computeVertexNormals();
-          }
-          
-          setGeometry(bufferGeometry);
-          setLoading(false);
-          setError(null);
-        } catch (err) {
-          console.error('Error processing STL geometry:', err);
-          setError('Failed to process 3D model');
-          setLoading(false);
+    // Add CORS headers and better error handling
+    const loadModel = async () => {
+      try {
+        const response = await fetch(fileUrl, { 
+          mode: 'cors',
+          credentials: 'omit' 
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
-      },
-      (progress) => {
-        console.log('STL loading progress:', progress);
-      },
-      (err) => {
+        
+        const arrayBuffer = await response.arrayBuffer();
+        const loadedGeometry = loader.parse(arrayBuffer);
+        
+        // Create a clean copy of the geometry to avoid prop conflicts
+        const bufferGeometry = loadedGeometry.clone();
+        bufferGeometry.computeBoundingBox();
+        bufferGeometry.computeBoundingSphere();
+        if (!bufferGeometry.attributes.normal) {
+          bufferGeometry.computeVertexNormals();
+        }
+        
+        setGeometry(bufferGeometry);
+        setLoading(false);
+        setError(null);
+        console.log('STL model loaded successfully');
+      } catch (err) {
         console.error('STL loading error:', err);
-        setError('Failed to load 3D model');
+        setError(`Failed to load 3D model: ${err instanceof Error ? err.message : 'Unknown error'}`);
         setLoading(false);
       }
-    );
+    };
+
+    loadModel();
   }, [fileUrl]);
 
   if (loading) {
-    return (
-      <>
-        <CameraController geometry={null} />
-        <mesh>
-          <boxGeometry args={[1, 1, 1]} />
-          <meshBasicMaterial color="#cccccc" transparent opacity={0.5} />
-        </mesh>
-      </>
-    );
+    return <LoadingIndicator3D />;
   }
 
   if (error || !geometry) {
     return (
       <>
         <CameraController geometry={null} />
-        <mesh>
-          <boxGeometry args={[1, 1, 1]} />
-          <meshBasicMaterial color="#ff4444" transparent opacity={0.5} />
+        <mesh position={[0, 0, 0]}>
+          <boxGeometry args={[2, 2, 2]} />
+          <meshBasicMaterial color="#ef4444" transparent opacity={0.6} />
+        </mesh>
+        <mesh position={[0, 3, 0]}>
+          <planeGeometry args={[4, 1]} />
+          <meshBasicMaterial color="#ffffff" transparent opacity={0.9} />
         </mesh>
       </>
     );
@@ -213,7 +224,9 @@ export const SimpleSTLViewer = ({ fileUrl, className = "" }: SimpleSTLViewerProp
       >
         <ambientLight intensity={0.6} />
         <directionalLight position={[10, 10, 5]} intensity={1} />
-        <STLModel fileUrl={fileUrl} onCameraSetup={handleCameraSetup} />
+        <Suspense fallback={<LoadingIndicator3D />}>
+          <STLModel fileUrl={fileUrl} onCameraSetup={handleCameraSetup} />
+        </Suspense>
         <OrbitControls 
           enablePan={true} 
           enableZoom={true} 
