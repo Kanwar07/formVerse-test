@@ -19,18 +19,35 @@ const ThumbnailModel3D = ({ fileUrl, fileType, onThumbnailReady }: ThumbnailMode
   let geometry;
   
   try {
-    if (fileType.toLowerCase().includes('stl')) {
+    const fileExtension = fileType.toLowerCase();
+    if (fileExtension.includes('stl') || fileExtension === 'stl') {
       geometry = useLoader(STLLoader, fileUrl);
-    } else if (fileType.toLowerCase().includes('obj')) {
+    } else if (fileExtension.includes('obj') || fileExtension === 'obj') {
       const obj = useLoader(OBJLoader, fileUrl);
       const mesh = obj.children.find(child => child instanceof THREE.Mesh) as THREE.Mesh;
       geometry = mesh?.geometry || new THREE.BoxGeometry(2, 2, 2);
+    } else if (fileExtension.includes('step') || fileExtension.includes('stp') || fileExtension.includes('iges') || fileExtension.includes('igs')) {
+      // Create sophisticated placeholder for STEP/IGES files
+      const stepGeometry = new THREE.BufferGeometry();
+      const vertices = new Float32Array([
+        // Mechanical part shape
+        -1, -1, -1, 1, -1, -1, 1, 1, -1, -1, 1, -1,
+        -1, -1, 1, 1, -1, 1, 1, 1, 1, -1, 1, 1,
+        0.5, -0.5, 1, 0.7, 0, 1, 0.5, 0.5, 1, 0, 0.7, 1,
+        -0.5, 0.5, 1, -0.7, 0, 1, -0.5, -0.5, 1, 0, -0.7, 1
+      ]);
+      stepGeometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+      stepGeometry.computeVertexNormals();
+      geometry = stepGeometry;
     } else {
+      // Generic CAD placeholder
       geometry = new THREE.BoxGeometry(2, 2, 2);
     }
   } catch (error) {
     console.error('Error loading 3D model for thumbnail:', error);
-    geometry = new THREE.BoxGeometry(2, 2, 2);
+    // Create a more CAD-like fallback
+    const fallbackGeometry = new THREE.CylinderGeometry(0.8, 1.2, 2, 8);
+    geometry = fallbackGeometry;
   }
 
   useEffect(() => {
