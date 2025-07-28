@@ -1,6 +1,5 @@
 import React from 'react';
 import { Html, useProgress } from '@react-three/drei';
-import { Loader2 } from 'lucide-react';
 
 export const LoadingIndicator3D = () => {
   const { progress, item } = useProgress();
@@ -9,7 +8,17 @@ export const LoadingIndicator3D = () => {
     <Html center>
       <div className="bg-background/95 backdrop-blur rounded-lg p-6 border shadow-lg min-w-[200px]">
         <div className="flex items-center justify-center mb-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <div className="relative">
+            <img 
+              src="/lovable-uploads/02a4ca94-e61c-4f7c-9ef0-942b8abb8bb3.png"
+              alt="FormVerse Logo"
+              className="h-12 w-12 animate-spin"
+              style={{ 
+                animation: 'spin 2s linear infinite',
+                filter: 'drop-shadow(0 0 8px rgba(147, 51, 234, 0.5))'
+              }}
+            />
+          </div>
         </div>
         <div className="text-center space-y-2">
           <p className="font-medium">Loading CAD Model</p>
