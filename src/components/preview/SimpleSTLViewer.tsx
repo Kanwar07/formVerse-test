@@ -101,6 +101,7 @@ const STLModel = ({ fileUrl, onCameraSetup }: { fileUrl: string; onCameraSetup?:
   const meshRef = useRef<THREE.Mesh>(null);
   const [geometry, setGeometry] = useState<THREE.BufferGeometry | null>(null);
   const [loading, setLoading] = useState(true);
+  const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -112,24 +113,38 @@ const STLModel = ({ fileUrl, onCameraSetup }: { fileUrl: string; onCameraSetup?:
 
     setLoading(true);
     setError(null);
+    setProgress(0);
     
     const loader = new STLLoader();
     
     // Add CORS headers and better error handling
     const loadModel = async () => {
       try {
+        console.log('Starting STL loading for:', fileUrl);
+        setProgress(10);
+        
         const response = await fetch(fileUrl, { 
           mode: 'cors',
           credentials: 'omit' 
         });
         
+        console.log('Response status:', response.status, response.statusText);
+        setProgress(30);
+        
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
+        console.log('Reading file content...');
         const arrayBuffer = await response.arrayBuffer();
-        const loadedGeometry = loader.parse(arrayBuffer);
+        console.log('File size:', arrayBuffer.byteLength, 'bytes');
+        setProgress(60);
         
+        console.log('Parsing STL geometry...');
+        const loadedGeometry = loader.parse(arrayBuffer);
+        setProgress(80);
+        
+        console.log('Processing geometry...');
         // Create a clean copy of the geometry to avoid prop conflicts
         const bufferGeometry = loadedGeometry.clone();
         bufferGeometry.computeBoundingBox();
@@ -138,7 +153,14 @@ const STLModel = ({ fileUrl, onCameraSetup }: { fileUrl: string; onCameraSetup?:
           bufferGeometry.computeVertexNormals();
         }
         
+        console.log('Geometry processed successfully:', {
+          vertices: bufferGeometry.attributes.position?.count || 0,
+          boundingBox: bufferGeometry.boundingBox,
+          boundingSphere: bufferGeometry.boundingSphere
+        });
+        
         setGeometry(bufferGeometry);
+        setProgress(100);
         setLoading(false);
         setError(null);
         console.log('STL model loaded successfully');
@@ -146,6 +168,7 @@ const STLModel = ({ fileUrl, onCameraSetup }: { fileUrl: string; onCameraSetup?:
         console.error('STL loading error:', err);
         setError(`Failed to load 3D model: ${err instanceof Error ? err.message : 'Unknown error'}`);
         setLoading(false);
+        setProgress(0);
       }
     };
 
@@ -153,7 +176,7 @@ const STLModel = ({ fileUrl, onCameraSetup }: { fileUrl: string; onCameraSetup?:
   }, [fileUrl]);
 
   if (loading) {
-    return <LoadingIndicator3D />;
+    return <LoadingIndicator3D progress={progress} />;
   }
 
   if (error || !geometry) {

@@ -1,8 +1,7 @@
 import React from 'react';
 import { Html, useProgress } from '@react-three/drei';
 
-export const LoadingIndicator3D = () => {
-  const { progress, item } = useProgress();
+export const LoadingIndicator3D = ({ progress = 0 }: { progress?: number }) => {
   
   return (
     <Html center>
@@ -31,11 +30,9 @@ export const LoadingIndicator3D = () => {
               style={{ width: `${progress}%` }}
             />
           </div>
-          {item && (
-            <p className="text-xs text-muted-foreground">
-              Loading: {item}
-            </p>
-          )}
+          <p className="text-xs text-muted-foreground">
+            Loading 3D model...
+          </p>
         </div>
       </div>
     </Html>
