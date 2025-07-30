@@ -51,27 +51,62 @@ const ModelDetails = () => {
     const initializeModel = async () => {
       setLoading(true);
       try {
-        // For now, using mock data - replace with actual API call
-        const mockModel = {
-          id: modelId,
-          name: "Industrial Gear Assembly",
-          description: "High-precision industrial gear assembly designed for manufacturing applications. Features optimized tooth profiles for maximum efficiency and durability. Suitable for both prototyping and production use.",
-          thumbnail: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=1226&ixlib=rb-4.0.3",
-          price: 1999,
-          creator: "MechDesigns",
-          creatorAvatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=150&h=150",
-          printabilityScore: 95,
-          tags: ["industrial", "mechanical", "gear", "assembly", "precision"],
+        // Fetch model data from Supabase
+        const { data: modelData, error: modelError } = await supabase
+          .from('models')
+          .select(`
+            id,
+            name,
+            description,
+            file_path,
+            file_type,
+            preview_image,
+            price,
+            tags,
+            downloads,
+            view_count,
+            printability_score,
+            created_at,
+            user_id
+          `)
+          .eq('id', modelId)
+          .eq('status', 'published')
+          .eq('is_published', true)
+          .single();
+
+        if (modelError) {
+          throw new Error(modelError.message);
+        }
+
+        // Fetch creator profile
+        const { data: creatorData } = await supabase
+          .from('profiles')
+          .select('username, email, avatar_url')
+          .eq('id', modelData.user_id)
+          .single();
+
+        // Transform data to match component expectations
+        const transformedModel = {
+          id: modelData.id,
+          name: modelData.name,
+          description: modelData.description || 'No description available',
+          thumbnail: modelData.preview_image,
+          price: modelData.price || 0,
+          creator: creatorData?.username || creatorData?.email || 'Unknown Creator',
+          creatorAvatar: creatorData?.avatar_url || `https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=150&h=150`,
+          printabilityScore: modelData.printability_score || 0,
+          tags: modelData.tags || [],
           licenseType: "Commercial",
-          fileSize: "24.3 MB",
-          fileFormat: "STL",
-          uploadDate: "2024-01-15",
-          downloads: 234,
-          likes: 45,
-          fileUrl: "/models/industrial-gear-assembly.stl",
-          filePath: "models/sample/industrial-gear-assembly.stl"
+          fileSize: "N/A",
+          fileFormat: modelData.file_type?.replace('application/', '').toUpperCase() || 'STL',
+          uploadDate: new Date(modelData.created_at).toLocaleDateString(),
+          downloads: modelData.downloads || 0,
+          likes: modelData.view_count || 0,
+          fileUrl: `https://zqnzxpbthldfqqbzzjct.supabase.co/storage/v1/object/public/3d-models/${modelData.file_path}`,
+          filePath: modelData.file_path
         };
-        setModel(mockModel);
+        
+        setModel(transformedModel);
       } catch (error) {
         console.error('Error loading model:', error);
         toast({
