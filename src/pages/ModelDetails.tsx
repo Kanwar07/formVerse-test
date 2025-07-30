@@ -51,7 +51,9 @@ const ModelDetails = () => {
     const initializeModel = async () => {
       setLoading(true);
       try {
-        // Fetch model data from Supabase
+        console.log('Fetching model with ID:', modelId);
+        
+        // First try to fetch model data with less restrictive filters
         const { data: modelData, error: modelError } = await supabase
           .from('models')
           .select(`
@@ -67,15 +69,26 @@ const ModelDetails = () => {
             view_count,
             printability_score,
             created_at,
-            user_id
+            user_id,
+            status,
+            is_published
           `)
           .eq('id', modelId)
-          .eq('status', 'published')
-          .eq('is_published', true)
-          .single();
+          .maybeSingle();
+
+        console.log('Model query result:', { modelData, modelError });
 
         if (modelError) {
           throw new Error(modelError.message);
+        }
+
+        if (!modelData) {
+          throw new Error('Model not found');
+        }
+
+        // Check if model is available for viewing
+        if (modelData.status !== 'published' || !modelData.is_published) {
+          throw new Error('Model is not available for viewing');
         }
 
         // Fetch creator profile
@@ -83,7 +96,9 @@ const ModelDetails = () => {
           .from('profiles')
           .select('username, email, avatar_url')
           .eq('id', modelData.user_id)
-          .single();
+          .maybeSingle();
+
+        console.log('Creator data:', creatorData);
 
         // Transform data to match component expectations
         const transformedModel = {
