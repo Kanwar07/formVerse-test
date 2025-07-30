@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { APIService } from "@/services/api";
 import { FileUploadService } from "@/services/fileUpload";
+import { PaymentManager } from "@/services/payments";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
@@ -25,7 +26,9 @@ import {
   Calendar,
   FileText,
   Package,
-  CheckCircle
+  CheckCircle,
+  CreditCard,
+  ArrowLeft
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -33,56 +36,130 @@ const ModelDetails = () => {
   const { modelId } = useParams();
   const [purchased, setPurchased] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [processing, setProcessing] = useState(false);
+  const [selectedLicense, setSelectedLicense] = useState<'personal' | 'commercial' | 'enterprise' | null>(null);
   const [currentStep, setCurrentStep] = useState<'preview' | 'analysis' | 'pricing'>('preview');
   const [secureModelUrl, setSecureModelUrl] = useState<string | null>(null);
+  const [model, setModel] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  
+  const paymentManager = new PaymentManager();
 
-  // Mock model data - replace with actual data fetching
-  const model = {
-    id: modelId,
-    name: "Industrial Gear Assembly",
-    description: "High-precision industrial gear assembly designed for manufacturing applications. Features optimized tooth profiles for maximum efficiency and durability. Suitable for both prototyping and production use.",
-    thumbnail: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=1226&ixlib=rb-4.0.3",
-    price: 1999,
-    creator: "MechDesigns",
-    creatorAvatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=150&h=150",
-    printabilityScore: 95,
-    tags: ["industrial", "mechanical", "gear", "assembly", "precision"],
-    licenseType: "Commercial",
-    fileSize: "24.3 MB",
-    fileFormat: "STL",
-    uploadDate: "2024-01-15",
-    downloads: 234,
-    likes: 45,
-    fileUrl: "/models/industrial-gear-assembly.stl",
-    filePath: "models/sample/industrial-gear-assembly.stl" // Supabase storage path
-  };
-
-  const handlePurchase = async () => {
-    try {
-      // Simulate purchase process
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      setPurchased(true);
-      
-      // Generate secure URL for 3D viewing after purchase
+  // Initialize component with model data
+  useEffect(() => {
+    const initializeModel = async () => {
+      setLoading(true);
       try {
-        const secureUrl = await FileUploadService.getSecureFileUrl('3d-models', model.filePath);
-        setSecureModelUrl(secureUrl);
+        // For now, using mock data - replace with actual API call
+        const mockModel = {
+          id: modelId,
+          name: "Industrial Gear Assembly",
+          description: "High-precision industrial gear assembly designed for manufacturing applications. Features optimized tooth profiles for maximum efficiency and durability. Suitable for both prototyping and production use.",
+          thumbnail: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=1226&ixlib=rb-4.0.3",
+          price: 1999,
+          creator: "MechDesigns",
+          creatorAvatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=150&h=150",
+          printabilityScore: 95,
+          tags: ["industrial", "mechanical", "gear", "assembly", "precision"],
+          licenseType: "Commercial",
+          fileSize: "24.3 MB",
+          fileFormat: "STL",
+          uploadDate: "2024-01-15",
+          downloads: 234,
+          likes: 45,
+          fileUrl: "/models/industrial-gear-assembly.stl",
+          filePath: "models/sample/industrial-gear-assembly.stl"
+        };
+        setModel(mockModel);
       } catch (error) {
-        console.error('Failed to generate secure URL:', error);
+        console.error('Error loading model:', error);
+        toast({
+          title: "Error loading model",
+          description: "Please try again later.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
       }
+    };
+
+    if (modelId) {
+      initializeModel();
+    }
+  }, [modelId, toast]);
+
+  const handlePurchase = async (licenseType: 'personal' | 'commercial' | 'enterprise') => {
+    if (!model) return;
+    
+    setProcessing(true);
+    setSelectedLicense(licenseType);
+    
+    try {
+      const prices = {
+        personal: model.price,
+        commercial: model.price * 3,
+        enterprise: model.price * 5
+      };
       
-      toast({
-        title: "Purchase successful!",
-        description: "You can now download the model files and order 3D prints.",
-      });
-    } catch (error) {
+      const amount = prices[licenseType];
+      const currency = 'INR';
+      
+      // Get current user for payment metadata
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to purchase a license.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const metadata = {
+        modelName: model.name,
+        licenseType,
+        userName: user.user_metadata?.name || user.email,
+        userEmail: user.email,
+        modelId: model.id
+      };
+
+      // Process payment through Razorpay
+      const paymentResult = await paymentManager.processPayment(
+        'razorpay',
+        model.id,
+        `${licenseType}-license-id`, // This should be actual license type ID from database
+        amount,
+        currency,
+        metadata
+      );
+
+      if (paymentResult) {
+        setPurchased(true);
+        
+        // Generate secure URL for 3D viewing after purchase
+        try {
+          const secureUrl = await FileUploadService.getSecureFileUrl('3d-models', model.filePath);
+          setSecureModelUrl(secureUrl);
+        } catch (error) {
+          console.error('Failed to generate secure URL:', error);
+        }
+        
+        toast({
+          title: "Purchase successful!",
+          description: `${licenseType} license purchased successfully. You can now download the model files.`,
+        });
+      }
+    } catch (error: any) {
+      console.error('Purchase error:', error);
       toast({
         title: "Purchase failed",
-        description: "Please try again or contact support.",
+        description: error.message || "Please try again or contact support.",
         variant: "destructive"
       });
+    } finally {
+      setProcessing(false);
+      setSelectedLicense(null);
     }
   };
 
@@ -170,6 +247,41 @@ const ModelDetails = () => {
   const handleBackToAnalysis = () => {
     setCurrentStep('analysis');
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-muted/30">
+        <Navbar />
+        <div className="container py-8 max-w-6xl">
+          <div className="flex items-center justify-center h-96">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading model details...</p>
+            </div>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!model) {
+    return (
+      <div className="min-h-screen flex flex-col bg-muted/30">
+        <Navbar />
+        <div className="container py-8 max-w-6xl">
+          <div className="text-center py-16">
+            <h1 className="text-2xl font-bold mb-4">Model not found</h1>
+            <p className="text-muted-foreground mb-6">The requested model could not be found.</p>
+            <Button asChild>
+              <Link to="/discover">← Back to Discover</Link>
+            </Button>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-muted/30">
@@ -392,7 +504,7 @@ const ModelDetails = () => {
               modelId={model.id!}
               modelName={model.name}
               fileUrl={model.fileUrl}
-              onPurchase={handlePurchase}
+              onPurchase={() => console.log('Purchase initiated from analysis')}
               onAnalysisComplete={handleAnalysisComplete}
             />
           </div>
@@ -428,8 +540,22 @@ const ModelDetails = () => {
                         <li>• Single download</li>
                         <li>• Basic support</li>
                       </ul>
-                      <Button className="w-full mt-4" onClick={handlePurchase}>
-                        Purchase License
+                      <Button 
+                        className="w-full mt-4" 
+                        onClick={() => handlePurchase('personal')}
+                        disabled={processing && selectedLicense === 'personal'}
+                      >
+                        {processing && selectedLicense === 'personal' ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            Processing...
+                          </>
+                        ) : (
+                          <>
+                            <CreditCard className="h-4 w-4 mr-2" />
+                            Proceed to Buy
+                          </>
+                        )}
                       </Button>
                     </CardContent>
                   </Card>
@@ -447,8 +573,22 @@ const ModelDetails = () => {
                         <li>• Priority support</li>
                         <li>• Customization rights</li>
                       </ul>
-                      <Button className="w-full mt-4" onClick={handlePurchase}>
-                        Purchase License
+                      <Button 
+                        className="w-full mt-4" 
+                        onClick={() => handlePurchase('commercial')}
+                        disabled={processing && selectedLicense === 'commercial'}
+                      >
+                        {processing && selectedLicense === 'commercial' ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            Processing...
+                          </>
+                        ) : (
+                          <>
+                            <CreditCard className="h-4 w-4 mr-2" />
+                            Proceed to Buy
+                          </>
+                        )}
                       </Button>
                     </CardContent>
                   </Card>
@@ -465,8 +605,22 @@ const ModelDetails = () => {
                         <li>• Premium support</li>
                         <li>• Source files included</li>
                       </ul>
-                      <Button className="w-full mt-4" onClick={handlePurchase}>
-                        Purchase License
+                      <Button 
+                        className="w-full mt-4" 
+                        onClick={() => handlePurchase('enterprise')}
+                        disabled={processing && selectedLicense === 'enterprise'}
+                      >
+                        {processing && selectedLicense === 'enterprise' ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            Processing...
+                          </>
+                        ) : (
+                          <>
+                            <CreditCard className="h-4 w-4 mr-2" />
+                            Proceed to Buy
+                          </>
+                        )}
                       </Button>
                     </CardContent>
                   </Card>
