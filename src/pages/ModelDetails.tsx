@@ -38,7 +38,7 @@ const ModelDetails = () => {
   const [downloading, setDownloading] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [selectedLicense, setSelectedLicense] = useState<'personal' | 'commercial' | 'enterprise' | null>(null);
-  const [currentStep, setCurrentStep] = useState<'preview' | 'analysis' | 'pricing'>('preview');
+  const [currentStep, setCurrentStep] = useState<'preview' | 'analysis' | 'pricing'>('analysis');
   const [secureModelUrl, setSecureModelUrl] = useState<string | null>(null);
   const [model, setModel] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -261,10 +261,10 @@ const ModelDetails = () => {
 
   const handleAnalysisComplete = (canPrint: boolean) => {
     if (canPrint) {
-      setCurrentStep('pricing');
+      setCurrentStep('preview');
       toast({
         title: "Analysis Complete",
-        description: "Your model is ready for 3D printing!",
+        description: "You can now preview the model and proceed to purchase!",
       });
     } else {
       toast({
@@ -281,6 +281,10 @@ const ModelDetails = () => {
 
   const handleBackToAnalysis = () => {
     setCurrentStep('analysis');
+  };
+
+  const handleProceedToPricing = () => {
+    setCurrentStep('pricing');
   };
 
   if (loading) {
@@ -326,20 +330,20 @@ const ModelDetails = () => {
         {/* Progress Steps */}
         <div className="mb-8">
           <div className="flex items-center justify-center space-x-4 mb-4">
-            <div className={`flex items-center space-x-2 ${currentStep === 'preview' ? 'text-primary' : currentStep === 'analysis' || currentStep === 'pricing' ? 'text-green-600' : 'text-muted-foreground'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${currentStep === 'preview' ? 'border-primary bg-primary text-primary-foreground' : currentStep === 'analysis' || currentStep === 'pricing' ? 'border-green-600 bg-green-600 text-white' : 'border-muted-foreground'}`}>
+            <div className={`flex items-center space-x-2 ${currentStep === 'analysis' ? 'text-primary' : currentStep === 'preview' || currentStep === 'pricing' ? 'text-green-600' : 'text-muted-foreground'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${currentStep === 'analysis' ? 'border-primary bg-primary text-primary-foreground' : currentStep === 'preview' || currentStep === 'pricing' ? 'border-green-600 bg-green-600 text-white' : 'border-muted-foreground'}`}>
                 1
               </div>
-              <span className="text-sm font-medium">Model Preview</span>
+              <span className="text-sm font-medium">Model Analysis</span>
             </div>
             
-            <div className={`h-px w-12 ${currentStep === 'analysis' || currentStep === 'pricing' ? 'bg-green-600' : 'bg-muted-foreground'}`}></div>
+            <div className={`h-px w-12 ${currentStep === 'preview' || currentStep === 'pricing' ? 'bg-green-600' : 'bg-muted-foreground'}`}></div>
             
-            <div className={`flex items-center space-x-2 ${currentStep === 'analysis' ? 'text-primary' : currentStep === 'pricing' ? 'text-green-600' : 'text-muted-foreground'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${currentStep === 'analysis' ? 'border-primary bg-primary text-primary-foreground' : currentStep === 'pricing' ? 'border-green-600 bg-green-600 text-white' : 'border-muted-foreground'}`}>
+            <div className={`flex items-center space-x-2 ${currentStep === 'preview' ? 'text-primary' : currentStep === 'pricing' ? 'text-green-600' : 'text-muted-foreground'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${currentStep === 'preview' ? 'border-primary bg-primary text-primary-foreground' : currentStep === 'pricing' ? 'border-green-600 bg-green-600 text-white' : 'border-muted-foreground'}`}>
                 2
               </div>
-              <span className="text-sm font-medium">Model Analysis</span>
+              <span className="text-sm font-medium">Model Preview</span>
             </div>
             
             <div className={`h-px w-12 ${currentStep === 'pricing' ? 'bg-green-600' : 'bg-muted-foreground'}`}></div>
@@ -451,14 +455,23 @@ const ModelDetails = () => {
                   <Button 
                     className="w-full" 
                     size="lg" 
-                    onClick={handleAnalyzeModel}
+                    onClick={handleProceedToPricing}
                     variant="default"
                   >
-                    <Eye className="h-4 w-4 mr-2" />
-                    Start Model Analysis
+                    <CreditCard className="h-4 w-4 mr-2" />
+                    Proceed to Purchase
+                  </Button>
+                  <Button 
+                    className="w-full" 
+                    size="lg" 
+                    onClick={handleBackToAnalysis}
+                    variant="outline"
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Back to Analysis
                   </Button>
                   <p className="text-xs text-muted-foreground text-center">
-                    Get detailed analysis, error detection, and pricing for 3D printing
+                    Review model details and proceed to purchase options
                   </p>
                 </CardContent>
               </Card>
@@ -529,10 +542,10 @@ const ModelDetails = () => {
             <div className="mb-6">
               <Button 
                 variant="outline" 
-                onClick={handleBackToPreview}
+                onClick={() => window.history.back()}
                 className="mb-4"
               >
-                ← Back to Preview
+                ← Back to Discover
               </Button>
             </div>
             <ModelAnalysisReport
@@ -550,10 +563,10 @@ const ModelDetails = () => {
             <div className="mb-6">
               <Button 
                 variant="outline" 
-                onClick={handleBackToAnalysis}
+                onClick={handleBackToPreview}
                 className="mb-4"
               >
-                ← Back to Analysis
+                ← Back to Preview
               </Button>
             </div>
             
