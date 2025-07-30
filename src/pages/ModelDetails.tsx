@@ -33,7 +33,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 
 const ModelDetails = () => {
-  const { modelId } = useParams();
+  const { id: modelId } = useParams();
   const [purchased, setPurchased] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [processing, setProcessing] = useState(false);
