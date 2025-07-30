@@ -33,8 +33,7 @@ const ModelDetails = () => {
   const { modelId } = useParams();
   const [purchased, setPurchased] = useState(false);
   const [downloading, setDownloading] = useState(false);
-  const [showAnalysis, setShowAnalysis] = useState(false);
-  const [analysisStep, setAnalysisStep] = useState<'preview' | 'analysis'>('preview');
+  const [currentStep, setCurrentStep] = useState<'preview' | 'analysis' | 'pricing'>('preview');
   const [secureModelUrl, setSecureModelUrl] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -145,12 +144,12 @@ const ModelDetails = () => {
   };
 
   const handleAnalyzeModel = () => {
-    setShowAnalysis(true);
-    setAnalysisStep('analysis');
+    setCurrentStep('analysis');
   };
 
   const handleAnalysisComplete = (canPrint: boolean) => {
     if (canPrint) {
+      setCurrentStep('pricing');
       toast({
         title: "Analysis Complete",
         description: "Your model is ready for 3D printing!",
@@ -164,12 +163,51 @@ const ModelDetails = () => {
     }
   };
 
+  const handleBackToPreview = () => {
+    setCurrentStep('preview');
+  };
+
+  const handleBackToAnalysis = () => {
+    setCurrentStep('analysis');
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-muted/30">
       <Navbar />
       
       <div className="container py-8 max-w-6xl">
-        {!showAnalysis ? (
+        {/* Progress Steps */}
+        <div className="mb-8">
+          <div className="flex items-center justify-center space-x-4 mb-4">
+            <div className={`flex items-center space-x-2 ${currentStep === 'preview' ? 'text-primary' : currentStep === 'analysis' || currentStep === 'pricing' ? 'text-green-600' : 'text-muted-foreground'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${currentStep === 'preview' ? 'border-primary bg-primary text-primary-foreground' : currentStep === 'analysis' || currentStep === 'pricing' ? 'border-green-600 bg-green-600 text-white' : 'border-muted-foreground'}`}>
+                1
+              </div>
+              <span className="text-sm font-medium">Model Preview</span>
+            </div>
+            
+            <div className={`h-px w-12 ${currentStep === 'analysis' || currentStep === 'pricing' ? 'bg-green-600' : 'bg-muted-foreground'}`}></div>
+            
+            <div className={`flex items-center space-x-2 ${currentStep === 'analysis' ? 'text-primary' : currentStep === 'pricing' ? 'text-green-600' : 'text-muted-foreground'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${currentStep === 'analysis' ? 'border-primary bg-primary text-primary-foreground' : currentStep === 'pricing' ? 'border-green-600 bg-green-600 text-white' : 'border-muted-foreground'}`}>
+                2
+              </div>
+              <span className="text-sm font-medium">Model Analysis</span>
+            </div>
+            
+            <div className={`h-px w-12 ${currentStep === 'pricing' ? 'bg-green-600' : 'bg-muted-foreground'}`}></div>
+            
+            <div className={`flex items-center space-x-2 ${currentStep === 'pricing' ? 'text-primary' : 'text-muted-foreground'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${currentStep === 'pricing' ? 'border-primary bg-primary text-primary-foreground' : 'border-muted-foreground'}`}>
+                3
+              </div>
+              <span className="text-sm font-medium">Pricing & Purchase</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Step Content */}
+        {currentStep === 'preview' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Enhanced Model Preview */}
             <div className="space-y-4">
@@ -195,16 +233,6 @@ const ModelDetails = () => {
                   isOwner={false}
                   isPurchased={purchased}
                   price={model.price}
-                  onPurchase={handlePurchase}
-                />
-              )}
-              
-              {/* Engagement Gate for Downloads/Licensing */}
-              {purchased && (
-                <EngagementGate 
-                  modelId={model.id!}
-                  modelName={model.name}
-                  previewImage={model.thumbnail}
                 />
               )}
               
@@ -269,18 +297,6 @@ const ModelDetails = () => {
                 </div>
                 
                 <p className="text-muted-foreground mb-6">{model.description}</p>
-                
-                <div className="flex items-center justify-between mb-6">
-                  <div className="text-3xl font-bold">₹{model.price}</div>
-                  <div className="flex space-x-2">
-                    <Button variant="outline" size="sm">
-                      <Heart className="h-4 w-4" />
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      <Share className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
               </div>
               
               <Card>
@@ -292,17 +308,86 @@ const ModelDetails = () => {
                     variant="default"
                   >
                     <Eye className="h-4 w-4 mr-2" />
-                    Analyze Model for Printing
+                    Start Model Analysis
                   </Button>
                   <p className="text-xs text-muted-foreground text-center">
                     Get detailed analysis, error detection, and pricing for 3D printing
                   </p>
                 </CardContent>
               </Card>
+              
+              {/* Additional Tabs */}
+              <Tabs defaultValue="details" className="w-full">
+                <TabsList>
+                  <TabsTrigger value="details">Details</TabsTrigger>
+                  <TabsTrigger value="reviews">Reviews</TabsTrigger>
+                  <TabsTrigger value="similar">Similar</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="details" className="mt-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Technical Specifications</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="prose max-w-none text-sm">
+                        <h4>Design Features</h4>
+                        <ul>
+                          <li>Optimized tooth profiles for maximum efficiency</li>
+                          <li>Precision-engineered for manufacturing applications</li>
+                          <li>Compatible with standard bearing assemblies</li>
+                          <li>Designed for both prototyping and production</li>
+                        </ul>
+                        
+                        <h4>Recommended Print Settings</h4>
+                        <ul>
+                          <li>Layer Height: 0.2mm</li>
+                          <li>Infill: 20-40%</li>
+                          <li>Support: Minimal required</li>
+                          <li>Print Speed: 50-60 mm/s</li>
+                        </ul>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+                
+                <TabsContent value="reviews" className="mt-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Customer Reviews</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-muted-foreground">No reviews yet. Be the first to review this model!</p>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+                
+                <TabsContent value="similar" className="mt-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Similar Models</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-muted-foreground">Discover more models from this creator and similar categories.</p>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              </Tabs>
             </div>
           </div>
-        ) : (
+        )}
+
+        {currentStep === 'analysis' && (
           <div className="max-w-4xl mx-auto">
+            <div className="mb-6">
+              <Button 
+                variant="outline" 
+                onClick={handleBackToPreview}
+                className="mb-4"
+              >
+                ← Back to Preview
+              </Button>
+            </div>
             <ModelAnalysisReport
               modelId={model.id!}
               modelName={model.name}
@@ -312,66 +397,106 @@ const ModelDetails = () => {
             />
           </div>
         )}
-        
-        {/* Additional Tabs */}
-        <div className="mt-12">
-          <Tabs defaultValue="details" className="w-full">
-            <TabsList>
-              <TabsTrigger value="details">Details</TabsTrigger>
-              <TabsTrigger value="reviews">Reviews</TabsTrigger>
-              <TabsTrigger value="similar">Similar Models</TabsTrigger>
-            </TabsList>
+
+        {currentStep === 'pricing' && (
+          <div className="max-w-4xl mx-auto">
+            <div className="mb-6">
+              <Button 
+                variant="outline" 
+                onClick={handleBackToAnalysis}
+                className="mb-4"
+              >
+                ← Back to Analysis
+              </Button>
+            </div>
             
-            <TabsContent value="details" className="mt-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Technical Specifications</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="prose max-w-none">
-                    <h4>Design Features</h4>
-                    <ul>
-                      <li>Optimized tooth profiles for maximum efficiency</li>
-                      <li>Precision-engineered for manufacturing applications</li>
-                      <li>Compatible with standard bearing assemblies</li>
-                      <li>Designed for both prototyping and production</li>
-                    </ul>
-                    
-                    <h4>Recommended Print Settings</h4>
-                    <ul>
-                      <li>Layer Height: 0.2mm</li>
-                      <li>Infill: 20-40%</li>
-                      <li>Support: Minimal required</li>
-                      <li>Print Speed: 50-60 mm/s</li>
-                    </ul>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-2xl">Pricing & Purchase Options</CardTitle>
+                <p className="text-muted-foreground">Choose your licensing option and proceed with purchase</p>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Card className="border-2">
+                    <CardHeader>
+                      <CardTitle className="text-lg">Personal License</CardTitle>
+                      <div className="text-2xl font-bold">₹{model.price}</div>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="text-sm space-y-2">
+                        <li>• Personal use only</li>
+                        <li>• Single download</li>
+                        <li>• Basic support</li>
+                      </ul>
+                      <Button className="w-full mt-4" onClick={handlePurchase}>
+                        Purchase License
+                      </Button>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="border-2 border-primary">
+                    <CardHeader>
+                      <CardTitle className="text-lg">Commercial License</CardTitle>
+                      <div className="text-2xl font-bold">₹{model.price * 3}</div>
+                      <Badge>Most Popular</Badge>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="text-sm space-y-2">
+                        <li>• Commercial use allowed</li>
+                        <li>• Multiple downloads</li>
+                        <li>• Priority support</li>
+                        <li>• Customization rights</li>
+                      </ul>
+                      <Button className="w-full mt-4" onClick={handlePurchase}>
+                        Purchase License
+                      </Button>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="border-2">
+                    <CardHeader>
+                      <CardTitle className="text-lg">Enterprise License</CardTitle>
+                      <div className="text-2xl font-bold">₹{model.price * 5}</div>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="text-sm space-y-2">
+                        <li>• Unlimited commercial use</li>
+                        <li>• Team access</li>
+                        <li>• Premium support</li>
+                        <li>• Source files included</li>
+                      </ul>
+                      <Button className="w-full mt-4" onClick={handlePurchase}>
+                        Purchase License
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </div>
+                
+                {/* 3D Printing Options */}
+                <div className="border-t pt-6">
+                  <h3 className="text-lg font-semibold mb-4">3D Printing Services</h3>
+                  <CadQuaPricing 
+                    modelId={model.id!}
+                    modelName={model.name}
+                    fileUrl={model.fileUrl}
+                    onOrderPlaced={handleOrderPlaced}
+                  />
+                </div>
+                
+                {purchased && (
+                  <div className="border-t pt-6">
+                    <h3 className="text-lg font-semibold mb-4">Download Options</h3>
+                    <EngagementGate 
+                      modelId={model.id!}
+                      modelName={model.name}
+                      previewImage={model.thumbnail}
+                    />
                   </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="reviews" className="mt-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Customer Reviews</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">No reviews yet. Be the first to review this model!</p>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="similar" className="mt-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Similar Models</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">Discover more models from this creator and similar categories.</p>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
       
       <div className="mt-auto">
