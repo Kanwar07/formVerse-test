@@ -30,7 +30,7 @@ import {
   CreditCard,
   ArrowLeft
 } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 const ModelDetails = () => {
   const { modelId } = useParams();
@@ -46,9 +46,14 @@ const ModelDetails = () => {
   
   const paymentManager = new PaymentManager();
 
+  console.log('ModelDetails component loaded, modelId:', modelId);
+
   // Initialize component with model data
   useEffect(() => {
+    console.log('useEffect triggered with modelId:', modelId);
+    
     const initializeModel = async () => {
+      console.log('initializeModel function called');
       setLoading(true);
       try {
         console.log('Fetching model with ID:', modelId);
