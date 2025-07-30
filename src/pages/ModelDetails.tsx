@@ -575,6 +575,23 @@ const ModelDetails = () => {
               onPurchase={() => console.log('Purchase initiated from analysis')}
               onAnalysisComplete={handleAnalysisComplete}
             />
+            
+            {/* Skip to Purchase Option */}
+            <div className="mt-6 text-center">
+              <div className="inline-flex items-center gap-4 p-4 bg-secondary/20 rounded-lg border">
+                <div className="text-sm text-muted-foreground">
+                  Don't need the analysis?
+                </div>
+                <Button
+                  onClick={() => setCurrentStep('pricing')}
+                  variant="secondary"
+                  className="flex items-center gap-2"
+                >
+                  <CreditCard className="h-4 w-4" />
+                  Skip Analysis & Buy Now
+                </Button>
+              </div>
+            </div>
           </div>
         )}
 
