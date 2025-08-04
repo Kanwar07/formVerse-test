@@ -37,15 +37,40 @@ export function ImageToCADSection() {
 
     setIsProcessing(true);
     
-    // Simulate processing time
-    setTimeout(() => {
+    try {
+      // Create FormData for the API request
+      const formData = new FormData();
+      formData.append('image', selectedImage);
+      
+      // Call the Modal API
+      const response = await fetch('https://formversedude--cadqua-3d-generator-gradio-app.modal.run/api/predict', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      console.log('API Response:', result);
+      
       setIsProcessing(false);
       setModelReady(true);
       toast({
         title: "CAD conversion completed!",
-        description: "Your 3D model is ready for download and viewing.",
+        description: "Your 3D model has been generated successfully.",
       });
-    }, 3000);
+      
+    } catch (error) {
+      console.error('Error converting image to CAD:', error);
+      setIsProcessing(false);
+      toast({
+        title: "Conversion failed",
+        description: "There was an error converting your image. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleDownload = () => {
