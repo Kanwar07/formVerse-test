@@ -89,15 +89,29 @@ const ImageToCAD = () => {
       formData.append('input_image', selectedImage);
       
       console.log('Sending image to Modal API...');
+      console.log('Image file details:', {
+        name: selectedImage.name,
+        size: selectedImage.size,
+        type: selectedImage.type
+      });
       
-      // Call the Modal API
+      // Call the Modal API with detailed error handling
       const response = await fetch('https://formversedude--cadqua-3d-generator-gradio-app.modal.run/api/predict', {
         method: 'POST',
         body: formData,
+        mode: 'cors', // Explicitly set CORS mode
+      }).catch(error => {
+        console.error('Fetch error:', error);
+        throw new Error(`Network error: ${error.message}`);
       });
       
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+      
       if (!response.ok) {
-        throw new Error(`Modal API request failed: ${response.status} ${response.statusText}`);
+        const errorText = await response.text();
+        console.error('API error response:', errorText);
+        throw new Error(`Modal API request failed: ${response.status} ${response.statusText} - ${errorText}`);
       }
       
       const result = await response.json();
@@ -109,11 +123,16 @@ const ImageToCAD = () => {
         modelUrl = result.data[0].url || result.data[0];
       }
       
+      if (!modelUrl) {
+        console.warn('No model URL found in response:', result);
+        // Still create the model entry but mark it as requiring manual check
+      }
+      
       const newModel: ConvertedModel = {
         id: Date.now().toString(),
         name: selectedImage.name.replace(/\.[^/.]+$/, ""),
         originalImage: imagePreview!,
-        status: 'completed',
+        status: modelUrl ? 'completed' : 'processing',
         createdAt: new Date().toISOString(),
         modelUrl: modelUrl,
         predictionId: Date.now().toString()
@@ -122,8 +141,8 @@ const ImageToCAD = () => {
       setConvertedModels(prev => [newModel, ...prev]);
       
       toast({
-        title: "Conversion completed!",
-        description: "Your 3D model has been generated successfully.",
+        title: modelUrl ? "Conversion completed!" : "Conversion started!",
+        description: modelUrl ? "Your 3D model has been generated successfully." : "Processing your image, please check back soon.",
       });
 
       // Reset form
@@ -137,7 +156,7 @@ const ImageToCAD = () => {
       console.error('Error converting image:', error);
       toast({
         title: "Conversion failed",
-        description: "There was an error converting your image. Please try again.",
+        description: `Error: ${error instanceof Error ? error.message : 'Unknown error occurred'}. Please try again.`,
         variant: "destructive"
       });
     } finally {
