@@ -84,22 +84,46 @@ const ImageToCAD = () => {
     setIsConverting(true);
     
     try {
-      const response = await VFusion3DService.convertImageTo3D(selectedImage, user?.id);
+      // Use the Modal API directly instead of VFusion3DService
+      const formData = new FormData();
+      formData.append('input_image', selectedImage);
+      
+      console.log('Sending image to Modal API...');
+      
+      // Call the Modal API
+      const response = await fetch('https://formversedude--cadqua-3d-generator-gradio-app.modal.run/api/predict', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Modal API request failed: ${response.status} ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      console.log('Modal API Response:', result);
+      
+      // Extract the generated model URL from the response
+      let modelUrl = null;
+      if (result && result.data && result.data[0]) {
+        modelUrl = result.data[0].url || result.data[0];
+      }
       
       const newModel: ConvertedModel = {
-        id: response.predictionId,
+        id: Date.now().toString(),
         name: selectedImage.name.replace(/\.[^/.]+$/, ""),
         originalImage: imagePreview!,
-        status: 'processing',
+        status: 'completed',
         createdAt: new Date().toISOString(),
-        predictionId: response.predictionId
+        modelUrl: modelUrl,
+        predictionId: Date.now().toString()
       };
 
       setConvertedModels(prev => [newModel, ...prev]);
       
       toast({
-        title: "Conversion started",
-        description: "Your image is being converted to 3D. Check back in a few minutes.",
+        title: "Conversion completed!",
+        description: "Your 3D model has been generated successfully.",
       });
 
       // Reset form
@@ -110,6 +134,7 @@ const ImageToCAD = () => {
       }
 
     } catch (error) {
+      console.error('Error converting image:', error);
       toast({
         title: "Conversion failed",
         description: "There was an error converting your image. Please try again.",
