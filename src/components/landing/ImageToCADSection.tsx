@@ -2,9 +2,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Upload, Image, Zap, Download } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Upload, Sparkles, ArrowRight, Zap, Download, FileImage, Cpu, Box } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export function ImageToCADSection() {
@@ -78,159 +77,206 @@ endsolid model`;
   };
 
   return (
-    <section className="py-20 bg-gradient-to-br from-accent/5 via-background to-primary/5">
-      <div className="container">
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="text-3xl font-bold mb-4">Image to CAD Conversion</h2>
-          <p className="text-muted-foreground text-lg">
-            Transform any image into a detailed 3D CAD model using our advanced AI technology. 
-            Perfect for rapid prototyping and design iteration.
+    <section className="relative py-32 overflow-hidden">
+      {/* Dark gradient background inspired by AdamCAD */}
+      <div className="absolute inset-0 bg-gradient-to-br from-background via-muted/50 to-background" />
+      <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-accent/10" />
+      
+      <div className="container relative">
+        {/* Hero Section */}
+        <div className="text-center max-w-5xl mx-auto mb-20">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-8">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <span className="text-sm font-medium text-primary">AI-Powered Image to CAD</span>
+          </div>
+          
+          <h2 className="text-5xl md:text-7xl font-bold mb-8 leading-tight">
+            Transform anything into{" "}
+            <span className="bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
+              3D models
+            </span>
+          </h2>
+          
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-12">
+            Upload any image and watch our AI convert it into a precise 3D CAD model in seconds. 
+            Perfect for rapid prototyping, reverse engineering, and bringing ideas to life.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
-          {/* Upload Section */}
-          <Card className="border-2 border-dashed border-primary/20 hover:border-primary/40 transition-colors">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Upload className="h-5 w-5" />
-                Upload Your Image
-              </CardTitle>
-              <CardDescription>
-                Upload a clear image of the object you want to convert to CAD
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="image-upload">Choose Image File</Label>
-                <Input
-                  id="image-upload"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="cursor-pointer"
-                />
+        {/* Main Conversion Interface */}
+        <div className="max-w-4xl mx-auto mb-20">
+          <Card className="bg-card/50 backdrop-blur-sm border-primary/20 shadow-2xl">
+            <CardContent className="p-8">
+              <div className="grid md:grid-cols-2 gap-8 items-center">
+                {/* Upload Area */}
+                <div className="space-y-6">
+                  <div className="text-center">
+                    <input
+                      id="image-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                    <label 
+                      htmlFor="image-upload" 
+                      className="group cursor-pointer block"
+                    >
+                      <div className="border-2 border-dashed border-primary/30 rounded-2xl p-12 hover:border-primary/50 transition-all duration-300 hover:bg-primary/5">
+                        {previewUrl ? (
+                          <div className="space-y-4">
+                            <img
+                              src={previewUrl}
+                              alt="Preview"
+                              className="w-full h-48 object-cover rounded-xl shadow-lg"
+                            />
+                            <p className="text-sm text-muted-foreground font-medium">
+                              Click to change image
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="space-y-6">
+                            <div className="w-16 h-16 rounded-full bg-gradient-to-r from-primary/20 to-accent/20 flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
+                              <Upload className="h-8 w-8 text-primary" />
+                            </div>
+                            <div>
+                              <h3 className="text-lg font-semibold mb-2">Drop your image here</h3>
+                              <p className="text-muted-foreground">
+                                or click to browse • JPG, PNG, WEBP up to 10MB
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </label>
+                  </div>
+
+                  <Button
+                    onClick={handleConvertToCAD}
+                    disabled={!selectedImage || isProcessing}
+                    className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-lg hover:shadow-xl transition-all"
+                  >
+                    {isProcessing ? (
+                      <div className="flex items-center gap-3">
+                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" />
+                        Generating 3D Model...
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-3">
+                        <Zap className="h-5 w-5" />
+                        Convert to 3D Model
+                        <ArrowRight className="h-5 w-5" />
+                      </div>
+                    )}
+                  </Button>
+
+                  {/* Result Section */}
+                  {modelReady && (
+                    <div className="p-6 bg-gradient-to-r from-primary/10 to-accent/10 rounded-2xl border border-primary/20 animate-fade-in">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-primary to-accent flex items-center justify-center">
+                          <Download className="h-5 w-5 text-white" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-primary">Model Generated!</h4>
+                          <p className="text-sm text-muted-foreground">Your 3D CAD file is ready</p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <Button onClick={handleDownload} className="h-12">
+                          <Download className="h-4 w-4 mr-2" />
+                          Download STL
+                        </Button>
+                        <Button variant="outline" className="h-12">
+                          <Box className="h-4 w-4 mr-2" />
+                          View 3D
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Process Visualization */}
+                <div className="space-y-8">
+                  <div className="text-center mb-8">
+                    <h3 className="text-2xl font-bold mb-3">How it works</h3>
+                    <p className="text-muted-foreground">Three simple steps to 3D magic</p>
+                  </div>
+                  
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors">
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-blue-500/20 to-blue-600/20 flex items-center justify-center">
+                        <FileImage className="h-6 w-6 text-blue-500" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold">Upload Image</h4>
+                        <p className="text-sm text-muted-foreground">Any photo or sketch works</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors">
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-purple-500/20 to-purple-600/20 flex items-center justify-center">
+                        <Cpu className="h-6 w-6 text-purple-500" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold">AI Processing</h4>
+                        <p className="text-sm text-muted-foreground">Advanced algorithms analyze your image</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors">
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-green-500/20 to-green-600/20 flex items-center justify-center">
+                        <Box className="h-6 w-6 text-green-500" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold">3D Model Ready</h4>
+                        <p className="text-sm text-muted-foreground">Download CAD files instantly</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              
-              {previewUrl && (
-                <div className="mt-4">
-                  <img
-                    src={previewUrl}
-                    alt="Preview"
-                    className="w-full h-48 object-cover rounded-lg border"
-                  />
-                </div>
-              )}
-              
-              <Button
-                onClick={handleConvertToCAD}
-                disabled={!selectedImage || isProcessing}
-                className="w-full"
-                size="lg"
-              >
-                {isProcessing ? (
-                  <>
-                    <Zap className="h-4 w-4 mr-2 animate-spin" />
-                    Converting to CAD...
-                  </>
-                ) : (
-                  <>
-                    <Zap className="h-4 w-4 mr-2" />
-                    Convert to CAD
-                  </>
-              )}
-              </Button>
-              
-              {/* Model Ready Section */}
-              {modelReady && (
-                <div className="mt-6 p-4 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg border border-primary/20">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Download className="h-5 w-5 text-primary" />
-                    <span className="font-medium text-primary">Model Ready!</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Your 3D CAD model has been generated successfully. You can now download it or view it in 3D.
-                  </p>
-                  <div className="flex gap-3">
-                    <Button size="sm" className="flex-1" onClick={handleDownload}>
-                      <Download className="h-4 w-4 mr-2" />
-                      Download STL
-                    </Button>
-                    <Button size="sm" variant="outline" className="flex-1">
-                      View 3D Model
-                    </Button>
-                  </div>
-                </div>
-              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Features Grid */}
+        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <Card className="bg-card/30 backdrop-blur-sm border-primary/10 hover:border-primary/20 transition-all group">
+            <CardContent className="p-8 text-center">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-r from-primary/20 to-accent/20 flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
+                <Zap className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold mb-4">Lightning Fast</h3>
+              <p className="text-muted-foreground">
+                Generate professional 3D models from images in under 30 seconds with our optimized AI pipeline.
+              </p>
             </CardContent>
           </Card>
 
-          {/* Process Steps */}
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold">How it works:</h3>
-            
-            <div className="space-y-4">
-              <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-medium">
-                  1
-                </div>
-                <div>
-                  <h4 className="font-medium">Upload Image</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Upload a clear photo of the object from multiple angles for best results
-                  </p>
-                </div>
+          <Card className="bg-card/30 backdrop-blur-sm border-primary/10 hover:border-primary/20 transition-all group">
+            <CardContent className="p-8 text-center">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-r from-purple-500/20 to-purple-600/20 flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
+                <Cpu className="h-8 w-8 text-purple-500" />
               </div>
-              
-              <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-medium">
-                  2
-                </div>
-                <div>
-                  <h4 className="font-medium">AI Analysis</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Our AI analyzes the image to understand geometry, dimensions, and features
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-medium">
-                  3
-                </div>
-                <div>
-                  <h4 className="font-medium">3D Model Generation</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Generate a detailed 3D CAD model ready for manufacturing or 3D printing
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-medium">
-                  4
-                </div>
-                <div>
-                  <h4 className="font-medium">Download & Refine</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Download your CAD file and make adjustments using our editing tools
-                  </p>
-                </div>
-              </div>
-            </div>
+              <h3 className="text-xl font-bold mb-4">AI Precision</h3>
+              <p className="text-muted-foreground">
+                Advanced computer vision and machine learning ensure accurate geometry reconstruction.
+              </p>
+            </CardContent>
+          </Card>
 
-            <Card className="bg-gradient-to-r from-primary/5 to-accent/5">
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-3 mb-3">
-                  <Image className="h-5 w-5 text-primary" />
-                  <span className="font-medium">Supported Formats</span>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  JPG, PNG, WEBP • Export as STL, OBJ, STEP, IGES
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+          <Card className="bg-card/30 backdrop-blur-sm border-primary/10 hover:border-primary/20 transition-all group">
+            <CardContent className="p-8 text-center">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-r from-green-500/20 to-green-600/20 flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
+                <Download className="h-8 w-8 text-green-500" />
+              </div>
+              <h3 className="text-xl font-bold mb-4">CAD Ready</h3>
+              <p className="text-muted-foreground">
+                Export to STL, OBJ, STEP, and IGES formats compatible with all major CAD software.
+              </p>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </section>
