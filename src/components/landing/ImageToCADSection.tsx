@@ -25,6 +25,8 @@ export function ImageToCADSection() {
     }
   };
 
+  const [modelFileUrl, setModelFileUrl] = useState<string | null>(null);
+
   const handleConvertToCAD = async () => {
     if (!selectedImage) {
       toast({
@@ -38,9 +40,11 @@ export function ImageToCADSection() {
     setIsProcessing(true);
     
     try {
-      // Create FormData for the API request
+      // Create FormData for the Modal API request
       const formData = new FormData();
-      formData.append('image', selectedImage);
+      formData.append('input_image', selectedImage);
+      
+      console.log('Sending image to Modal API...');
       
       // Call the Modal API
       const response = await fetch('https://formversedude--cadqua-3d-generator-gradio-app.modal.run/api/predict', {
@@ -49,11 +53,17 @@ export function ImageToCADSection() {
       });
       
       if (!response.ok) {
-        throw new Error(`API request failed: ${response.status}`);
+        throw new Error(`Modal API request failed: ${response.status}`);
       }
       
       const result = await response.json();
-      console.log('API Response:', result);
+      console.log('Modal API Response:', result);
+      
+      // Extract the generated model URL from the response
+      // The response structure may vary, adjust based on actual API response
+      if (result && result.data && result.data[0]) {
+        setModelFileUrl(result.data[0].url || result.data[0]);
+      }
       
       setIsProcessing(false);
       setModelReady(true);
@@ -73,32 +83,49 @@ export function ImageToCADSection() {
     }
   };
 
-  const handleDownload = () => {
-    // Create a mock STL file content for demo purposes
-    const mockSTLContent = `solid model
-  facet normal 0 0 1
-    outer loop
-      vertex 0 0 0
-      vertex 1 0 0
-      vertex 0.5 1 0
-    endloop
-  endfacet
-endsolid model`;
+  const handleDownload = async () => {
+    if (!modelFileUrl) {
+      toast({
+        title: "No model available",
+        description: "Please generate a model first.",
+        variant: "destructive"
+      });
+      return;
+    }
 
-    const blob = new Blob([mockSTLContent], { type: 'application/octet-stream' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'converted-model.stl';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    try {
+      // Download the actual generated model file
+      const response = await fetch(modelFileUrl);
+      const blob = await response.blob();
+      
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'generated-model.stl';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
 
-    toast({
-      title: "Download started!",
-      description: "Your STL file is being downloaded.",
-    });
+      toast({
+        title: "Download started!",
+        description: "Your generated STL file is being downloaded.",
+      });
+    } catch (error) {
+      console.error('Error downloading model:', error);
+      toast({
+        title: "Download failed",
+        description: "There was an error downloading the model file.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleView3D = () => {
+    if (modelFileUrl) {
+      // Open the model file in a new tab for viewing
+      window.open(modelFileUrl, '_blank');
+    }
   };
 
   return (
@@ -212,7 +239,7 @@ endsolid model`;
                           <Download className="h-4 w-4 mr-2" />
                           Download STL
                         </Button>
-                        <Button variant="outline" className="h-12">
+                        <Button variant="outline" className="h-12" onClick={handleView3D}>
                           <Box className="h-4 w-4 mr-2" />
                           View 3D
                         </Button>
