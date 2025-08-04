@@ -10,6 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { VFusion3DService } from "@/services/vfusion3d";
+import { supabase } from "@/integrations/supabase/client";
 import { Upload, Download, Eye, Trash2, Search, Grid, List, Sparkles, Zap } from "lucide-react";
 
 interface ConvertedModel {
@@ -84,47 +85,37 @@ const ImageToCAD = () => {
     setIsConverting(true);
     
     try {
-      // Use the Modal API directly instead of VFusion3DService
+      // Use our Supabase edge function to proxy the Modal API request
       const formData = new FormData();
       formData.append('input_image', selectedImage);
       
-      console.log('Sending image to Modal API...');
+      console.log('Sending image to Modal API via edge function...');
       console.log('Image file details:', {
         name: selectedImage.name,
         size: selectedImage.size,
         type: selectedImage.type
       });
       
-      // Call the Modal API with detailed error handling
-      const response = await fetch('https://formversedude--cadqua-3d-generator-gradio-app.modal.run/api/predict', {
-        method: 'POST',
+      // Call our edge function
+      const { data, error } = await supabase.functions.invoke('modal-image-to-cad', {
         body: formData,
-        mode: 'cors', // Explicitly set CORS mode
-      }).catch(error => {
-        console.error('Fetch error:', error);
-        throw new Error(`Network error: ${error.message}`);
       });
       
-      console.log('Response status:', response.status);
-      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('API error response:', errorText);
-        throw new Error(`Modal API request failed: ${response.status} ${response.statusText} - ${errorText}`);
+      if (error) {
+        console.error('Edge function error:', error);
+        throw new Error(`Conversion failed: ${error.message}`);
       }
       
-      const result = await response.json();
-      console.log('Modal API Response:', result);
+      console.log('Modal API Response via edge function:', data);
       
       // Extract the generated model URL from the response
       let modelUrl = null;
-      if (result && result.data && result.data[0]) {
-        modelUrl = result.data[0].url || result.data[0];
+      if (data && data.data && data.data[0]) {
+        modelUrl = data.data[0].url || data.data[0];
       }
       
       if (!modelUrl) {
-        console.warn('No model URL found in response:', result);
+        console.warn('No model URL found in response:', data);
         // Still create the model entry but mark it as requiring manual check
       }
       
