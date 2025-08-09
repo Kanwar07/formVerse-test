@@ -11,6 +11,7 @@ import { LoadingIndicator3D } from './LoadingIndicator3D';
 interface SimpleSTLViewerProps {
   fileUrl: string;
   className?: string;
+  background?: 'white' | 'grey' | 'black' | 'gradient';
 }
 
 // Enhanced camera controller with better auto-fitting and zoom
@@ -44,7 +45,7 @@ const CameraController = ({
     cam.far = size * 100; // Very far for extensive zoom out
     
     // Position camera to view the entire model
-    const distance = size * 1.5;
+    const distance = size * 2;
     cam.position.set(center.x, center.y, center.z + distance);
     cam.lookAt(center);
     cam.updateProjectionMatrix();
@@ -73,7 +74,7 @@ const CameraController = ({
     if (!modelBounds || !controls) return;
     
     const { center, size } = modelBounds;
-    const distance = size * 1.5;
+    const distance = size * 2;
     
     // Reset camera position
     camera.position.set(center.x, center.y, center.z + distance);
@@ -225,7 +226,7 @@ const STLModel = ({ fileUrl, onCameraSetup }: { fileUrl: string; onCameraSetup?:
   );
 };
 
-export const SimpleSTLViewer = ({ fileUrl, className = "" }: SimpleSTLViewerProps) => {
+export const SimpleSTLViewer = ({ fileUrl, className = "", background = 'gradient' }: SimpleSTLViewerProps) => {
   const [showInstructions, setShowInstructions] = useState(true);
   const [resetView, setResetView] = useState<(() => void) | null>(null);
 
@@ -247,6 +248,13 @@ export const SimpleSTLViewer = ({ fileUrl, className = "" }: SimpleSTLViewerProp
       resetView();
     }
   };
+  const canvasBg = background === 'white'
+    ? 'hsl(var(--background))'
+    : background === 'grey'
+    ? 'hsl(var(--muted))'
+    : background === 'black'
+    ? 'hsl(0 0% 0%)'
+    : 'linear-gradient(180deg, hsl(var(--muted)), hsl(var(--background)))';
 
   return (
     <div className={`relative w-full h-[400px] ${className}`}>
@@ -257,7 +265,7 @@ export const SimpleSTLViewer = ({ fileUrl, className = "" }: SimpleSTLViewerProp
           near: 0.01,
           far: 2000
         }}
-        style={{ background: 'linear-gradient(to bottom, #f0f0f0, #ffffff)' }}
+        style={{ background: canvasBg }}
       >
         <ambientLight intensity={0.6} />
         <directionalLight position={[10, 10, 5]} intensity={1} />
@@ -265,12 +273,13 @@ export const SimpleSTLViewer = ({ fileUrl, className = "" }: SimpleSTLViewerProp
           <STLModel fileUrl={fileUrl} onCameraSetup={handleCameraSetup} />
         </Suspense>
         <OrbitControls 
-          enablePan={true} 
-          enableZoom={true} 
-          enableRotate={true}
+          makeDefault
+          enablePan 
+          enableZoom 
+          enableRotate
           minDistance={0.1}
           maxDistance={1000}
-          enableDamping={true}
+          enableDamping
           dampingFactor={0.05}
         />
       </Canvas>

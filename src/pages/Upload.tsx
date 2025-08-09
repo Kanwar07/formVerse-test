@@ -347,14 +347,6 @@ const Upload = () => {
                   isOwner={true}
                 />
                 
-                {/* Debug information */}
-                <div className="mt-2 p-2 bg-gray-100 rounded text-xs text-gray-600">
-                  <strong>Debug Info:</strong><br/>
-                  File URL: {getFileUrl()}<br/>
-                  File Name: {modelFile.name}<br/>
-                  File Type: {modelFile.name.split('.').pop()?.toLowerCase() || ''}<br/>
-                  Is Owner: true
-                </div>
                 
                 {thumbnailUrl && (
                   <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">

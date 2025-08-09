@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Download, Lock, Box } from 'lucide-react';
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
+import { Lock, Box } from 'lucide-react';
 import { SimpleSTLViewer } from './SimpleSTLViewer';
 
 interface PreviewSelectorProps {
@@ -31,6 +32,7 @@ export const PreviewSelector = ({
 }: PreviewSelectorProps) => {
   const canView3D = isOwner || isPurchased;
   const hasFileAccess = fileUrl && fileName && fileType;
+  const [background, setBackground] = useState<'white' | 'grey' | 'black' | 'gradient'>('gradient');
 
   return (
     <div className={`space-y-4 ${className}`}>
@@ -51,12 +53,26 @@ export const PreviewSelector = ({
         {canView3D && <Badge variant="default" className="bg-primary">3D Viewer Active</Badge>}
         {fileType && <Badge variant="outline">{fileType.toUpperCase()}</Badge>}
       </div>
+      <div className="flex items-center gap-3">
+        <span className="text-sm text-muted-foreground">Background</span>
+        <Select value={background} onValueChange={(v) => setBackground(v as any)}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="Background" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="white">White</SelectItem>
+            <SelectItem value="grey">Grey</SelectItem>
+            <SelectItem value="black">Black</SelectItem>
+            <SelectItem value="gradient">Gradient</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       {/* 3D Viewer Content */}
       {hasFileAccess && canView3D ? (
         <div className="space-y-4">
           <div className="border rounded-lg overflow-hidden">
-            <SimpleSTLViewer fileUrl={fileUrl!} />
+            <SimpleSTLViewer fileUrl={fileUrl!} background={background} />
           </div>
           
           {/* User Instructions */}
@@ -79,20 +95,13 @@ export const PreviewSelector = ({
       )}
 
       {/* Action Buttons */}
-      <div className="flex gap-2">
-        {!isOwner && !isPurchased && price && (
+      {!isOwner && !isPurchased && price && (
+        <div className="flex gap-2">
           <Button onClick={onPurchase} className="flex-1">
             Buy for ₹{price}
           </Button>
-        )}
-        
-        {(isOwner || isPurchased) && (
-          <Button variant="outline" className="flex-1">
-            <Download className="h-4 w-4 mr-2" />
-            Download Files
-          </Button>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
