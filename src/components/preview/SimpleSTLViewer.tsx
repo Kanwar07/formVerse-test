@@ -28,6 +28,7 @@ const CameraController = ({
     center: THREE.Vector3;
     size: number;
   } | null>(null);
+  const [cameraReady, setCameraReady] = useState(false);
   
   const setupCamera = () => {
     if (!geometry || !controls) return;
@@ -60,6 +61,7 @@ const CameraController = ({
     }
     
     setModelBounds({ center, size });
+    setCameraReady(true);
     console.log('Camera setup complete:', { 
       center, 
       size, 
@@ -111,10 +113,10 @@ const CameraController = ({
   
   useEffect(() => {
     setupCamera();
-    if (onCameraSetup) {
+    if (onCameraSetup && cameraReady) {
       onCameraSetup(resetView);
     }
-  }, [geometry, camera, controls]);
+  }, [geometry, camera, controls, cameraReady]);
   
   return null;
 };
@@ -346,6 +348,7 @@ export const SimpleSTLViewer = ({ fileUrl, className = "", background = 'gradien
         <Suspense fallback={<LoadingIndicator3D />}>
           <STLModel fileUrl={fileUrl} onCameraSetup={handleCameraSetup} />
         </Suspense>
+        {/* Only render OrbitControls after initial render to avoid camera timing issues */}
         <OrbitControls 
           makeDefault
           enablePan 
