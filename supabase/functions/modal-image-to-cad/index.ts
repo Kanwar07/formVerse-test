@@ -5,6 +5,8 @@ import { Client } from "https://cdn.skypack.dev/@gradio/client";
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Credentials': 'true',
 };
 
 const CADQUA_API_URL = "https://formversedude--cadqua-3d-generator-gradio-app.modal.run";
@@ -85,7 +87,7 @@ async function warmUpModel(client: any): Promise<boolean> {
     console.log('Model warmed up successfully');
     return true;
   } catch (error) {
-    console.log('Model warmup failed (this is expected):', error.message);
+    console.log('Model warmup failed (this is expected):', (error as Error).message);
     return false; // Warmup failure is acceptable
   }
 }
@@ -135,7 +137,7 @@ async function generateModel(client: any, imageFile: File): Promise<any> {
     } catch (error) {
       console.error(`Generation attempt ${attempt + 1} failed:`, error);
       
-      if (attempt < maxRetries && !error.message.includes('timeout')) {
+      if (attempt < maxRetries && !(error as Error).message.includes('timeout')) {
         console.log(`Retrying in ${retryDelay}ms...`);
         await delay(retryDelay);
       } else {
@@ -148,7 +150,7 @@ async function generateModel(client: any, imageFile: File): Promise<any> {
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
@@ -241,30 +243,30 @@ serve(async (req) => {
     
     // Determine error type and appropriate response
     let errorMessage = 'Internal server error';
-    let errorDetails = error.message;
+    let errorDetails = (error as Error).message;
     let statusCode = 500;
     let errorCode = 'INTERNAL_ERROR';
     let retryAfter;
     
-    if (error.message.includes('Connection timeout')) {
+    if ((error as Error).message.includes('Connection timeout')) {
       errorMessage = 'Unable to connect to CADQUA AI service';
       errorDetails = 'Connection timed out. The service may be starting up.';
       statusCode = 503;
       errorCode = 'CONNECTION_TIMEOUT';
       retryAfter = 30;
-    } else if (error.message.includes('Generation timeout')) {
+    } else if ((error as Error).message.includes('Generation timeout')) {
       errorMessage = 'Model generation timed out';
       errorDetails = 'The generation process took too long. Please try with a smaller image.';
       statusCode = 504;
       errorCode = 'GENERATION_TIMEOUT';
       retryAfter = 10;
-    } else if (error.message.includes('Invalid response')) {
+    } else if ((error as Error).message.includes('Invalid response')) {
       errorMessage = 'Model generation failed';
       errorDetails = 'The AI service returned an invalid response. Please try again.';
       statusCode = 502;
       errorCode = 'INVALID_RESPONSE';
       retryAfter = 15;
-    } else if (error.message.includes('fetch')) {
+    } else if ((error as Error).message.includes('fetch')) {
       errorMessage = 'Failed to connect to CADQUA AI service';
       errorDetails = 'Network connection failed. Please check your internet connection.';
       statusCode = 503;
