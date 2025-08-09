@@ -263,11 +263,34 @@ interface ViewerToolbarProps {
 const ViewerToolbar = ({ background, backgroundImage, onBackgroundChange, onBackgroundImageUpload, onResetView, resetDisabled }: ViewerToolbarProps) => {
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && onBackgroundImageUpload) {
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        console.error('Please select a valid image file');
+        return;
+      }
+      
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        console.error('Image file is too large. Please select a file under 10MB.');
+        return;
+      }
+      
+      // Revoke previous blob URL to prevent memory leaks
+      if (backgroundImage && backgroundImage.startsWith('blob:')) {
+        URL.revokeObjectURL(backgroundImage);
+      }
+      
+      // Create new blob URL and update background
       const imageUrl = URL.createObjectURL(file);
-      onBackgroundImageUpload(imageUrl);
+      if (onBackgroundImageUpload) {
+        onBackgroundImageUpload(imageUrl);
+      }
       onBackgroundChange('custom');
     }
+    
+    // Reset input to allow same file selection
+    event.target.value = '';
   };
 
   return (
