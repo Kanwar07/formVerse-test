@@ -305,21 +305,25 @@ const ViewerToolbar = ({ background, backgroundImage, onBackgroundChange, onBack
               title="Upload Background Image"
             />
             <button
-              className={`w-8 h-8 rounded text-xs font-bold transition-all duration-200 ${
+              className={`h-8 px-2 rounded text-xs font-bold transition-all duration-200 flex items-center gap-1 ${
                 background === 'custom' && backgroundImage
-                  ? 'ring-2 ring-primary ring-offset-2 ring-offset-background scale-110'
-                  : 'hover:scale-105'
-              } ${
-                background === 'custom' && backgroundImage
-                  ? 'bg-cover bg-center border-2 border-primary'
-                  : 'bg-muted border border-border/50 text-foreground'
+                  ? 'ring-2 ring-primary ring-offset-2 ring-offset-background scale-110 bg-cover bg-center border-2 border-primary text-white'
+                  : 'hover:scale-105 bg-muted border border-border/50 text-foreground hover:bg-accent hover:text-accent-foreground'
               }`}
               style={{
-                backgroundImage: background === 'custom' && backgroundImage ? `url(${backgroundImage})` : undefined
+                backgroundImage: background === 'custom' && backgroundImage ? `url(${backgroundImage})` : undefined,
+                minWidth: 'fit-content'
               }}
               title="Upload Background Image"
             >
-              {background === 'custom' && backgroundImage ? '' : <ImageUp className="h-3 w-3" />}
+              <ImageUp className="h-3 w-3 flex-shrink-0" />
+              <span className={`whitespace-nowrap ${
+                background === 'custom' && backgroundImage 
+                  ? 'text-white drop-shadow-sm' 
+                  : ''
+              }`}>
+                Upload
+              </span>
             </button>
           </div>
         </div>
