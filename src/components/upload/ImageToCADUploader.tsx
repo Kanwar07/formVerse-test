@@ -7,6 +7,7 @@ import { UploadIcon, FileCheck, Sparkles, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
+import { Client } from "@gradio/client";
 
 interface ImageToCADUploaderProps {
   onModelGenerated: (file: File, filePath: string, fileInfo: any, sourceImage?: string) => void;
@@ -24,6 +25,7 @@ export const ImageToCADUploader = ({
   const [conversionStatus, setConversionStatus] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [imagePreview, setImagePreview] = useState<string>("");
+  const [retryCount, setRetryCount] = useState(0);
   const { toast } = useToast();
   const { user, session } = useAuth();
 
@@ -46,25 +48,35 @@ export const ImageToCADUploader = ({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
+  const validateImageFile = (file: File): string | null => {
+    // Check file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+    if (!allowedTypes.includes(file.type)) {
+      return "Invalid file type. Please upload a JPG or PNG image.";
+    }
+    
+    // Check file size (10MB max)
+    const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+    if (file.size > maxSize) {
+      return "Image file is too large. Maximum size is 10MB.";
+    }
+    
+    return null;
+  };
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      setError("Please select a valid image file (JPG, PNG)");
-      return;
-    }
-    
-    // Validate file size (10MB max)
-    const maxSize = 10 * 1024 * 1024; // 10MB in bytes
-    if (file.size > maxSize) {
-      setError("Image file is too large. Maximum size is 10MB.");
+    const validationError = validateImageFile(file);
+    if (validationError) {
+      setError(validationError);
       return;
     }
     
     setSelectedImage(file);
     setError("");
+    setRetryCount(0);
     
     // Create preview
     const reader = new FileReader();
@@ -74,18 +86,75 @@ export const ImageToCADUploader = ({
     reader.readAsDataURL(file);
   };
 
+  const generate3DModelFromImage = async (imageFile: File): Promise<string> => {
+    console.log('Connecting to CADQUA API...');
+    setConversionStatus("Connecting to CADQUA AI Generator...");
+    
+    try {
+      const client = await Client.connect("https://formversedude--cadqua-3d-generator-gradio-app.modal.run");
+      console.log('Connected to Gradio client successfully');
+      
+      setConversionProgress(30);
+      setConversionStatus("Generating your 3D model...");
+      
+      const result = await client.predict("/generate_and_extract__glb", {
+        image: imageFile,
+        multiimages: [],
+        is_multiimage: false,
+        seed: 0,
+        randomize_seed: true,
+        ss_guidance_strength: 7.5,
+        ss_sampling_steps: 12,
+        slat_guidance_strength: 3.0,
+        slat_sampling_steps: 12,
+        multiimage_algo: "stochastic",
+        mesh_simplify: 0.95,
+        texture_size: 1024
+      });
+
+      console.log('CADQUA API response:', result);
+      
+      if (!result || !result.data || !result.data[2]) {
+        throw new Error("Invalid response from CADQUA API - no 3D model generated");
+      }
+      
+      const glbUrl = result.data[2];
+      if (typeof glbUrl !== 'string' || !glbUrl) {
+        throw new Error("Invalid GLB file URL received from API");
+      }
+      
+      return glbUrl;
+    } catch (error) {
+      console.error('CADQUA API error:', error);
+      if (error instanceof Error) {
+        if (error.message.includes('fetch')) {
+          throw new Error("Unable to connect to CADQUA AI service. Please check your internet connection and try again.");
+        } else if (error.message.includes('timeout')) {
+          throw new Error("Request timed out. Please try with a smaller image or retry later.");
+        } else {
+          throw new Error(`Generation failed: ${error.message}`);
+        }
+      }
+      throw new Error("Unexpected error during model generation");
+    }
+  };
+
   const generateModelFromImage = async () => {
     if (!selectedImage || !user || !session) return;
     
     setUploading(true);
     setConversionProgress(0);
-    setConversionStatus("Uploading image...");
+    setConversionStatus("Starting generation...");
     setError("");
     
     try {
       // Step 1: Upload image to Supabase storage
       const timestamp = Date.now();
       const imagePath = `${user.id}/images/${timestamp}-${selectedImage.name}`;
+      
+      console.log('Uploading image to storage...');
+      setConversionProgress(10);
+      setConversionStatus("Uploading image...");
       
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('3d-models')
@@ -96,62 +165,27 @@ export const ImageToCADUploader = ({
       }
       
       setConversionProgress(20);
-      setConversionStatus("Generating 3D model with CADQUA AI...");
       
-      // Step 2: Call the Modal API via edge function
-      const formData = new FormData();
-      formData.append('input_image', selectedImage);
-      
-      let conversionData;
-      try {
-        const response = await fetch(`https://zqnzxpbthldfqqbzzjct.supabase.co/functions/v1/modal-image-to-cad`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpxbnp4cGJ0aGxkZnFxYnp6amN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg5MzIxNzgsImV4cCI6MjA2NDUwODE3OH0.7YWUyL31eeOtauM4TqHjQXm8PB1Y-wVB7Cj0dSMQ0SA'
-          },
-          body: formData
-        });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Edge function error response:', errorText);
-          throw new Error(`Model generation failed: ${response.status} - ${errorText}`);
-        }
-
-        conversionData = await response.json();
-        console.log('Edge function success response:', conversionData);
-      } catch (fetchError) {
-        console.error('Fetch error:', fetchError);
-        throw new Error(`Model generation failed: Network error - ${fetchError.message}`);
-      }
+      // Step 2: Generate 3D model using CADQUA API
+      const glbUrl = await generate3DModelFromImage(selectedImage);
       
       setConversionProgress(70);
-      setConversionStatus("Processing generated model...");
-      
-      // Step 3: Handle the conversion result
-      if (!conversionData || !conversionData.data || !conversionData.data[2]) {
-        throw new Error("Invalid response from model generation API");
-      }
-      
-      const generatedModelUrl = conversionData.data[2]; // .glb file URL from Modal API
-      
-      setConversionProgress(85);
       setConversionStatus("Downloading generated model...");
       
-      // Step 4: Download the generated model
-      const modelResponse = await fetch(generatedModelUrl);
+      // Step 3: Download the generated GLB file
+      console.log('Downloading GLB from:', glbUrl);
+      const modelResponse = await fetch(glbUrl);
       if (!modelResponse.ok) {
-        throw new Error("Failed to download generated model");
+        throw new Error(`Failed to download generated model: ${modelResponse.status} ${modelResponse.statusText}`);
       }
       
       const modelBlob = await modelResponse.blob();
       const modelFile = new File([modelBlob], `generated-${timestamp}.glb`, { type: 'model/gltf-binary' });
       
-      setConversionProgress(95);
+      setConversionProgress(85);
       setConversionStatus("Uploading generated model...");
       
-      // Step 5: Upload the generated model to storage
+      // Step 4: Upload the generated model to storage
       const modelPath = `${user.id}/${timestamp}-generated-model.glb`;
       
       const { data: modelUploadData, error: modelUploadError } = await supabase.storage
@@ -165,40 +199,41 @@ export const ImageToCADUploader = ({
       setConversionProgress(100);
       setConversionStatus("3D model ready! Loading preview...");
       
-      // Step 6: Pass to the main upload flow
+      // Step 5: Pass to the main upload flow
       const fileInfo = extractFileInfo(modelFile);
       onModelGenerated(modelFile, modelUploadData.path, fileInfo, imagePath);
       
       toast({
-        title: "3D Model Generated!",
-        description: "Your image has been successfully converted to a 3D model.",
+        title: "Success!",
+        description: "Your 3D model has been generated successfully from the image.",
       });
       
-      // Reset state
+      // Reset state after success
       setTimeout(() => {
         setConversionProgress(0);
         setConversionStatus("");
         setSelectedImage(null);
         setImagePreview("");
+        setRetryCount(0);
       }, 2000);
       
     } catch (error) {
       console.error('Image to CAD conversion error:', error);
       
-      // Provide more specific error messaging based on error type
+      // Provide specific error messaging
       let errorMessage = "Model generation failed. Please try again.";
       
       if (error instanceof Error) {
-        if (error.message.includes('Invalid file type')) {
-          errorMessage = "Invalid file type. Please upload a JPG or PNG image.";
-        } else if (error.message.includes('too large')) {
-          errorMessage = "Image file is too large. Maximum size is 10MB.";
-        } else if (error.message.includes('API service may be temporarily unavailable')) {
-          errorMessage = "The AI generation service is temporarily unavailable. Please try again in a few minutes.";
-        } else if (error.message.includes('timed out')) {
+        if (error.message.includes('upload failed')) {
+          errorMessage = "Failed to upload image. Please check your connection and try again.";
+        } else if (error.message.includes('Unable to connect')) {
+          errorMessage = "CADQUA AI service is temporarily unavailable. Please try again in a few minutes.";
+        } else if (error.message.includes('timeout')) {
           errorMessage = "Generation timed out. Please try with a smaller image.";
-        } else if (error.message.includes('Edge Function returned a non-2xx status code')) {
-          errorMessage = "Model generation service error. Please check your image format and try again.";
+        } else if (error.message.includes('Invalid response')) {
+          errorMessage = "Model generation failed. The API may be experiencing issues.";
+        } else if (error.message.includes('Failed to download')) {
+          errorMessage = "Generated model could not be downloaded. Please try again.";
         } else {
           errorMessage = error.message;
         }
@@ -218,11 +253,17 @@ export const ImageToCADUploader = ({
     }
   };
 
-  const retry = () => {
-    setError("");
-    if (selectedImage) {
-      generateModelFromImage();
+  const retry = async () => {
+    if (!selectedImage) return;
+    
+    if (retryCount >= 2) {
+      setError("Maximum retry attempts reached. Please try with a different image or check your connection.");
+      return;
     }
+    
+    setRetryCount(prev => prev + 1);
+    setError("");
+    await generateModelFromImage();
   };
 
   // Show authentication warning if user is not signed in
@@ -274,7 +315,7 @@ export const ImageToCADUploader = ({
           {uploading ? "Processing..." : "Select Image"}
         </Label>
         
-        {selectedImage && imagePreview && (
+        {selectedImage && imagePreview && !uploading && (
           <div className="mt-4 p-3 bg-muted/50 rounded-lg text-sm w-full">
             <div className="flex items-center mb-2">
               <FileCheck className="h-4 w-4 text-green-600 mr-2" />
@@ -292,16 +333,14 @@ export const ImageToCADUploader = ({
               <div><strong>Size:</strong> {formatFileSize(selectedImage.size)}</div>
               <div><strong>Type:</strong> {selectedImage.type}</div>
             </div>
-            {!uploading && !error && (
-              <Button 
-                onClick={generateModelFromImage}
-                className="w-full"
-                disabled={uploading}
-              >
-                <Sparkles className="h-4 w-4 mr-2" />
-                Generate 3D Model
-              </Button>
-            )}
+            <Button 
+              onClick={generateModelFromImage}
+              className="w-full"
+              disabled={uploading}
+            >
+              <Sparkles className="h-4 w-4 mr-2" />
+              Generate 3D Model
+            </Button>
           </div>
         )}
       </div>
@@ -323,7 +362,7 @@ export const ImageToCADUploader = ({
       )}
 
       {/* Error Display */}
-      {error && (
+      {error && !uploading && (
         <div className="mt-4 w-full max-w-xl">
           <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
             <div className="flex items-center mb-2">
@@ -331,14 +370,30 @@ export const ImageToCADUploader = ({
               <span className="font-medium text-destructive">Generation Failed</span>
             </div>
             <p className="text-sm text-destructive/80 mb-3">{error}</p>
-            <Button 
-              onClick={retry}
-              variant="destructive"
-              size="sm"
-              disabled={!selectedImage}
-            >
-              Retry
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                onClick={retry}
+                variant="destructive"
+                size="sm"
+                disabled={!selectedImage || retryCount >= 2}
+              >
+                Retry {retryCount > 0 && `(${retryCount}/2)`}
+              </Button>
+              {retryCount >= 2 && (
+                <Button 
+                  onClick={() => {
+                    setError("");
+                    setSelectedImage(null);
+                    setImagePreview("");
+                    setRetryCount(0);
+                  }}
+                  variant="outline"
+                  size="sm"
+                >
+                  Start Over
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       )}
