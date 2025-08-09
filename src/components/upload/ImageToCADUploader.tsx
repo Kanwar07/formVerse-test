@@ -95,16 +95,28 @@ export const ImageToCADUploader = ({
       formData.append('input_image', imageFile);
       
       setConversionProgress(30);
-      setConversionStatus("Generating your 3D model...");
+      setConversionStatus("Generating your 3D model (this may take 1-2 minutes)...");
       
-      // Call the edge function with proper error handling
+      // Call the edge function with extended timeout
       const { data, error } = await supabase.functions.invoke('modal-image-to-cad', {
-        body: formData
+        body: formData,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        }
       });
 
       if (error) {
         console.error('Edge function error:', error);
-        throw new Error(`Edge function failed: ${error.message}`);
+        // Provide more specific error messages based on the error
+        if (error.message.includes('503')) {
+          throw new Error("CADQUA AI service is temporarily unavailable. Please try again in a few minutes.");
+        } else if (error.message.includes('504')) {
+          throw new Error("Model generation timed out. Please try with a smaller image or retry later.");
+        } else if (error.message.includes('Connection timeout')) {
+          throw new Error("Unable to connect to CADQUA AI service. The service may be down.");
+        } else {
+          throw new Error(`Edge function failed: ${error.message}`);
+        }
       }
 
       console.log('Edge function response:', data);
@@ -122,13 +134,7 @@ export const ImageToCADUploader = ({
     } catch (error) {
       console.error('CADQUA API error:', error);
       if (error instanceof Error) {
-        if (error.message.includes('Edge function failed')) {
-          throw new Error("Unable to connect to CADQUA AI service. Please check your internet connection and try again.");
-        } else if (error.message.includes('timeout')) {
-          throw new Error("Request timed out. Please try with a smaller image or retry later.");
-        } else {
-          throw new Error(`Generation failed: ${error.message}`);
-        }
+        throw error; // Re-throw the error with the specific message
       }
       throw new Error("Unexpected error during model generation");
     }

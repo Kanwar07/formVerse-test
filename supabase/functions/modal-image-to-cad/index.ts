@@ -51,27 +51,55 @@ serve(async (req) => {
     });
 
     console.log('Connecting to Gradio client...');
-
-    // Connect to the Gradio client
-    const client = await Client.connect("https://formversedude--cadqua-3d-generator-gradio-app.modal.run");
     
-    console.log('Calling generate_and_extract__glb endpoint...');
+    // Test connection to the API endpoint first
+    try {
+      const testResponse = await fetch("https://formversedude--cadqua-3d-generator-gradio-app.modal.run", {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+      console.log('API endpoint test response status:', testResponse.status);
+    } catch (testError) {
+      console.error('API endpoint test failed:', testError);
+      return new Response(JSON.stringify({ 
+        error: 'CADQUA API endpoint is not accessible',
+        details: 'The AI model service appears to be down or unreachable'
+      }), {
+        status: 503,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
-    // Call the specific endpoint with proper parameters
-    const result = await client.predict("/generate_and_extract__glb", {
-      image: imageFile,
-      multiimages: [],
-      is_multiimage: false,
-      seed: 0,
-      randomize_seed: true,
-      ss_guidance_strength: 7.5,
-      ss_sampling_steps: 12,
-      slat_guidance_strength: 3.0,
-      slat_sampling_steps: 12,
-      multiimage_algo: "stochastic",
-      mesh_simplify: 0.95,
-      texture_size: 1024
-    });
+    // Connect to the Gradio client with timeout handling
+    const client = await Promise.race([
+      Client.connect("https://formversedude--cadqua-3d-generator-gradio-app.modal.run"),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Connection timeout')), 30000)
+      )
+    ]) as any;
+    
+    console.log('Gradio client connected, calling API endpoint...');
+
+    // Call the specific endpoint with proper parameters and timeout
+    const result = await Promise.race([
+      client.predict("/generate_and_extract__glb", {
+        image: imageFile,
+        multiimages: [],
+        is_multiimage: false,
+        seed: 0,
+        randomize_seed: true,
+        ss_guidance_strength: 7.5,
+        ss_sampling_steps: 12,
+        slat_guidance_strength: 3.0,
+        slat_sampling_steps: 12,
+        multiimage_algo: "stochastic",
+        mesh_simplify: 0.95,
+        texture_size: 1024
+      }),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('API call timeout')), 120000) // 2 minutes timeout
+      )
+    ]) as any;
 
     console.log('Gradio API success response:', result);
 
@@ -94,23 +122,34 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in modal-image-to-cad function:', error);
     
-    // Provide more specific error messages
+    // Provide more specific error messages based on error type
     let errorMessage = 'Internal server error';
     let errorDetails = error.message;
+    let statusCode = 500;
     
-    if (error.message.includes('fetch')) {
-      errorMessage = 'Failed to connect to model generation API';
-      errorDetails = 'The CADQUA API service may be temporarily unavailable';
-    } else if (error.message.includes('timeout')) {
+    if (error.message.includes('Connection timeout')) {
+      errorMessage = 'Unable to connect to CADQUA AI service';
+      errorDetails = 'Connection timed out. The AI service may be temporarily unavailable.';
+      statusCode = 503;
+    } else if (error.message.includes('API call timeout')) {
       errorMessage = 'Model generation timed out';
-      errorDetails = 'The conversion process took too long. Please try with a smaller image.';
+      errorDetails = 'The AI generation process took too long. Please try with a smaller image.';
+      statusCode = 504;
+    } else if (error.message.includes('fetch')) {
+      errorMessage = 'Failed to connect to CADQUA AI service';
+      errorDetails = 'Network connection failed. Please check your internet connection.';
+      statusCode = 503;
+    } else if (error.message.includes('not accessible')) {
+      errorMessage = 'CADQUA AI service unavailable';
+      errorDetails = 'The AI model service is currently down. Please try again later.';
+      statusCode = 503;
     }
     
     return new Response(JSON.stringify({ 
       error: errorMessage, 
       details: errorDetails 
     }), {
-      status: 500,
+      status: statusCode,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
