@@ -7,7 +7,6 @@ import { UploadIcon, FileCheck, Sparkles, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
-import { Client } from "@gradio/client";
 
 interface ImageToCADUploaderProps {
   onModelGenerated: (file: File, filePath: string, fileInfo: any, sourceImage?: string) => void;
@@ -87,38 +86,34 @@ export const ImageToCADUploader = ({
   };
 
   const generate3DModelFromImage = async (imageFile: File): Promise<string> => {
-    console.log('Connecting to CADQUA API...');
+    console.log('Sending image to CADQUA API via edge function...');
     setConversionStatus("Connecting to CADQUA AI Generator...");
     
     try {
-      const client = await Client.connect("https://formversedude--cadqua-3d-generator-gradio-app.modal.run");
-      console.log('Connected to Gradio client successfully');
+      // Create FormData for the edge function
+      const formData = new FormData();
+      formData.append('input_image', imageFile);
       
       setConversionProgress(30);
       setConversionStatus("Generating your 3D model...");
       
-      const result = await client.predict("/generate_and_extract__glb", {
-        image: imageFile,
-        multiimages: [],
-        is_multiimage: false,
-        seed: 0,
-        randomize_seed: true,
-        ss_guidance_strength: 7.5,
-        ss_sampling_steps: 12,
-        slat_guidance_strength: 3.0,
-        slat_sampling_steps: 12,
-        multiimage_algo: "stochastic",
-        mesh_simplify: 0.95,
-        texture_size: 1024
+      // Call the edge function with proper error handling
+      const { data, error } = await supabase.functions.invoke('modal-image-to-cad', {
+        body: formData
       });
 
-      console.log('CADQUA API response:', result);
+      if (error) {
+        console.error('Edge function error:', error);
+        throw new Error(`Edge function failed: ${error.message}`);
+      }
+
+      console.log('Edge function response:', data);
       
-      if (!result || !result.data || !result.data[2]) {
+      if (!data || !data.data || !data.data[2]) {
         throw new Error("Invalid response from CADQUA API - no 3D model generated");
       }
       
-      const glbUrl = result.data[2];
+      const glbUrl = data.data[2];
       if (typeof glbUrl !== 'string' || !glbUrl) {
         throw new Error("Invalid GLB file URL received from API");
       }
@@ -127,7 +122,7 @@ export const ImageToCADUploader = ({
     } catch (error) {
       console.error('CADQUA API error:', error);
       if (error instanceof Error) {
-        if (error.message.includes('fetch')) {
+        if (error.message.includes('Edge function failed')) {
           throw new Error("Unable to connect to CADQUA AI service. Please check your internet connection and try again.");
         } else if (error.message.includes('timeout')) {
           throw new Error("Request timed out. Please try with a smaller image or retry later.");
@@ -226,7 +221,7 @@ export const ImageToCADUploader = ({
       if (error instanceof Error) {
         if (error.message.includes('upload failed')) {
           errorMessage = "Failed to upload image. Please check your connection and try again.";
-        } else if (error.message.includes('Unable to connect')) {
+        } else if (error.message.includes('Edge function failed')) {
           errorMessage = "CADQUA AI service is temporarily unavailable. Please try again in a few minutes.";
         } else if (error.message.includes('timeout')) {
           errorMessage = "Generation timed out. Please try with a smaller image.";
