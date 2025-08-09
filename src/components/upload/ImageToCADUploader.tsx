@@ -102,21 +102,29 @@ export const ImageToCADUploader = ({
       const formData = new FormData();
       formData.append('input_image', selectedImage);
       
-      const response = await fetch(`https://zqnzxpbthldfqqbzzjct.supabase.co/functions/v1/modal-image-to-cad`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpxbnp4cGJ0aGxkZnFxYnp6amN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg5MzIxNzgsImV4cCI6MjA2NDUwODE3OH0.7YWUyL31eeOtauM4TqHjQXm8PB1Y-wVB7Cj0dSMQ0SA'
-        },
-        body: formData
-      });
+      let conversionData;
+      try {
+        const response = await fetch(`https://zqnzxpbthldfqqbzzjct.supabase.co/functions/v1/modal-image-to-cad`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpxbnp4cGJ0aGxkZnFxYnp6amN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg5MzIxNzgsImV4cCI6MjA2NDUwODE3OH0.7YWUyL31eeOtauM4TqHjQXm8PB1Y-wVB7Cj0dSMQ0SA'
+          },
+          body: formData
+        });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`Model generation failed: ${errorData.error || 'API request failed'}`);
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Edge function error response:', errorText);
+          throw new Error(`Model generation failed: ${response.status} - ${errorText}`);
+        }
+
+        conversionData = await response.json();
+        console.log('Edge function success response:', conversionData);
+      } catch (fetchError) {
+        console.error('Fetch error:', fetchError);
+        throw new Error(`Model generation failed: Network error - ${fetchError.message}`);
       }
-
-      const conversionData = await response.json();
       
       setConversionProgress(70);
       setConversionStatus("Processing generated model...");
