@@ -12,6 +12,7 @@ interface SimpleSTLViewerProps {
   fileUrl: string;
   className?: string;
   background?: 'white' | 'grey' | 'black' | 'gradient';
+  onBackgroundChange?: (bg: 'white' | 'grey' | 'black' | 'gradient') => void;
 }
 
 // Enhanced camera controller with better auto-fitting and zoom
@@ -76,16 +77,36 @@ const CameraController = ({
     const { center, size } = modelBounds;
     const distance = size * 2;
     
-    // Reset camera position
-    camera.position.set(center.x, center.y, center.z + distance);
-    camera.lookAt(center);
-    camera.updateProjectionMatrix();
+    // Smooth animated reset
+    const startPosition = camera.position.clone();
+    const targetPosition = new THREE.Vector3(center.x, center.y, center.z + distance);
+    const startTime = Date.now();
+    const duration = 800; // 800ms animation
     
-    // Reset controls
-    if (controls && 'target' in controls) {
-      (controls as any).target.copy(center);
-      (controls as any).update();
-    }
+    const animate = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      
+      // Smooth easing function
+      const easeOut = 1 - Math.pow(1 - progress, 3);
+      
+      // Interpolate camera position
+      camera.position.lerpVectors(startPosition, targetPosition, easeOut);
+      camera.lookAt(center);
+      camera.updateProjectionMatrix();
+      
+      // Update controls target
+      if (controls && 'target' in controls) {
+        (controls as any).target.copy(center);
+        (controls as any).update();
+      }
+      
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    };
+    
+    animate();
   };
   
   useEffect(() => {
@@ -226,7 +247,58 @@ const STLModel = ({ fileUrl, onCameraSetup }: { fileUrl: string; onCameraSetup?:
   );
 };
 
-export const SimpleSTLViewer = ({ fileUrl, className = "", background = 'gradient' }: SimpleSTLViewerProps) => {
+interface ViewerToolbarProps {
+  background: 'white' | 'grey' | 'black' | 'gradient';
+  onBackgroundChange: (bg: 'white' | 'grey' | 'black' | 'gradient') => void;
+  onResetView: () => void;
+  resetDisabled: boolean;
+}
+
+const ViewerToolbar = ({ background, onBackgroundChange, onResetView, resetDisabled }: ViewerToolbarProps) => {
+  return (
+    <div className="absolute top-3 left-3 right-3 z-10 flex items-center justify-between gap-2">
+      {/* Background Controls */}
+      <div className="flex items-center gap-2 bg-background/95 backdrop-blur-sm border rounded-lg px-3 py-2 shadow-lg">
+        <span className="text-xs font-medium text-muted-foreground hidden sm:block">Background</span>
+        <div className="flex gap-1">
+          {[
+            { value: 'white', label: 'W', color: 'bg-white border-2 border-border' },
+            { value: 'grey', label: 'G', color: 'bg-muted' },
+            { value: 'black', label: 'B', color: 'bg-black' },
+            { value: 'gradient', label: '∇', color: 'bg-gradient-to-br from-muted to-background' }
+          ].map(({ value, label, color }) => (
+            <button
+              key={value}
+              onClick={() => onBackgroundChange(value as any)}
+              className={`w-8 h-8 rounded text-xs font-bold transition-all duration-200 ${color} ${
+                background === value 
+                  ? 'ring-2 ring-primary ring-offset-2 ring-offset-background scale-110' 
+                  : 'hover:scale-105 border border-border/50'
+              } ${value === 'white' ? 'text-black' : 'text-white'}`}
+              title={`${value.charAt(0).toUpperCase() + value.slice(1)} Background`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Reset Button */}
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={onResetView}
+        disabled={resetDisabled}
+        className="bg-black/90 text-white border-black hover:bg-primary hover:border-primary hover:text-primary-foreground transition-all duration-200 shadow-lg"
+      >
+        <RotateCcw className="h-4 w-4 sm:mr-2" />
+        <span className="hidden sm:inline">Reset View</span>
+      </Button>
+    </div>
+  );
+};
+
+export const SimpleSTLViewer = ({ fileUrl, className = "", background = 'gradient', onBackgroundChange }: SimpleSTLViewerProps) => {
   const [showInstructions, setShowInstructions] = useState(true);
   const [resetView, setResetView] = useState<(() => void) | null>(null);
 
@@ -248,16 +320,18 @@ export const SimpleSTLViewer = ({ fileUrl, className = "", background = 'gradien
       resetView();
     }
   };
+
+  // Force true white for white background instead of theme white
   const canvasBg = background === 'white'
-    ? 'hsl(var(--background))'
+    ? '#ffffff'
     : background === 'grey'
     ? 'hsl(var(--muted))'
     : background === 'black'
-    ? 'hsl(0 0% 0%)'
+    ? '#000000'
     : 'linear-gradient(180deg, hsl(var(--muted)), hsl(var(--background)))';
 
   return (
-    <div className={`relative w-full h-[400px] ${className}`}>
+    <div className={`relative w-full h-[400px] md:h-[500px] ${className}`}>
       <Canvas
         camera={{ 
           position: [5, 5, 5], 
@@ -284,36 +358,33 @@ export const SimpleSTLViewer = ({ fileUrl, className = "", background = 'gradien
         />
       </Canvas>
       
-      {/* User Instructions Overlay */}
+      {/* Toolbar - Background controls + Reset button */}
+      {onBackgroundChange && (
+        <ViewerToolbar
+          background={background}
+          onBackgroundChange={onBackgroundChange}
+          onResetView={handleResetView}
+          resetDisabled={!resetView}
+        />
+      )}
+      
+      {/* User Instructions Overlay - Only show initially */}
       {showInstructions && (
-        <div className="absolute top-4 left-4 z-10 transition-opacity duration-500">
-          <Badge variant="secondary" className="flex items-center gap-2 px-3 py-2 shadow-lg">
+        <div className="absolute top-16 left-1/2 transform -translate-x-1/2 z-10 animate-fade-in">
+          <Badge variant="secondary" className="flex items-center gap-2 px-3 py-2 shadow-lg bg-background/95 backdrop-blur-sm">
             <Move3D className="h-4 w-4" />
-            <span className="text-sm">Drag to rotate</span>
+            <span className="text-sm hidden sm:inline">Drag to rotate</span>
+            <span className="text-xs sm:hidden">Drag • Pinch</span>
             <ZoomIn className="h-4 w-4 ml-2" />
-            <span className="text-sm">Scroll to zoom</span>
+            <span className="text-sm hidden sm:inline">Scroll to zoom</span>
           </Badge>
         </div>
       )}
       
-      {/* Reset View Button */}
-      <div className="absolute top-4 right-4 z-10">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleResetView}
-          className="bg-white/90 hover:bg-white shadow-sm"
-          disabled={!resetView}
-        >
-          <RotateCcw className="h-4 w-4 mr-2" />
-          Reset View
-        </Button>
-      </div>
-      
-      {/* Persistent Control Hint - Fixed visibility */}
-      <div className="absolute bottom-4 right-4 z-10">
-        <Badge variant="outline" className="text-xs bg-white/90 text-gray-800 border-gray-300 shadow-sm">
-          Interactive 3D Model
+      {/* Persistent Control Hint - Bottom right */}
+      <div className="absolute bottom-3 right-3 z-10">
+        <Badge variant="outline" className="text-xs bg-background/95 backdrop-blur-sm shadow-sm">
+          Interactive 3D
         </Badge>
       </div>
     </div>

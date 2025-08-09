@@ -53,26 +53,15 @@ export const PreviewSelector = ({
         {canView3D && <Badge variant="default" className="bg-primary">3D Viewer Active</Badge>}
         {fileType && <Badge variant="outline">{fileType.toUpperCase()}</Badge>}
       </div>
-      <div className="flex items-center gap-3">
-        <span className="text-sm text-muted-foreground">Background</span>
-        <Select value={background} onValueChange={(v) => setBackground(v as any)}>
-          <SelectTrigger className="w-[160px]">
-            <SelectValue placeholder="Background" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="white">White</SelectItem>
-            <SelectItem value="grey">Grey</SelectItem>
-            <SelectItem value="black">Black</SelectItem>
-            <SelectItem value="gradient">Gradient</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
       {/* 3D Viewer Content */}
       {hasFileAccess && canView3D ? (
         <div className="space-y-4">
           <div className="border rounded-lg overflow-hidden">
-            <SimpleSTLViewer fileUrl={fileUrl!} background={background} />
+            <SimpleSTLViewer 
+              fileUrl={fileUrl!} 
+              background={background}
+              onBackgroundChange={setBackground}
+            />
           </div>
           
           {/* User Instructions */}
