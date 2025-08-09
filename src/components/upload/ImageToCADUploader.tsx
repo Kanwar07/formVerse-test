@@ -102,15 +102,21 @@ export const ImageToCADUploader = ({
       const formData = new FormData();
       formData.append('input_image', selectedImage);
       
-      const { data: conversionData, error: conversionError } = await supabase.functions
-        .invoke('modal-image-to-cad', {
-          body: formData
-        });
+      const response = await fetch(`https://zqnzxpbthldfqqbzzjct.supabase.co/functions/v1/modal-image-to-cad`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpxbnp4cGJ0aGxkZnFxYnp6amN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg5MzIxNzgsImV4cCI6MjA2NDUwODE3OH0.7YWUyL31eeOtauM4TqHjQXm8PB1Y-wVB7Cj0dSMQ0SA'
+        },
+        body: formData
+      });
 
-      if (conversionError) {
-        console.error('Conversion error details:', conversionError);
-        throw new Error(`Model generation failed: ${conversionError.message}`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Model generation failed: ${errorData.error || 'API request failed'}`);
       }
+
+      const conversionData = await response.json();
       
       setConversionProgress(70);
       setConversionStatus("Processing generated model...");
