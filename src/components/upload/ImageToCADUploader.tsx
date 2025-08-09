@@ -108,6 +108,7 @@ export const ImageToCADUploader = ({
         });
 
       if (conversionError) {
+        console.error('Conversion error details:', conversionError);
         throw new Error(`Model generation failed: ${conversionError.message}`);
       }
       
@@ -169,13 +170,33 @@ export const ImageToCADUploader = ({
       
     } catch (error) {
       console.error('Image to CAD conversion error:', error);
-      setError(error instanceof Error ? error.message : "Model generation failed. Please try again.");
+      
+      // Provide more specific error messaging based on error type
+      let errorMessage = "Model generation failed. Please try again.";
+      
+      if (error instanceof Error) {
+        if (error.message.includes('Invalid file type')) {
+          errorMessage = "Invalid file type. Please upload a JPG or PNG image.";
+        } else if (error.message.includes('too large')) {
+          errorMessage = "Image file is too large. Maximum size is 10MB.";
+        } else if (error.message.includes('API service may be temporarily unavailable')) {
+          errorMessage = "The AI generation service is temporarily unavailable. Please try again in a few minutes.";
+        } else if (error.message.includes('timed out')) {
+          errorMessage = "Generation timed out. Please try with a smaller image.";
+        } else if (error.message.includes('Edge Function returned a non-2xx status code')) {
+          errorMessage = "Model generation service error. Please check your image format and try again.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      setError(errorMessage);
       setConversionProgress(0);
       setConversionStatus("");
       
       toast({
         title: "Generation Failed",
-        description: error instanceof Error ? error.message : "Failed to generate 3D model from image.",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
