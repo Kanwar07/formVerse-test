@@ -32,7 +32,12 @@ export const PreviewSelector = ({
 }: PreviewSelectorProps) => {
   const canView3D = isOwner || isPurchased;
   const hasFileAccess = fileUrl && fileName && fileType;
-  const [background, setBackground] = useState<'white' | 'grey' | 'black' | 'gradient'>('gradient');
+  const [background, setBackground] = useState<'white' | 'grey' | 'black' | 'custom'>('white');
+  const [backgroundImage, setBackgroundImage] = useState<string>();
+
+  const handleBackgroundImageUpload = (imageUrl: string) => {
+    setBackgroundImage(imageUrl);
+  };
 
   return (
     <div className={`space-y-4 ${className}`}>
@@ -60,7 +65,9 @@ export const PreviewSelector = ({
             <SimpleSTLViewer 
               fileUrl={fileUrl!} 
               background={background}
+              backgroundImage={backgroundImage}
               onBackgroundChange={setBackground}
+              onBackgroundImageUpload={handleBackgroundImageUpload}
             />
           </div>
           

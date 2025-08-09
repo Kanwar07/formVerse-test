@@ -5,14 +5,16 @@ import { STLLoader } from 'three-stdlib';
 import * as THREE from 'three';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Move3D, ZoomIn, RotateCcw, Loader2 } from 'lucide-react';
+import { Move3D, ZoomIn, RotateCcw, Loader2, ImageUp } from 'lucide-react';
 import { LoadingIndicator3D } from './LoadingIndicator3D';
 
 interface SimpleSTLViewerProps {
   fileUrl: string;
   className?: string;
-  background?: 'white' | 'grey' | 'black' | 'gradient';
-  onBackgroundChange?: (bg: 'white' | 'grey' | 'black' | 'gradient') => void;
+  background?: 'white' | 'grey' | 'black' | 'custom';
+  backgroundImage?: string;
+  onBackgroundChange?: (bg: 'white' | 'grey' | 'black' | 'custom') => void;
+  onBackgroundImageUpload?: (imageUrl: string) => void;
 }
 
 // Enhanced camera controller with better auto-fitting and zoom
@@ -250,13 +252,24 @@ const STLModel = ({ fileUrl, onCameraSetup }: { fileUrl: string; onCameraSetup?:
 };
 
 interface ViewerToolbarProps {
-  background: 'white' | 'grey' | 'black' | 'gradient';
-  onBackgroundChange: (bg: 'white' | 'grey' | 'black' | 'gradient') => void;
+  background: 'white' | 'grey' | 'black' | 'custom';
+  backgroundImage?: string;
+  onBackgroundChange: (bg: 'white' | 'grey' | 'black' | 'custom') => void;
+  onBackgroundImageUpload?: (imageUrl: string) => void;
   onResetView: () => void;
   resetDisabled: boolean;
 }
 
-const ViewerToolbar = ({ background, onBackgroundChange, onResetView, resetDisabled }: ViewerToolbarProps) => {
+const ViewerToolbar = ({ background, backgroundImage, onBackgroundChange, onBackgroundImageUpload, onResetView, resetDisabled }: ViewerToolbarProps) => {
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && onBackgroundImageUpload) {
+      const imageUrl = URL.createObjectURL(file);
+      onBackgroundImageUpload(imageUrl);
+      onBackgroundChange('custom');
+    }
+  };
+
   return (
     <div className="absolute top-3 left-3 right-3 z-10 flex items-center justify-between gap-2">
       {/* Background Controls */}
@@ -264,24 +277,51 @@ const ViewerToolbar = ({ background, onBackgroundChange, onResetView, resetDisab
         <span className="text-xs font-medium text-muted-foreground hidden sm:block">Background</span>
         <div className="flex gap-1">
           {[
-            { value: 'white', label: 'W', color: 'bg-white border-2 border-border' },
-            { value: 'grey', label: 'G', color: 'bg-muted' },
-            { value: 'black', label: 'B', color: 'bg-black' },
-            { value: 'gradient', label: '∇', color: 'bg-gradient-to-br from-muted to-background' }
-          ].map(({ value, label, color }) => (
+            { value: 'white', label: 'W', color: 'bg-white border-2 border-border', textColor: 'text-black' },
+            { value: 'grey', label: 'G', color: 'bg-muted', textColor: 'text-foreground' },
+            { value: 'black', label: 'B', color: 'bg-black', textColor: 'text-white' }
+          ].map(({ value, label, color, textColor }) => (
             <button
               key={value}
               onClick={() => onBackgroundChange(value as any)}
-              className={`w-8 h-8 rounded text-xs font-bold transition-all duration-200 ${color} ${
+              className={`w-8 h-8 rounded text-xs font-bold transition-all duration-200 ${color} ${textColor} ${
                 background === value 
                   ? 'ring-2 ring-primary ring-offset-2 ring-offset-background scale-110' 
                   : 'hover:scale-105 border border-border/50'
-              } ${value === 'white' ? 'text-black' : 'text-white'}`}
+              }`}
               title={`${value.charAt(0).toUpperCase() + value.slice(1)} Background`}
             >
               {label}
             </button>
           ))}
+          
+          {/* Custom Background Image Upload */}
+          <div className="relative">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              title="Upload Background Image"
+            />
+            <button
+              className={`w-8 h-8 rounded text-xs font-bold transition-all duration-200 ${
+                background === 'custom' && backgroundImage
+                  ? 'ring-2 ring-primary ring-offset-2 ring-offset-background scale-110'
+                  : 'hover:scale-105'
+              } ${
+                background === 'custom' && backgroundImage
+                  ? 'bg-cover bg-center border-2 border-primary'
+                  : 'bg-muted border border-border/50 text-foreground'
+              }`}
+              style={{
+                backgroundImage: background === 'custom' && backgroundImage ? `url(${backgroundImage})` : undefined
+              }}
+              title="Upload Background Image"
+            >
+              {background === 'custom' && backgroundImage ? '' : <ImageUp className="h-3 w-3" />}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -291,7 +331,7 @@ const ViewerToolbar = ({ background, onBackgroundChange, onResetView, resetDisab
         size="sm"
         onClick={onResetView}
         disabled={resetDisabled}
-        className="bg-black/90 text-white border-black hover:bg-primary hover:border-primary hover:text-primary-foreground transition-all duration-200 shadow-lg"
+        className="bg-background/95 text-purple-600 border-border hover:bg-primary hover:border-primary hover:text-primary-foreground transition-all duration-200 shadow-lg backdrop-blur-sm"
       >
         <RotateCcw className="h-4 w-4 sm:mr-2" />
         <span className="hidden sm:inline">Reset View</span>
@@ -300,7 +340,14 @@ const ViewerToolbar = ({ background, onBackgroundChange, onResetView, resetDisab
   );
 };
 
-export const SimpleSTLViewer = ({ fileUrl, className = "", background = 'gradient', onBackgroundChange }: SimpleSTLViewerProps) => {
+export const SimpleSTLViewer = ({ 
+  fileUrl, 
+  className = "", 
+  background = 'white', 
+  backgroundImage, 
+  onBackgroundChange,
+  onBackgroundImageUpload 
+}: SimpleSTLViewerProps) => {
   const [showInstructions, setShowInstructions] = useState(true);
   const [resetView, setResetView] = useState<(() => void) | null>(null);
 
@@ -323,14 +370,16 @@ export const SimpleSTLViewer = ({ fileUrl, className = "", background = 'gradien
     }
   };
 
-  // Force true white for white background instead of theme white
+  // Handle background including custom image
   const canvasBg = background === 'white'
     ? '#ffffff'
     : background === 'grey'
     ? 'hsl(var(--muted))'
     : background === 'black'
     ? '#000000'
-    : 'linear-gradient(180deg, hsl(var(--muted)), hsl(var(--background)))';
+    : background === 'custom' && backgroundImage
+    ? `url(${backgroundImage})`
+    : 'hsl(var(--muted))';
 
   return (
     <div className={`relative w-full h-[400px] md:h-[500px] ${className}`}>
@@ -341,7 +390,12 @@ export const SimpleSTLViewer = ({ fileUrl, className = "", background = 'gradien
           near: 0.01,
           far: 2000
         }}
-        style={{ background: canvasBg }}
+        style={{ 
+          background: canvasBg,
+          backgroundSize: background === 'custom' ? 'cover' : undefined,
+          backgroundPosition: background === 'custom' ? 'center' : undefined,
+          backgroundRepeat: background === 'custom' ? 'no-repeat' : undefined
+        }}
       >
         <ambientLight intensity={0.6} />
         <directionalLight position={[10, 10, 5]} intensity={1} />
@@ -365,7 +419,9 @@ export const SimpleSTLViewer = ({ fileUrl, className = "", background = 'gradien
       {onBackgroundChange && (
         <ViewerToolbar
           background={background}
+          backgroundImage={backgroundImage}
           onBackgroundChange={onBackgroundChange}
+          onBackgroundImageUpload={onBackgroundImageUpload}
           onResetView={handleResetView}
           resetDisabled={!resetView}
         />
