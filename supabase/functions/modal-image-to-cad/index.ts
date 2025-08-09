@@ -7,6 +7,144 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const CADQUA_API_URL = "https://formversedude--cadqua-3d-generator-gradio-app.modal.run";
+
+// Utility function for exponential backoff delay
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Health check with retries
+async function performHealthCheck(): Promise<{ success: boolean; retryAfter?: number }> {
+  const maxRetries = 3;
+  const baseDelay = 1000; // 1s
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      console.log(`Health check attempt ${attempt + 1}/${maxRetries}`);
+      
+      const response = await fetch(CADQUA_API_URL, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+        signal: AbortSignal.timeout(10000) // 10s timeout
+      });
+      
+      if (response.ok) {
+        console.log('Health check passed');
+        return { success: true };
+      }
+      
+      console.log(`Health check failed with status: ${response.status}`);
+    } catch (error) {
+      console.error(`Health check attempt ${attempt + 1} failed:`, error);
+    }
+    
+    if (attempt < maxRetries - 1) {
+      const delayMs = baseDelay * Math.pow(2, attempt);
+      console.log(`Waiting ${delayMs}ms before next attempt...`);
+      await delay(delayMs);
+    }
+  }
+  
+  // All attempts failed - suggest retry after 30 seconds
+  return { success: false, retryAfter: 30 };
+}
+
+// Warm up the model with a minimal request
+async function warmUpModel(client: any): Promise<boolean> {
+  try {
+    console.log('Warming up CADQUA model...');
+    
+    // Create a minimal 1x1 pixel image for warm-up
+    const canvas = new OffscreenCanvas(1, 1);
+    const ctx = canvas.getContext('2d');
+    ctx!.fillStyle = '#000000';
+    ctx!.fillRect(0, 0, 1, 1);
+    
+    const blob = await canvas.convertToBlob({ type: 'image/png' });
+    const warmupFile = new File([blob], 'warmup.png', { type: 'image/png' });
+    
+    await Promise.race([
+      client.predict("/generate_and_extract__glb", {
+        image: warmupFile,
+        multiimages: [],
+        is_multiimage: false,
+        seed: 0,
+        randomize_seed: false,
+        ss_guidance_strength: 1.0,
+        ss_sampling_steps: 1,
+        slat_guidance_strength: 1.0,
+        slat_sampling_steps: 1,
+        multiimage_algo: "stochastic",
+        mesh_simplify: 0.95,
+        texture_size: 512
+      }),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Warmup timeout')), 30000)
+      )
+    ]);
+    
+    console.log('Model warmed up successfully');
+    return true;
+  } catch (error) {
+    console.log('Model warmup failed (this is expected):', error.message);
+    return false; // Warmup failure is acceptable
+  }
+}
+
+// Generate 3D model with retries
+async function generateModel(client: any, imageFile: File): Promise<any> {
+  const maxRetries = 2;
+  const retryDelay = 3000; // 3s
+  
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      console.log(`Generation attempt ${attempt + 1}/${maxRetries + 1}`);
+      
+      const result = await Promise.race([
+        client.predict("/generate_and_extract__glb", {
+          image: imageFile,
+          multiimages: [],
+          is_multiimage: false,
+          seed: 0,
+          randomize_seed: true,
+          ss_guidance_strength: 7.5,
+          ss_sampling_steps: 12,
+          slat_guidance_strength: 3.0,
+          slat_sampling_steps: 12,
+          multiimage_algo: "stochastic",
+          mesh_simplify: 0.95,
+          texture_size: 1024
+        }),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Generation timeout')), 120000) // 2 minutes
+        )
+      ]);
+      
+      // Validate response structure
+      if (!result || !result.data || !result.data[2]) {
+        throw new Error('Invalid response structure - no GLB file generated');
+      }
+      
+      const glbUrl = result.data[2];
+      if (typeof glbUrl !== 'string' || !glbUrl.trim()) {
+        throw new Error('Invalid GLB URL in response');
+      }
+      
+      console.log('Generation successful');
+      return result;
+      
+    } catch (error) {
+      console.error(`Generation attempt ${attempt + 1} failed:`, error);
+      
+      if (attempt < maxRetries && !error.message.includes('timeout')) {
+        console.log(`Retrying in ${retryDelay}ms...`);
+        await delay(retryDelay);
+      } else {
+        throw error;
+      }
+    }
+  }
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -21,7 +159,10 @@ serve(async (req) => {
     const imageFile = formData.get('input_image') as File;
     
     if (!imageFile) {
-      return new Response(JSON.stringify({ error: 'No image file provided' }), {
+      return new Response(JSON.stringify({ 
+        error: 'No image file provided',
+        code: 'MISSING_FILE' 
+      }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -29,7 +170,10 @@ serve(async (req) => {
 
     // Validate file type
     if (!imageFile.type.startsWith('image/')) {
-      return new Response(JSON.stringify({ error: 'Invalid file type. Please upload a valid image (JPG, PNG).' }), {
+      return new Response(JSON.stringify({ 
+        error: 'Invalid file type. Please upload a valid image (JPG, PNG).',
+        code: 'INVALID_FILE_TYPE'
+      }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -38,7 +182,10 @@ serve(async (req) => {
     // Validate file size (10MB max)
     const maxSize = 10 * 1024 * 1024; // 10MB in bytes
     if (imageFile.size > maxSize) {
-      return new Response(JSON.stringify({ error: 'Image file is too large. Maximum size is 10MB.' }), {
+      return new Response(JSON.stringify({ 
+        error: 'Image file is too large. Maximum size is 10MB.',
+        code: 'FILE_TOO_LARGE'
+      }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -50,71 +197,41 @@ serve(async (req) => {
       type: imageFile.type
     });
 
-    console.log('Connecting to Gradio client...');
+    // Step 1: Health check with retries
+    console.log('Performing health check...');
+    const healthCheck = await performHealthCheck();
     
-    // Test connection to the API endpoint first
-    try {
-      const testResponse = await fetch("https://formversedude--cadqua-3d-generator-gradio-app.modal.run", {
-        method: 'GET',
-        headers: { 'Accept': 'application/json' }
-      });
-      console.log('API endpoint test response status:', testResponse.status);
-    } catch (testError) {
-      console.error('API endpoint test failed:', testError);
+    if (!healthCheck.success) {
       return new Response(JSON.stringify({ 
-        error: 'CADQUA API endpoint is not accessible',
-        details: 'The AI model service appears to be down or unreachable'
+        error: 'CADQUA AI service is currently unavailable',
+        details: 'The service may be starting up or experiencing issues',
+        code: 'SERVICE_UNAVAILABLE',
+        retryAfter: healthCheck.retryAfter
       }), {
         status: 503,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Connect to the Gradio client with timeout handling
+    // Step 2: Connect to Gradio client
+    console.log('Connecting to Gradio client...');
     const client = await Promise.race([
-      Client.connect("https://formversedude--cadqua-3d-generator-gradio-app.modal.run"),
+      Client.connect(CADQUA_API_URL),
       new Promise((_, reject) => 
         setTimeout(() => reject(new Error('Connection timeout')), 30000)
       )
     ]) as any;
     
-    console.log('Gradio client connected, calling API endpoint...');
+    console.log('Gradio client connected successfully');
 
-    // Call the specific endpoint with proper parameters and timeout
-    const result = await Promise.race([
-      client.predict("/generate_and_extract__glb", {
-        image: imageFile,
-        multiimages: [],
-        is_multiimage: false,
-        seed: 0,
-        randomize_seed: true,
-        ss_guidance_strength: 7.5,
-        ss_sampling_steps: 12,
-        slat_guidance_strength: 3.0,
-        slat_sampling_steps: 12,
-        multiimage_algo: "stochastic",
-        mesh_simplify: 0.95,
-        texture_size: 1024
-      }),
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('API call timeout')), 120000) // 2 minutes timeout
-      )
-    ]) as any;
+    // Step 3: Warm up the model (optional - don't fail if this doesn't work)
+    await warmUpModel(client);
 
-    console.log('Gradio API success response:', result);
+    // Step 4: Generate the actual model with retries
+    console.log('Starting model generation...');
+    const result = await generateModel(client, imageFile);
 
-    // Check if the response contains the expected GLB file path
-    if (!result || !result.data || !result.data[2]) {
-      console.error('Invalid response structure:', result);
-      return new Response(JSON.stringify({ 
-        error: 'Invalid response from model generation API',
-        details: 'Expected GLB file path not found in response'
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
+    console.log('Model generation completed successfully');
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
@@ -122,32 +239,44 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in modal-image-to-cad function:', error);
     
-    // Provide more specific error messages based on error type
+    // Determine error type and appropriate response
     let errorMessage = 'Internal server error';
     let errorDetails = error.message;
     let statusCode = 500;
+    let errorCode = 'INTERNAL_ERROR';
+    let retryAfter;
     
     if (error.message.includes('Connection timeout')) {
       errorMessage = 'Unable to connect to CADQUA AI service';
-      errorDetails = 'Connection timed out. The AI service may be temporarily unavailable.';
+      errorDetails = 'Connection timed out. The service may be starting up.';
       statusCode = 503;
-    } else if (error.message.includes('API call timeout')) {
+      errorCode = 'CONNECTION_TIMEOUT';
+      retryAfter = 30;
+    } else if (error.message.includes('Generation timeout')) {
       errorMessage = 'Model generation timed out';
-      errorDetails = 'The AI generation process took too long. Please try with a smaller image.';
+      errorDetails = 'The generation process took too long. Please try with a smaller image.';
       statusCode = 504;
+      errorCode = 'GENERATION_TIMEOUT';
+      retryAfter = 10;
+    } else if (error.message.includes('Invalid response')) {
+      errorMessage = 'Model generation failed';
+      errorDetails = 'The AI service returned an invalid response. Please try again.';
+      statusCode = 502;
+      errorCode = 'INVALID_RESPONSE';
+      retryAfter = 15;
     } else if (error.message.includes('fetch')) {
       errorMessage = 'Failed to connect to CADQUA AI service';
       errorDetails = 'Network connection failed. Please check your internet connection.';
       statusCode = 503;
-    } else if (error.message.includes('not accessible')) {
-      errorMessage = 'CADQUA AI service unavailable';
-      errorDetails = 'The AI model service is currently down. Please try again later.';
-      statusCode = 503;
+      errorCode = 'NETWORK_ERROR';
+      retryAfter = 20;
     }
     
     return new Response(JSON.stringify({ 
       error: errorMessage, 
-      details: errorDetails 
+      details: errorDetails,
+      code: errorCode,
+      retryAfter
     }), {
       status: statusCode,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

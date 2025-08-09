@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { UploadIcon, FileCheck, Sparkles, AlertCircle } from "lucide-react";
+import { UploadIcon, FileCheck, Sparkles, AlertCircle, Search, Settings, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
@@ -14,6 +14,14 @@ interface ImageToCADUploaderProps {
   setUploading: (uploading: boolean) => void;
 }
 
+type GenerationStage = 'idle' | 'uploading' | 'health-check' | 'warming-up' | 'generating' | 'downloading' | 'finalizing' | 'complete' | 'error';
+
+interface ErrorInfo {
+  message: string;
+  code?: string;
+  retryAfter?: number;
+}
+
 export const ImageToCADUploader = ({ 
   onModelGenerated, 
   uploading,
@@ -21,12 +29,24 @@ export const ImageToCADUploader = ({
 }: ImageToCADUploaderProps) => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [conversionProgress, setConversionProgress] = useState(0);
-  const [conversionStatus, setConversionStatus] = useState<string>("");
-  const [error, setError] = useState<string>("");
+  const [conversionStage, setConversionStage] = useState<GenerationStage>('idle');
+  const [error, setError] = useState<ErrorInfo | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
   const [retryCount, setRetryCount] = useState(0);
+  const [retryCountdown, setRetryCountdown] = useState(0);
   const { toast } = useToast();
   const { user, session } = useAuth();
+
+  // Countdown timer for retry button
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (retryCountdown > 0) {
+      timer = setTimeout(() => {
+        setRetryCountdown(prev => prev - 1);
+      }, 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [retryCountdown]);
 
   const extractFileInfo = (file: File) => {
     return {
@@ -48,13 +68,11 @@ export const ImageToCADUploader = ({
   };
 
   const validateImageFile = (file: File): string | null => {
-    // Check file type
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
     if (!allowedTypes.includes(file.type)) {
       return "Invalid file type. Please upload a JPG or PNG image.";
     }
     
-    // Check file size (10MB max)
     const maxSize = 10 * 1024 * 1024; // 10MB in bytes
     if (file.size > maxSize) {
       return "Image file is too large. Maximum size is 10MB.";
@@ -63,19 +81,122 @@ export const ImageToCADUploader = ({
     return null;
   };
 
+  const getStageInfo = (stage: GenerationStage) => {
+    switch (stage) {
+      case 'uploading':
+        return {
+          icon: UploadIcon,
+          title: "Uploading image...",
+          description: "Preparing your image for processing",
+          progress: 10
+        };
+      case 'health-check':
+        return {
+          icon: Search,
+          title: "Checking CADQUA service...",
+          description: "Please wait while we warm up the AI service",
+          progress: 25
+        };
+      case 'warming-up':
+        return {
+          icon: Settings,
+          title: "Warming up AI model...",
+          description: "Preparing the generation engine",
+          progress: 40
+        };
+      case 'generating':
+        return {
+          icon: Sparkles,
+          title: "Generating 3D Model...",
+          description: "This can take up to 2 minutes",
+          progress: 70
+        };
+      case 'downloading':
+        return {
+          icon: UploadIcon,
+          title: "Downloading generated model...",
+          description: "Retrieving your 3D model",
+          progress: 85
+        };
+      case 'finalizing':
+        return {
+          icon: CheckCircle,
+          title: "Finalizing upload...",
+          description: "Almost ready!",
+          progress: 95
+        };
+      case 'complete':
+        return {
+          icon: CheckCircle,
+          title: "3D model ready!",
+          description: "Loading preview...",
+          progress: 100
+        };
+      default:
+        return {
+          icon: Sparkles,
+          title: "Processing...",
+          description: "Please wait",
+          progress: 50
+        };
+    }
+  };
+
+  const getErrorMessage = (error: ErrorInfo) => {
+    switch (error.code) {
+      case 'SERVICE_UNAVAILABLE':
+        return {
+          title: "CADQUA AI service unavailable",
+          message: "The AI service is starting up or experiencing issues. Please wait and try again.",
+          type: "service-down" as const
+        };
+      case 'CONNECTION_TIMEOUT':
+        return {
+          title: "Connection timeout",
+          message: "Unable to connect to the AI service. It may be starting up.",
+          type: "service-down" as const
+        };
+      case 'GENERATION_TIMEOUT':
+        return {
+          title: "Generation took too long",
+          message: "The AI generation process timed out. Try again with a smaller image.",
+          type: "timeout" as const
+        };
+      case 'INVALID_RESPONSE':
+        return {
+          title: "Generation failed",
+          message: "The AI service returned an invalid response. Please try again.",
+          type: "service-error" as const
+        };
+      case 'NETWORK_ERROR':
+        return {
+          title: "Network error",
+          message: "Please check your internet connection and try again.",
+          type: "network" as const
+        };
+      default:
+        return {
+          title: "Generation failed",
+          message: error.message || "An unexpected error occurred. Please try again.",
+          type: "general" as const
+        };
+    }
+  };
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     
     const validationError = validateImageFile(file);
     if (validationError) {
-      setError(validationError);
+      setError({ message: validationError, code: 'VALIDATION_ERROR' });
       return;
     }
     
     setSelectedImage(file);
-    setError("");
+    setError(null);
     setRetryCount(0);
+    setConversionStage('idle');
     
     // Create preview
     const reader = new FileReader();
@@ -86,37 +207,23 @@ export const ImageToCADUploader = ({
   };
 
   const generate3DModelFromImage = async (imageFile: File): Promise<string> => {
-    console.log('Sending image to CADQUA API via edge function...');
-    setConversionStatus("Connecting to CADQUA AI Generator...");
+    console.log('Starting 3D model generation...');
     
     try {
       // Create FormData for the edge function
       const formData = new FormData();
       formData.append('input_image', imageFile);
       
-      setConversionProgress(30);
-      setConversionStatus("Generating your 3D model (this may take 1-2 minutes)...");
+      setConversionStage('health-check');
       
-      // Call the edge function with extended timeout
+      // Call the edge function
       const { data, error } = await supabase.functions.invoke('modal-image-to-cad', {
-        body: formData,
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        }
+        body: formData
       });
 
       if (error) {
         console.error('Edge function error:', error);
-        // Provide more specific error messages based on the error
-        if (error.message.includes('503')) {
-          throw new Error("CADQUA AI service is temporarily unavailable. Please try again in a few minutes.");
-        } else if (error.message.includes('504')) {
-          throw new Error("Model generation timed out. Please try with a smaller image or retry later.");
-        } else if (error.message.includes('Connection timeout')) {
-          throw new Error("Unable to connect to CADQUA AI service. The service may be down.");
-        } else {
-          throw new Error(`Edge function failed: ${error.message}`);
-        }
+        throw new Error(error.message);
       }
 
       console.log('Edge function response:', data);
@@ -132,11 +239,8 @@ export const ImageToCADUploader = ({
       
       return glbUrl;
     } catch (error) {
-      console.error('CADQUA API error:', error);
-      if (error instanceof Error) {
-        throw error; // Re-throw the error with the specific message
-      }
-      throw new Error("Unexpected error during model generation");
+      console.error('Generation error:', error);
+      throw error;
     }
   };
 
@@ -145,8 +249,8 @@ export const ImageToCADUploader = ({
     
     setUploading(true);
     setConversionProgress(0);
-    setConversionStatus("Starting generation...");
-    setError("");
+    setConversionStage('uploading');
+    setError(null);
     
     try {
       // Step 1: Upload image to Supabase storage
@@ -154,8 +258,6 @@ export const ImageToCADUploader = ({
       const imagePath = `${user.id}/images/${timestamp}-${selectedImage.name}`;
       
       console.log('Uploading image to storage...');
-      setConversionProgress(10);
-      setConversionStatus("Uploading image...");
       
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('3d-models')
@@ -166,12 +268,13 @@ export const ImageToCADUploader = ({
       }
       
       setConversionProgress(20);
+      setConversionStage('generating');
       
       // Step 2: Generate 3D model using CADQUA API
       const glbUrl = await generate3DModelFromImage(selectedImage);
       
       setConversionProgress(70);
-      setConversionStatus("Downloading generated model...");
+      setConversionStage('downloading');
       
       // Step 3: Download the generated GLB file
       console.log('Downloading GLB from:', glbUrl);
@@ -184,7 +287,7 @@ export const ImageToCADUploader = ({
       const modelFile = new File([modelBlob], `generated-${timestamp}.glb`, { type: 'model/gltf-binary' });
       
       setConversionProgress(85);
-      setConversionStatus("Uploading generated model...");
+      setConversionStage('finalizing');
       
       // Step 4: Upload the generated model to storage
       const modelPath = `${user.id}/${timestamp}-generated-model.glb`;
@@ -198,7 +301,7 @@ export const ImageToCADUploader = ({
       }
       
       setConversionProgress(100);
-      setConversionStatus("3D model ready! Loading preview...");
+      setConversionStage('complete');
       
       // Step 5: Pass to the main upload flow
       const fileInfo = extractFileInfo(modelFile);
@@ -212,41 +315,46 @@ export const ImageToCADUploader = ({
       // Reset state after success
       setTimeout(() => {
         setConversionProgress(0);
-        setConversionStatus("");
+        setConversionStage('idle');
         setSelectedImage(null);
         setImagePreview("");
         setRetryCount(0);
       }, 2000);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Image to CAD conversion error:', error);
       
-      // Provide specific error messaging
-      let errorMessage = "Model generation failed. Please try again.";
+      let errorInfo: ErrorInfo;
       
-      if (error instanceof Error) {
-        if (error.message.includes('upload failed')) {
-          errorMessage = "Failed to upload image. Please check your connection and try again.";
-        } else if (error.message.includes('Edge function failed')) {
-          errorMessage = "CADQUA AI service is temporarily unavailable. Please try again in a few minutes.";
-        } else if (error.message.includes('timeout')) {
-          errorMessage = "Generation timed out. Please try with a smaller image.";
-        } else if (error.message.includes('Invalid response')) {
-          errorMessage = "Model generation failed. The API may be experiencing issues.";
-        } else if (error.message.includes('Failed to download')) {
-          errorMessage = "Generated model could not be downloaded. Please try again.";
+      // Parse error response to extract structured error info
+      try {
+        if (error.message) {
+          const errorData = JSON.parse(error.message);
+          errorInfo = {
+            message: errorData.error || errorData.details || error.message,
+            code: errorData.code,
+            retryAfter: errorData.retryAfter
+          };
         } else {
-          errorMessage = error.message;
+          errorInfo = { message: error.message || "Model generation failed" };
         }
+      } catch {
+        errorInfo = { message: error.message || "Model generation failed" };
       }
       
-      setError(errorMessage);
+      setError(errorInfo);
       setConversionProgress(0);
-      setConversionStatus("");
+      setConversionStage('error');
       
+      // Set countdown if retryAfter is provided
+      if (errorInfo.retryAfter) {
+        setRetryCountdown(errorInfo.retryAfter);
+      }
+      
+      const errorDisplay = getErrorMessage(errorInfo);
       toast({
-        title: "Generation Failed",
-        description: errorMessage,
+        title: errorDisplay.title,
+        description: errorDisplay.message,
         variant: "destructive"
       });
     } finally {
@@ -255,15 +363,19 @@ export const ImageToCADUploader = ({
   };
 
   const retry = async () => {
-    if (!selectedImage) return;
+    if (!selectedImage || retryCountdown > 0) return;
     
     if (retryCount >= 2) {
-      setError("Maximum retry attempts reached. Please try with a different image or check your connection.");
+      setError({ 
+        message: "Maximum retry attempts reached. Please try with a different image or check your connection.",
+        code: 'MAX_RETRIES'
+      });
       return;
     }
     
     setRetryCount(prev => prev + 1);
-    setError("");
+    setError(null);
+    setRetryCountdown(0);
     await generateModelFromImage();
   };
 
@@ -287,6 +399,9 @@ export const ImageToCADUploader = ({
       </div>
     );
   }
+
+  const stageInfo = getStageInfo(conversionStage);
+  const StageIcon = stageInfo.icon;
 
   return (
     <div className="flex flex-col items-center">
@@ -316,8 +431,8 @@ export const ImageToCADUploader = ({
           {uploading ? "Processing..." : "Select Image"}
         </Label>
         
-        {selectedImage && imagePreview && !uploading && (
-          <div className="mt-4 p-3 bg-muted/50 rounded-lg text-sm w-full">
+        {selectedImage && imagePreview && !uploading && conversionStage === 'idle' && (
+          <div className="mt-4 p-3 bg-muted/50 rounded-lg text-sm w-full animate-fade-in">
             <div className="flex items-center mb-2">
               <FileCheck className="h-4 w-4 text-green-600 mr-2" />
               <span className="font-medium">Image Selected</span>
@@ -336,7 +451,7 @@ export const ImageToCADUploader = ({
             </div>
             <Button 
               onClick={generateModelFromImage}
-              className="w-full"
+              className="w-full hover-scale"
               disabled={uploading}
             >
               <Sparkles className="h-4 w-4 mr-2" />
@@ -347,49 +462,56 @@ export const ImageToCADUploader = ({
       </div>
 
       {/* Conversion Progress */}
-      {(conversionProgress > 0 || uploading) && (
-        <div className="mt-6 w-full max-w-xl">
-          <div className="flex items-center mb-2">
-            <div className="animate-pulse flex space-x-1 mr-3">
-              <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
-              <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-              <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+      {(conversionProgress > 0 || uploading) && conversionStage !== 'idle' && (
+        <div className="mt-6 w-full max-w-xl animate-fade-in">
+          <div className="bg-card border rounded-lg p-4">
+            <div className="flex items-center mb-3">
+              <div className="mr-3">
+                <StageIcon className="h-5 w-5 text-primary animate-pulse" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium">{stageInfo.title}</p>
+                <p className="text-xs text-muted-foreground">{stageInfo.description}</p>
+              </div>
             </div>
-            <p className="text-sm font-medium">{conversionStatus || "Processing..."}</p>
+            <Progress value={conversionProgress} className="h-2 mb-2" />
+            <p className="text-xs text-muted-foreground text-right">{conversionProgress}% complete</p>
           </div>
-          <Progress value={conversionProgress} className="h-2" />
-          <p className="text-xs text-muted-foreground mt-1">{conversionProgress}% complete</p>
         </div>
       )}
 
       {/* Error Display */}
-      {error && !uploading && (
-        <div className="mt-4 w-full max-w-xl">
+      {error && conversionStage === 'error' && (
+        <div className="mt-4 w-full max-w-xl animate-fade-in">
           <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
             <div className="flex items-center mb-2">
               <AlertCircle className="h-4 w-4 text-destructive mr-2" />
-              <span className="font-medium text-destructive">Generation Failed</span>
+              <span className="font-medium text-destructive">{getErrorMessage(error).title}</span>
             </div>
-            <p className="text-sm text-destructive/80 mb-3">{error}</p>
+            <p className="text-sm text-destructive/80 mb-3">{getErrorMessage(error).message}</p>
             <div className="flex gap-2">
               <Button 
                 onClick={retry}
                 variant="destructive"
                 size="sm"
-                disabled={!selectedImage || retryCount >= 2}
+                disabled={!selectedImage || retryCount >= 2 || retryCountdown > 0}
+                className="hover-scale"
               >
-                Retry {retryCount > 0 && `(${retryCount}/2)`}
+                {retryCountdown > 0 ? `Retry in ${retryCountdown}s` : 
+                 retryCount > 0 ? `Retry (${retryCount}/2)` : 'Retry'}
               </Button>
               {retryCount >= 2 && (
                 <Button 
                   onClick={() => {
-                    setError("");
+                    setError(null);
                     setSelectedImage(null);
                     setImagePreview("");
                     setRetryCount(0);
+                    setConversionStage('idle');
                   }}
                   variant="outline"
                   size="sm"
+                  className="hover-scale"
                 >
                   Start Over
                 </Button>
