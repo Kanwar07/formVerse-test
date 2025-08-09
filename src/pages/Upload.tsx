@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { useToast } from "@/components/ui/use-toast";
-import { Brain } from "lucide-react";
+import { Brain, Upload as UploadIcon, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { FormIQAnalysisResult } from "@/services/formiq";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +12,7 @@ import { useAuth } from "@/context/AuthContext";
 
 // Import refactored components
 import { FileUploader } from "@/components/upload/FileUploader";
+import { ImageToCADUploader } from "@/components/upload/ImageToCADUploader";
 import { FormIQAnalyzer } from "@/components/upload/FormIQAnalyzer";
 import { Stepper } from "@/components/upload/Stepper";
 import { DetailsForm } from "@/components/upload/DetailsForm";
@@ -41,6 +43,11 @@ const Upload = () => {
   const [qualityStatus, setQualityStatus] = useState<'approved' | 'declined' | 'reviewing'>('reviewing');
   const [qualityNotes, setQualityNotes] = useState<string>("");
   
+  // Upload method tracking
+  const [uploadMethod, setUploadMethod] = useState<'file' | 'image'>('file');
+  const [sourceImagePath, setSourceImagePath] = useState<string>("");
+  const [imageUploading, setImageUploading] = useState(false);
+  
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -63,17 +70,26 @@ const Upload = () => {
     return data.publicUrl;
   };
 
-  const handleFileSelected = async (file: File, filePath: string, extractedFileInfo: any) => {
+  const handleFileSelected = async (file: File, filePath: string, extractedFileInfo: any, sourceImage?: string) => {
     console.log('=== FILE SELECTED ===');
     console.log('File:', file.name);
     console.log('File Path:', filePath);
     console.log('File Info:', extractedFileInfo);
+    console.log('Source Image:', sourceImage);
     
     setModelFile(file);
     setModelPath(filePath);
     setFileInfo(extractedFileInfo);
     setModelName(file.name.split('.')[0]);
     setAnalyzing(true);
+    
+    // Store source image path if this model was generated from an image
+    if (sourceImage) {
+      setSourceImagePath(sourceImage);
+      setUploadMethod('image');
+    } else {
+      setUploadMethod('file');
+    }
 
     // Reset thumbnail state
     setThumbnailUrl(null);
@@ -361,46 +377,85 @@ const Upload = () => {
           </div>
         )}
         
-        {/* Step 1: File Upload & Analysis */}
+        {/* Step 1: Upload & Analysis */}
         {currentStep === 1 && (
           <Card>
             <CardContent className="pt-6">
-              <div className="flex flex-col items-center">
-                <FileUploader 
-                  onFileSelected={handleFileSelected} 
-                  uploadProgress={uploadProgress} 
-                  setUploadProgress={setUploadProgress}
-                />
-                
-                {/* Show file info after upload */}
-                {fileInfo && (
-                  <div className="mt-6 w-full max-w-xl">
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                      <h4 className="font-medium text-green-800 mb-2">CAD File Information Gathered</h4>
-                      <div className="grid grid-cols-2 gap-2 text-sm text-green-700">
-                        <div><strong>File:</strong> {fileInfo.name}</div>
-                        <div><strong>Size:</strong> {fileInfo.sizeFormatted}</div>
-                        <div><strong>Format:</strong> {fileInfo.extension?.toUpperCase()}</div>
-                        <div><strong>Uploaded:</strong> {new Date().toLocaleString()}</div>
-                      </div>
+              <Tabs defaultValue="upload" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 mb-6">
+                  <TabsTrigger value="upload">
+                    <div className="flex items-center gap-2">
+                      <UploadIcon className="h-4 w-4" />
+                      Upload 3D Model
                     </div>
-                  </div>
-                )}
+                  </TabsTrigger>
+                  <TabsTrigger value="generate">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4" />
+                      Generate from Image
+                    </div>
+                  </TabsTrigger>
+                </TabsList>
                 
-                <FormIQAnalyzer 
-                  analyzing={analyzing}
-                  analysisComplete={analysisComplete}
-                  modelPath={modelPath}
-                  modelName={modelName}
-                  printabilityScore={printabilityScore}
-                  materialRecommendations={materialRecommendations}
-                  printingTechniques={printingTechniques}
-                  designIssues={designIssues}
-                  oemCompatibility={oemCompatibility}
-                  onContinue={() => setCurrentStep(2)}
-                  onAnalysisComplete={handleAnalysisComplete}
-                />
-              </div>
+                <TabsContent value="upload" className="space-y-6">
+                  <div className="flex flex-col items-center">
+                    <FileUploader 
+                      onFileSelected={handleFileSelected} 
+                      uploadProgress={uploadProgress} 
+                      setUploadProgress={setUploadProgress}
+                    />
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="generate" className="space-y-6">
+                  <div className="flex flex-col items-center">
+                    <ImageToCADUploader 
+                      onModelGenerated={handleFileSelected}
+                      uploading={imageUploading}
+                      setUploading={setImageUploading}
+                    />
+                  </div>
+                </TabsContent>
+              </Tabs>
+              
+              {/* Show file info after upload */}
+              {fileInfo && (
+                <div className="mt-6">
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <h4 className="font-medium text-green-800 mb-2">
+                      {uploadMethod === 'image' ? 'Generated Model Information' : 'CAD File Information Gathered'}
+                    </h4>
+                    <div className="grid grid-cols-2 gap-2 text-sm text-green-700">
+                      <div><strong>File:</strong> {fileInfo.name}</div>
+                      <div><strong>Size:</strong> {fileInfo.sizeFormatted}</div>
+                      <div><strong>Format:</strong> {fileInfo.extension?.toUpperCase()}</div>
+                      <div><strong>Method:</strong> {uploadMethod === 'image' ? 'AI Generated' : 'Direct Upload'}</div>
+                    </div>
+                    {uploadMethod === 'image' && (
+                      <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
+                        <span className="flex items-center text-blue-800">
+                          <Sparkles className="h-3 w-3 mr-1" />
+                          Generated using CADQUA AI from uploaded image
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+              
+              <FormIQAnalyzer 
+                analyzing={analyzing}
+                analysisComplete={analysisComplete}
+                modelPath={modelPath}
+                modelName={modelName}
+                printabilityScore={printabilityScore}
+                materialRecommendations={materialRecommendations}
+                printingTechniques={printingTechniques}
+                designIssues={designIssues}
+                oemCompatibility={oemCompatibility}
+                onContinue={() => setCurrentStep(2)}
+                onAnalysisComplete={handleAnalysisComplete}
+              />
             </CardContent>
           </Card>
         )}
