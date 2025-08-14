@@ -838,6 +838,48 @@ export type Database = {
       }
     }
     Views: {
+      public_profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string | null
+          id: string | null
+          is_public: boolean | null
+          location: string | null
+          role: string | null
+          specialties: string[] | null
+          updated_at: string | null
+          username: string | null
+          website: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          id?: string | null
+          is_public?: boolean | null
+          location?: string | null
+          role?: string | null
+          specialties?: string[] | null
+          updated_at?: string | null
+          username?: string | null
+          website?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          id?: string | null
+          is_public?: boolean | null
+          location?: string | null
+          role?: string | null
+          specialties?: string[] | null
+          updated_at?: string | null
+          username?: string | null
+          website?: string | null
+        }
+        Relationships: []
+      }
       sales_analytics: {
         Row: {
           avg_sale_amount: number | null
@@ -858,6 +900,23 @@ export type Database = {
           license_id_param: string
         }
         Returns: string
+      }
+      get_own_profile: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          email: string
+          username: string
+          avatar_url: string
+          bio: string
+          location: string
+          website: string
+          specialties: string[]
+          role: string
+          is_public: boolean
+          created_at: string
+          updated_at: string
+        }[]
       }
       revoke_existing_licenses: {
         Args: { target_model_id: string }
