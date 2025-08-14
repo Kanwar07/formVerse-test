@@ -918,6 +918,22 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_public_profile_safe: {
+        Args: { profile_user_id: string }
+        Returns: {
+          id: string
+          username: string
+          avatar_url: string
+          bio: string
+          location: string
+          website: string
+          specialties: string[]
+          role: string
+          created_at: string
+          updated_at: string
+          is_public: boolean
+        }[]
+      }
       revoke_existing_licenses: {
         Args: { target_model_id: string }
         Returns: undefined
