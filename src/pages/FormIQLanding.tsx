@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
-import { ArrowRight, Zap, Shield, Factory, Users, Brain, Sparkles } from "lucide-react";
+import { ArrowRight, Zap, Shield, Factory, Users, Brain, Sparkles, Tag, DollarSign, Check, Search } from "lucide-react";
 
 const FormIQLanding = () => {
   return (
@@ -88,7 +88,201 @@ const FormIQLanding = () => {
         </div>
       </section>
 
-      {/* Value Proposition */}
+      {/* Features Deep Dive Section */}
+      <section className="py-20 bg-background">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold mb-6">FormIQ Features - AI-Powered Intelligence</h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Discover how FormIQ's advanced AI capabilities transform every aspect of your CAD workflow, from design validation to monetization
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+            {/* Auto-Tagging Agent */}
+            <div className="group bg-card rounded-xl p-6 border hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                <Tag className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="text-xl font-semibold mb-3">Auto-Tagging Agent</h3>
+              <p className="text-muted-foreground mb-4">
+                AI-powered tagging that analyzes your model geometry and suggests optimal tags for maximum discoverability.
+              </p>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <span>96.2% accuracy rate</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <span>50% faster tagging</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <span>3x more discoverable</span>
+                </div>
+              </div>
+            </div>
+
+            {/* AI Pricing Assistant */}
+            <div className="group bg-card rounded-xl p-6 border hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
+              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                <DollarSign className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="text-xl font-semibold mb-3">AI-Driven Pricing Assistant</h3>
+              <p className="text-muted-foreground mb-4">
+                Get smart pricing recommendations based on model complexity, market demand, and historical sales data.
+              </p>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span>+24% revenue increase</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span>Market-aware pricing</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span>Dynamic adjustments</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Printability Validator */}
+            <div className="group bg-card rounded-xl p-6 border hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
+              <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                <Check className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="text-xl font-semibold mb-3">Printability Validator</h3>
+              <p className="text-muted-foreground mb-4">
+                Advanced mesh analysis that identifies potential printing issues before they occur and suggests fixes.
+              </p>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                  <span>98.7% improvement rate</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                  <span>Real-time analysis</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                  <span>Instant feedback</span>
+                </div>
+              </div>
+            </div>
+
+            {/* OEM Recommendations */}
+            <div className="group bg-card rounded-xl p-6 border hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
+              <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                <Search className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="text-xl font-semibold mb-3">OEM-Prompt-Based Recommendations</h3>
+              <p className="text-muted-foreground mb-4">
+                Connect with manufacturers looking for designs like yours through our semantic matching system.
+              </p>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                  <span>412 OEMs connected</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                  <span>92% match accuracy</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                  <span>5-10 potential orders</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Licensing Recommender */}
+            <div className="group bg-card rounded-xl p-6 border hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                <Shield className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="text-xl font-semibold mb-3">Licensing Recommender</h3>
+              <p className="text-muted-foreground mb-4">
+                Receive tailored licensing suggestions to maximize your revenue while protecting your intellectual property.
+              </p>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                  <span>Smart licensing</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                  <span>IP protection</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                  <span>Revenue optimization</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Market Forecasting */}
+            <div className="group bg-card rounded-xl p-6 border hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
+              <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-pink-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                <Sparkles className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="text-xl font-semibold mb-3">Trend & Market Forecasting</h3>
+              <p className="text-muted-foreground mb-4">
+                Stay ahead with AI predictions about emerging design needs and market opportunities.
+              </p>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-2 h-2 bg-pink-500 rounded-full"></div>
+                  <span>Market predictions</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-2 h-2 bg-pink-500 rounded-full"></div>
+                  <span>Trend analysis</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-2 h-2 bg-pink-500 rounded-full"></div>
+                  <span>Opportunity alerts</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Performance Stats */}
+          <div className="bg-gradient-to-r from-muted/50 to-muted/30 rounded-2xl p-8">
+            <div className="text-center mb-8">
+              <h3 className="text-2xl font-bold mb-2">FormIQ Performance Metrics</h3>
+              <p className="text-muted-foreground">Real impact across the FormVerse ecosystem</p>
+            </div>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-primary mb-2">15,482</div>
+                <p className="text-sm text-muted-foreground">Models Enhanced</p>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-green-600 mb-2">₹9.2M+</div>
+                <p className="text-sm text-muted-foreground">Revenue Generated</p>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-blue-600 mb-2">98.7%</div>
+                <p className="text-sm text-muted-foreground">Printability Success</p>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-purple-600 mb-2">412</div>
+                <p className="text-sm text-muted-foreground">OEMs Connected</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-center mt-12">
+            <Button size="lg" asChild>
+              <Link to="/formiq/features">Explore All Features</Link>
+            </Button>
+          </div>
+        </div>
+      </section>
       <section className="py-20 bg-muted/5">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
