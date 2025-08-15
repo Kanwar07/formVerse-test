@@ -159,9 +159,9 @@ export function Navbar() {
               
               <Button
                 variant="ghost"
-                onClick={() => navigate("/formiq")}
+                onClick={() => navigate("/formiq-landing")}
                 className={`group relative overflow-hidden rounded-full px-4 py-2 h-9 text-sm font-medium transition-all duration-300 ${
-                  isActivePath("/formiq") 
+                  isActivePath("/formiq-landing") || isActivePath("/formiq") 
                     ? "bg-gradient-to-r from-cyber-pink/20 to-cyber-pink/10 text-white border border-cyber-pink/30 shadow-lg shadow-cyber-pink/20" 
                     : "text-white/80 hover:text-white hover:bg-white/10 border border-transparent"
                 }`}

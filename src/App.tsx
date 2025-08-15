@@ -31,6 +31,7 @@ import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import ImageToCAD from "./pages/ImageToCAD";
 import FormVerseUpload from "./pages/FormVerseUpload";
+import FormIQLanding from "./pages/FormIQLanding";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -67,6 +68,7 @@ function App() {
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/formiq" element={<FormIQ />} />
                 <Route path="/formiq/features" element={<FormIQFeatures />} />
+                <Route path="/formiq-landing" element={<FormIQLanding />} />
                 <Route path="/creators" element={<Creators />} />
                 <Route path="/creator/:id" element={<CreatorDashboard />} />
                 <Route path="/creator-profile/:id" element={<CreatorProfile />} />
