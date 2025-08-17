@@ -251,8 +251,8 @@ const Dashboard = () => {
                   return (
                     <Card key={model.id} className="overflow-hidden relative">
                       {!model.is_published && (
-                        <div className="absolute inset-0 bg-muted/50 z-10 flex items-center justify-center">
-                          <Badge variant="outline" className="bg-background/90">
+                        <div className="absolute inset-0 bg-muted/50 pointer-events-none flex items-center justify-center">
+                          <Badge variant="outline" className="bg-background/90 pointer-events-auto">
                             Hidden from marketplace
                           </Badge>
                         </div>
@@ -269,7 +269,7 @@ const Dashboard = () => {
                             {statusProps.text}
                           </Badge>
                         </div>
-                        <div className="absolute top-2 right-2 flex items-center gap-2">
+                        <div className="absolute top-2 right-2 flex items-center gap-2 z-20">
                           <div className="flex items-center gap-1 bg-background/90 rounded-md px-2 py-1">
                             <span className="text-xs font-medium">
                               {model.is_published ? "Published" : "Unpublished"}
