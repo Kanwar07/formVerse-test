@@ -283,9 +283,9 @@ const Upload = () => {
         description: "Your model has been uploaded and is now available in the marketplace.",
       });
       
-      // Redirect to creator profile after successful upload
+      // Redirect to creator dashboard after successful upload
       setTimeout(() => {
-        navigate(`/creator/${user.id}`);
+        navigate('/dashboard');
       }, 2000);
     } catch (error) {
       console.error("Error publishing model:", error);
