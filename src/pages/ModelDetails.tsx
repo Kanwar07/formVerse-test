@@ -38,7 +38,7 @@ const ModelDetails = () => {
   const [downloading, setDownloading] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [selectedLicense, setSelectedLicense] = useState<'personal' | 'commercial' | 'enterprise' | null>(null);
-  const [currentStep, setCurrentStep] = useState<'preview' | 'analysis' | 'pricing'>('analysis');
+  const [currentStep, setCurrentStep] = useState<'preview' | 'analysis' | 'pricing'>('preview');
   const [secureModelUrl, setSecureModelUrl] = useState<string | null>(null);
   const [model, setModel] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -347,23 +347,29 @@ const ModelDetails = () => {
       <Navbar />
       
       <div className="container py-8 max-w-6xl">
+        {/* Back to Discover Button */}
+        <div className="mb-6">
+          <Button asChild variant="outline">
+            <Link to="/discover">← Back to Discover</Link>
+          </Button>
+        </div>
         {/* Progress Steps */}
         <div className="mb-8">
           <div className="flex items-center justify-center space-x-4 mb-4">
-            <div className={`flex items-center space-x-2 ${currentStep === 'analysis' ? 'text-primary' : currentStep === 'preview' || currentStep === 'pricing' ? 'text-green-600' : 'text-muted-foreground'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${currentStep === 'analysis' ? 'border-primary bg-primary text-primary-foreground' : currentStep === 'preview' || currentStep === 'pricing' ? 'border-green-600 bg-green-600 text-white' : 'border-muted-foreground'}`}>
+            <div className={`flex items-center space-x-2 ${currentStep === 'preview' ? 'text-primary' : currentStep === 'analysis' || currentStep === 'pricing' ? 'text-green-600' : 'text-muted-foreground'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${currentStep === 'preview' ? 'border-primary bg-primary text-primary-foreground' : currentStep === 'analysis' || currentStep === 'pricing' ? 'border-green-600 bg-green-600 text-white' : 'border-muted-foreground'}`}>
                 1
               </div>
-              <span className="text-sm font-medium">Model Analysis</span>
+              <span className="text-sm font-medium">Model Preview</span>
             </div>
             
-            <div className={`h-px w-12 ${currentStep === 'preview' || currentStep === 'pricing' ? 'bg-green-600' : 'bg-muted-foreground'}`}></div>
+            <div className={`h-px w-12 ${currentStep === 'analysis' || currentStep === 'pricing' ? 'bg-green-600' : 'bg-muted-foreground'}`}></div>
             
-            <div className={`flex items-center space-x-2 ${currentStep === 'preview' ? 'text-primary' : currentStep === 'pricing' ? 'text-green-600' : 'text-muted-foreground'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${currentStep === 'preview' ? 'border-primary bg-primary text-primary-foreground' : currentStep === 'pricing' ? 'border-green-600 bg-green-600 text-white' : 'border-muted-foreground'}`}>
+            <div className={`flex items-center space-x-2 ${currentStep === 'analysis' ? 'text-primary' : currentStep === 'pricing' ? 'text-green-600' : 'text-muted-foreground'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${currentStep === 'analysis' ? 'border-primary bg-primary text-primary-foreground' : currentStep === 'pricing' ? 'border-green-600 bg-green-600 text-white' : 'border-muted-foreground'}`}>
                 2
               </div>
-              <span className="text-sm font-medium">Model Preview</span>
+              <span className="text-sm font-medium">Model Analysis</span>
             </div>
             
             <div className={`h-px w-12 ${currentStep === 'pricing' ? 'bg-green-600' : 'bg-muted-foreground'}`}></div>
@@ -484,14 +490,14 @@ const ModelDetails = () => {
                   <Button 
                     className="w-full" 
                     size="lg" 
-                    onClick={handleBackToAnalysis}
+                    onClick={handleAnalyzeModel}
                     variant="outline"
                   >
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    Back to Analysis
+                    <FileText className="h-4 w-4 mr-2" />
+                    View Analysis
                   </Button>
                   <p className="text-xs text-muted-foreground text-center">
-                    Review model details and proceed to purchase options
+                    View technical analysis or proceed to purchase options
                   </p>
                 </CardContent>
               </Card>
@@ -576,21 +582,23 @@ const ModelDetails = () => {
               onAnalysisComplete={handleAnalysisComplete}
             />
             
-            {/* Skip to Purchase Option */}
-            <div className="mt-6 text-center">
-              <div className="inline-flex items-center gap-4 p-4 bg-secondary/20 rounded-lg border">
-                <div className="text-sm text-muted-foreground">
-                  Don't need the analysis?
-                </div>
-                <Button
-                  onClick={() => setCurrentStep('pricing')}
-                  variant="secondary"
-                  className="flex items-center gap-2"
-                >
-                  <CreditCard className="h-4 w-4" />
-                  Skip Analysis & Buy Now
-                </Button>
-              </div>
+            {/* Navigation from Analysis */}
+            <div className="mt-6 flex gap-4">
+              <Button 
+                variant="outline" 
+                onClick={handleBackToPreview}
+                className="flex-1"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Preview
+              </Button>
+              <Button
+                onClick={handleProceedToPricing}
+                className="flex-1"
+              >
+                <CreditCard className="h-4 w-4 mr-2" />
+                Purchase / Go to Payment
+              </Button>
             </div>
           </div>
         )}
