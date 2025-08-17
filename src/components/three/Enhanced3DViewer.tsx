@@ -287,7 +287,50 @@ export const Enhanced3DViewer: React.FC<Enhanced3DViewerProps> = ({
         throw new Error('No model file or URL provided');
       }
       
-      const extension = fileType?.toLowerCase() || actualFileName.split('.').pop()?.toLowerCase();
+      // Enhanced file type detection
+      let extension: string | undefined;
+      
+      if (modelFile) {
+        // For File objects, use the file type first, then fall back to filename
+        if (modelFile.type) {
+          if (modelFile.type.includes('stl') || modelFile.type === 'application/sla') {
+            extension = 'stl';
+          } else if (modelFile.type.includes('obj')) {
+            extension = 'obj';
+          } else if (modelFile.type.includes('gltf') || modelFile.type === 'model/gltf+json') {
+            extension = 'gltf';
+          } else if (modelFile.type.includes('glb') || modelFile.type === 'model/gltf-binary') {
+            extension = 'glb';
+          } else if (modelFile.type.includes('ply')) {
+            extension = 'ply';
+          }
+        }
+        // If type detection failed, use filename extension
+        if (!extension) {
+          extension = modelFile.name.split('.').pop()?.toLowerCase();
+        }
+      } else if (modelUrl) {
+        // For URLs, try fileType parameter first, then URL extension
+        if (fileType && !fileType.includes(' ')) { // Avoid model names being passed as fileType
+          if (fileType.includes('stl') || fileType === 'application/sla') {
+            extension = 'stl';
+          } else if (fileType.includes('obj')) {
+            extension = 'obj';
+          } else if (fileType.includes('gltf')) {
+            extension = 'gltf';
+          } else if (fileType.includes('glb')) {
+            extension = 'glb';
+          } else if (fileType.includes('ply')) {
+            extension = 'ply';
+          } else {
+            extension = fileType.toLowerCase();
+          }
+        }
+        // Fall back to URL extension
+        if (!extension) {
+          extension = modelUrl.split('.').pop()?.toLowerCase();
+        }
+      }
 
       // Choose appropriate loader based on file type with enhanced settings
       switch (extension) {
