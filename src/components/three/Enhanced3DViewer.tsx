@@ -69,6 +69,8 @@ export const Enhanced3DViewer: React.FC<Enhanced3DViewerProps> = ({
   const [showWireframe, setShowWireframe] = useState(false);
   const [showCoordinates, setShowCoordinates] = useState(false);
   const [preserveScale, setPreserveScale] = useState(false);
+  const [loadedModelUrl, setLoadedModelUrl] = useState<string | null>(null);
+  const hasShownSuccessToast = useRef(false);
   
   const { toast } = useToast();
 
@@ -460,11 +462,16 @@ export const Enhanced3DViewer: React.FC<Enhanced3DViewerProps> = ({
           setModelInfo(info);
           onModelLoad?.(info);
           setIsLoading(false);
+          setLoadedModelUrl(fileUrl);
           
-          toast({
-            title: "Model loaded successfully!",
-            description: `${info.vertices.toLocaleString()} vertices, ${Math.floor(info.faces).toLocaleString()} faces`,
-          });
+          // Only show success toast once per model
+          if (!hasShownSuccessToast.current) {
+            hasShownSuccessToast.current = true;
+            toast({
+              title: "Model loaded successfully!",
+              description: `${info.vertices.toLocaleString()} vertices, ${Math.floor(info.faces).toLocaleString()} faces`,
+            });
+          }
         },
         (progress) => {
           if (progress.lengthComputable) {
@@ -476,21 +483,26 @@ export const Enhanced3DViewer: React.FC<Enhanced3DViewerProps> = ({
           const errorMessage = `Failed to load model: ${error.message}`;
           setError(errorMessage);
           setIsLoading(false);
+          setLoadedModelUrl(null);
           onError?.(errorMessage);
           
-          toast({
-            title: "Failed to load model",
-            description: errorMessage,
-            variant: "destructive"
-          });
+          // Only show error toast if not already shown for this model
+          if (!hasShownSuccessToast.current) {
+            toast({
+              title: "Failed to load model",
+              description: errorMessage,
+              variant: "destructive"
+            });
+          }
         }
       );
-    } catch (error: any) {
-      const errorMessage = error.message || 'Unknown error occurred';
-      setError(errorMessage);
-      setIsLoading(false);
-      onError?.(errorMessage);
-    } finally {
+      } catch (error: any) {
+        const errorMessage = error.message || 'Unknown error occurred';
+        setError(errorMessage);
+        setIsLoading(false);
+        setLoadedModelUrl(null);
+        onError?.(errorMessage);
+      } finally {
       // Clean up object URL if we created one
       if (modelFile && fileUrl) {
         URL.revokeObjectURL(fileUrl);
@@ -569,12 +581,16 @@ export const Enhanced3DViewer: React.FC<Enhanced3DViewerProps> = ({
     };
   }, [initScene]);
 
-  // Load model when URL or file changes
+  // Load model when URL or file changes (but only if not already loaded)
   useEffect(() => {
-    if ((modelUrl || modelFile) && sceneRef.current) {
+    const currentModelUrl = modelUrl || (modelFile ? modelFile.name : null);
+    
+    if ((modelUrl || modelFile) && sceneRef.current && currentModelUrl !== loadedModelUrl) {
+      // Reset success toast flag for new models
+      hasShownSuccessToast.current = false;
       loadModel();
     }
-  }, [modelUrl, modelFile, loadModel]);
+  }, [modelUrl, modelFile, loadedModelUrl]);
 
   // Update coordinate system visibility
   useEffect(() => {
