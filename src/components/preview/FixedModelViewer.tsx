@@ -41,31 +41,69 @@ const CameraController = ({
     const center = box.getCenter(new THREE.Vector3());
     const size = box.getSize(new THREE.Vector3());
     
-    // Get the max dimension to properly frame the object
+    // Get both horizontal and vertical extents for proper aspect ratio handling
     const maxDim = Math.max(size.x, size.y, size.z);
     const fov = camera instanceof THREE.PerspectiveCamera ? camera.fov : 50;
-    const cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2 * Math.PI / 180)) * 1.5;
+    const aspect = camera instanceof THREE.PerspectiveCamera ? camera.aspect : 1;
     
-    // Position camera to look at the object from a good angle
-    const idealDistance = Math.max(cameraZ, maxDim * 2);
-    camera.position.set(
-      center.x + idealDistance * 0.7,
-      center.y + idealDistance * 0.7, 
-      center.z + idealDistance * 0.7
-    );
+    // Calculate distance needed to fit both width and height in view
+    // Consider the largest dimension relative to camera's field of view and aspect ratio
+    const fovRad = (fov * Math.PI) / 180;
+    const vFov = fovRad;
+    const hFov = 2 * Math.atan(Math.tan(vFov / 2) * aspect);
     
-    // Look at the center of the object
+    // Calculate distances needed for vertical and horizontal fit
+    const distanceVFit = (size.y / 2) / Math.tan(vFov / 2);
+    const distanceHFit = (Math.max(size.x, size.z) / 2) / Math.tan(hFov / 2);
+    
+    // Use the larger distance to ensure everything fits, plus padding
+    const paddingFactor = 1.2; // 20% padding around the model
+    const requiredDistance = Math.max(distanceVFit, distanceHFit, maxDim) * paddingFactor;
+    
+    // Position camera adaptively based on model proportions
+    let cameraPosition;
+    if (size.y > size.x && size.y > size.z) {
+      // Tall model - position more to the side
+      cameraPosition = new THREE.Vector3(
+        center.x + requiredDistance * 0.8,
+        center.y + requiredDistance * 0.4,
+        center.z + requiredDistance * 0.8
+      );
+    } else if (size.x > size.z) {
+      // Wide model - position more above
+      cameraPosition = new THREE.Vector3(
+        center.x + requiredDistance * 0.6,
+        center.y + requiredDistance * 0.8,
+        center.z + requiredDistance * 0.6
+      );
+    } else {
+      // Deep or balanced model - use diagonal view
+      cameraPosition = new THREE.Vector3(
+        center.x + requiredDistance * 0.7,
+        center.y + requiredDistance * 0.7,
+        center.z + requiredDistance * 0.7
+      );
+    }
+    
+    camera.position.copy(cameraPosition);
     camera.lookAt(center);
     
-    // Update controls target to center of object
+    // Update controls with model-relative distances
     if (controlsRef.current) {
       controlsRef.current.target.copy(center);
-      controlsRef.current.minDistance = maxDim * 0.1;
-      controlsRef.current.maxDistance = maxDim * 10;
+      controlsRef.current.minDistance = maxDim * 0.05; // Closer minimum
+      controlsRef.current.maxDistance = maxDim * 15; // Further maximum
       controlsRef.current.update();
     }
     
-    console.log('Auto-fitted camera to object:', { center, size, idealDistance });
+    console.log('Auto-fitted camera to object:', { 
+      center, 
+      size, 
+      requiredDistance, 
+      cameraPosition,
+      distanceVFit,
+      distanceHFit 
+    });
   }, [camera]);
   
   useEffect(() => {
