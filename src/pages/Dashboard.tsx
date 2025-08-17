@@ -15,6 +15,7 @@ import { ModelsPagination } from "@/components/dashboard/ModelsPagination";
 import { useUserModels } from "@/hooks/useUserModels";
 import { useAuth } from "@/context/AuthContext";
 import { Toaster } from "@/components/ui/sonner";
+import { EditModelModal } from "@/components/dashboard/EditModelModal";
 import { 
   ArrowRight, 
   Brain, 
@@ -38,8 +39,9 @@ import {
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("models");
   const [currentPage, setCurrentPage] = useState(1);
+  const [editingModel, setEditingModel] = useState<any>(null);
   const { user } = useAuth();
-  const { models, stats, loading, error, hasMore, updating, updateModelPublishStatus, deleteModel } = useUserModels(currentPage);
+  const { models, stats, loading, error, hasMore, updating, updateModelPublishStatus, updateModel, deleteModel, refetch } = useUserModels(currentPage);
 
   // Debounced toggle handler
   const handleTogglePublish = useCallback((modelId: string, isPublished: boolean) => {
@@ -61,6 +63,10 @@ const Dashboard = () => {
 
   const calculateRevenue = (model: any) => {
     return (model.price || 0) * (model.downloads || 0);
+  };
+
+  const handleModelUpdated = (updatedModel: any) => {
+    refetch();
   };
 
   if (!user) {
@@ -295,10 +301,12 @@ const Dashboard = () => {
                               <Clock className="h-4 w-4" />
                             </Link>
                           </Button>
-                          <Button variant="ghost" size="sm" asChild>
-                            <Link to={`/model/${model.id}/edit`}>
-                              <Edit className="h-4 w-4" />
-                            </Link>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => setEditingModel(model)}
+                          >
+                            <Edit className="h-4 w-4" />
                           </Button>
                           <Button 
                             variant="ghost" 
@@ -470,6 +478,13 @@ const Dashboard = () => {
           </Card>
         </div>
       </div>
+      
+      <EditModelModal
+        model={editingModel}
+        isOpen={!!editingModel}
+        onClose={() => setEditingModel(null)}
+        onModelUpdated={handleModelUpdated}
+      />
 
       <div className="mt-auto">
         <Footer />

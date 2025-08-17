@@ -131,8 +131,35 @@ export const useUserModels = (page = 1, limit = 12) => {
     }
   }, [user]);
 
-  // Debounced version of the update function
-  const debouncedUpdateModelPublishStatus = useDebounce(updateModelPublishStatus, 500);
+  const updateModel = useCallback(async (modelId: string, updates: Partial<Model>) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('models')
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', modelId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setModels(prev => prev.map(model => 
+        model.id === modelId 
+          ? { ...model, ...updates }
+          : model
+      ));
+
+      return true;
+    } catch (err) {
+      console.error('Error updating model:', err);
+      toast.error('Failed to update model');
+      return false;
+    }
+  }, [user]);
 
   const deleteModel = useCallback(async (modelId: string) => {
     if (!user) return;
@@ -168,7 +195,8 @@ export const useUserModels = (page = 1, limit = 12) => {
     error,
     hasMore,
     updating,
-    updateModelPublishStatus: debouncedUpdateModelPublishStatus,
+    updateModelPublishStatus,
+    updateModel,
     deleteModel,
     refetch: fetchModels
   };
