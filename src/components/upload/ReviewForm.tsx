@@ -2,8 +2,6 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Link } from "react-router-dom";
 import { Brain } from "lucide-react";
-import { PreviewSelector } from "@/components/preview/PreviewSelector";
-import { Enhanced3DViewer } from "@/components/three/Enhanced3DViewer";
 
 interface DesignIssue {
   issue: string;
@@ -37,34 +35,6 @@ export const ReviewForm = ({
 
   return (
     <div className="space-y-6">
-      <div className="border rounded-xl overflow-hidden">
-        <div className="bg-muted p-4">
-          <h3 className="font-semibold">Interactive 3D Preview</h3>
-        </div>
-        <div className="p-6">
-          {modelFile ? (
-            <Enhanced3DViewer
-              modelUrl={URL.createObjectURL(modelFile)}
-              fileName={modelName}
-              fileType={modelFile.type}
-              width={800}
-              height={500}
-              showControls={true}
-              autoRotate={false}
-              onModelLoad={(info) => console.log('Model loaded:', info)}
-              onError={(error) => console.error('Model load error:', error)}
-            />
-          ) : (
-            <PreviewSelector
-              modelName={modelName}
-              thumbnail={originalImage}
-              isOwner={true}
-              isPurchased={false}
-              className="max-w-md mx-auto"
-            />
-          )}
-        </div>
-      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
