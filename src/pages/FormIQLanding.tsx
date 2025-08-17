@@ -283,19 +283,19 @@ const FormIQLanding = () => {
             </div>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
               <div className="text-center">
-                <div className="text-3xl font-bold text-primary mb-2">15,482</div>
+                <div className="text-3xl font-bold text-primary mb-2">2,847</div>
                 <p className="text-sm text-muted-foreground">Models Enhanced</p>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-green-600 mb-2">₹9.2M+</div>
+                <div className="text-3xl font-bold text-green-600 mb-2">₹1.8M+</div>
                 <p className="text-sm text-muted-foreground">Revenue Generated</p>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-blue-600 mb-2">98.7%</div>
+                <div className="text-3xl font-bold text-blue-600 mb-2">87.3%</div>
                 <p className="text-sm text-muted-foreground">Printability Success</p>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-purple-600 mb-2">412</div>
+                <div className="text-3xl font-bold text-purple-600 mb-2">127</div>
                 <p className="text-sm text-muted-foreground">OEMs Connected</p>
               </div>
             </div>
