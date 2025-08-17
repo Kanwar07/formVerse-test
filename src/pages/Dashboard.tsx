@@ -262,14 +262,7 @@ const Dashboard = () => {
                         <img 
                           src={model.preview_image || "/placeholder.svg"} 
                           alt={model.name} 
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            console.log('Image failed to load:', model.preview_image);
-                            e.currentTarget.src = "/placeholder.svg";
-                          }}
-                          onLoad={() => {
-                            console.log('Image loaded successfully:', model.preview_image);
-                          }}
+                          className="w-full h-full object-cover rounded-t-lg"
                         />
                         <div className="absolute top-2 left-2">
                           <Badge variant={statusProps.variant}>
