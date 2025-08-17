@@ -30,7 +30,17 @@ interface UserStats {
   uniqueBuyers: number;
 }
 
-export const useUserModels = (page = 1, limit = 12) => {
+interface FilterOptions {
+  status?: 'all' | 'published' | 'draft';
+  category?: string;
+}
+
+interface SortOptions {
+  field: 'created_at' | 'name' | 'printability_score' | 'downloads' | 'revenue';
+  direction: 'asc' | 'desc';
+}
+
+export const useUserModels = (page = 1, limit = 12, filters: FilterOptions = {}, sort: SortOptions = { field: 'created_at', direction: 'desc' }) => {
   const { user } = useAuth();
   const [models, setModels] = useState<Model[]>([]);
   const [stats, setStats] = useState<UserStats>({
@@ -53,17 +63,53 @@ export const useUserModels = (page = 1, limit = 12) => {
 
       const offset = (page - 1) * limit;
 
-      // Fetch models with pagination
-      const { data: modelsData, error: modelsError, count } = await supabase
+      // Build query with filters
+      let query = supabase
         .from('models')
         .select('*', { count: 'exact' })
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .range(offset, offset + limit - 1);
+        .eq('user_id', user.id);
+
+      // Apply status filter
+      if (filters.status && filters.status !== 'all') {
+        if (filters.status === 'published') {
+          query = query.eq('is_published', true);
+        } else if (filters.status === 'draft') {
+          query = query.eq('is_published', false);
+        }
+      }
+
+      // Apply category filter
+      if (filters.category && filters.category !== 'all') {
+        query = query.eq('category', filters.category);
+      }
+
+      // Apply sorting
+      if (sort.field === 'revenue') {
+        // For revenue, we need to sort by calculated field (price * downloads)
+        query = query.order('price', { ascending: sort.direction === 'asc' });
+      } else {
+        query = query.order(sort.field, { ascending: sort.direction === 'asc' });
+      }
+
+      // Apply pagination
+      query = query.range(offset, offset + limit - 1);
+
+      const { data: modelsData, error: modelsError, count } = await query;
 
       if (modelsError) throw modelsError;
 
-      setModels(modelsData || []);
+      let sortedData = modelsData || [];
+      
+      // Custom sort for revenue since we can't sort by calculated field in Supabase
+      if (sort.field === 'revenue') {
+        sortedData = sortedData.sort((a, b) => {
+          const revenueA = (a.price || 0) * (a.downloads || 0);
+          const revenueB = (b.price || 0) * (b.downloads || 0);
+          return sort.direction === 'asc' ? revenueA - revenueB : revenueB - revenueA;
+        });
+      }
+
+      setModels(sortedData);
       setHasMore((count || 0) > offset + limit);
 
       // Fetch user stats
@@ -90,7 +136,7 @@ export const useUserModels = (page = 1, limit = 12) => {
     } finally {
       setLoading(false);
     }
-  }, [user, page, limit]);
+  }, [user, page, limit, filters, sort]);
 
   const updateModelPublishStatus = useCallback(async (modelId: string, isPublished: boolean) => {
     if (!user) return;

@@ -12,6 +12,7 @@ import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { FormIQInsight } from "@/components/formiq/FormIQInsight";
 import { ModelsPagination } from "@/components/dashboard/ModelsPagination";
+import { ModelFilters } from "@/components/dashboard/ModelFilters";
 import { useUserModels } from "@/hooks/useUserModels";
 import { useAuth } from "@/context/AuthContext";
 import { Toaster } from "@/components/ui/sonner";
@@ -40,8 +41,10 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("models");
   const [currentPage, setCurrentPage] = useState(1);
   const [editingModel, setEditingModel] = useState<any>(null);
+  const [filters, setFilters] = useState({ status: 'all' as const, category: undefined as string | undefined });
+  const [sort, setSort] = useState({ field: 'created_at' as const, direction: 'desc' as const });
   const { user } = useAuth();
-  const { models, stats, loading, error, hasMore, updating, updateModelPublishStatus, updateModel, deleteModel, refetch } = useUserModels(currentPage);
+  const { models, stats, loading, error, hasMore, updating, updateModelPublishStatus, updateModel, deleteModel, refetch } = useUserModels(currentPage, 12, filters, sort);
 
   // Debounced toggle handler
   const handleTogglePublish = useCallback((modelId: string, isPublished: boolean) => {
@@ -67,6 +70,21 @@ const Dashboard = () => {
 
   const handleModelUpdated = (updatedModel: any) => {
     refetch();
+  };
+
+  const handleClearFilters = () => {
+    setFilters({ status: 'all', category: undefined });
+    setCurrentPage(1);
+  };
+
+  const handleFiltersChange = (newFilters: any) => {
+    setFilters(newFilters);
+    setCurrentPage(1);
+  };
+
+  const handleSortChange = (newSort: any) => {
+    setSort(newSort);
+    setCurrentPage(1);
   };
 
   if (!user) {
@@ -203,12 +221,15 @@ const Dashboard = () => {
           </TabsList>
           
           <TabsContent value="models" className="space-y-4">
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center flex-wrap gap-4">
               <h2 className="text-xl font-semibold">Your Models</h2>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm">Filter</Button>
-                <Button variant="outline" size="sm">Sort</Button>
-              </div>
+              <ModelFilters
+                filters={filters}
+                sort={sort}
+                onFiltersChange={handleFiltersChange}
+                onSortChange={handleSortChange}
+                onClearFilters={handleClearFilters}
+              />
             </div>
 
             {loading ? (
@@ -292,15 +313,7 @@ const Dashboard = () => {
                       </CardContent>
                       
                       <CardFooter className="flex justify-between">
-                        <Button variant="outline" size="sm" asChild>
-                          <Link to={`/printability/${model.id}`}>View Report</Link>
-                        </Button>
                         <div className="flex gap-1">
-                          <Button variant="ghost" size="sm" asChild>
-                            <Link to={`/model/${model.id}/history`}>
-                              <Clock className="h-4 w-4" />
-                            </Link>
-                          </Button>
                           <Button 
                             variant="ghost" 
                             size="sm" 
@@ -308,34 +321,34 @@ const Dashboard = () => {
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="text-destructive hover:text-destructive"
-                          >
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="text-destructive hover:text-destructive"
+                              >
                                 <Trash2 className="h-4 w-4" />
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Delete Model</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Are you sure you want to delete "{model.name}"? This action cannot be undone.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction 
-                                    onClick={() => deleteModel(model.id)}
-                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                  >
-                                    Delete
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </Button>
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Model</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete "{model.name}"? This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction 
+                                  onClick={() => deleteModel(model.id)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </div>
                       </CardFooter>
                     </Card>
