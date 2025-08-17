@@ -1,5 +1,5 @@
-import React, { useState, useRef, Suspense } from 'react';
-import { Canvas, useLoader } from '@react-three/fiber';
+import React, { useState, useRef, Suspense, useCallback, useEffect } from 'react';
+import { Canvas, useLoader, useThree } from '@react-three/fiber';
 import { OrbitControls, Environment, Center } from '@react-three/drei';
 import { GLTFLoader } from 'three-stdlib';
 import { STLLoader } from 'three-stdlib';
@@ -27,22 +27,80 @@ interface FixedModelViewerProps {
   className?: string;
 }
 
-// Model component using React Three Fiber's useLoader
-const ActualModel = ({ 
+// Auto-fit camera component
+const CameraController = ({ 
+  onAutoFit 
+}: { 
+  onAutoFit: (fitCamera: (object: THREE.Object3D) => void) => void;
+}) => {
+  const { camera, controls } = useThree();
+  const controlsRef = useRef<any>(controls);
+  
+  const fitCameraToObject = useCallback((object: THREE.Object3D) => {
+    const box = new THREE.Box3().setFromObject(object);
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+    
+    // Get the max dimension to properly frame the object
+    const maxDim = Math.max(size.x, size.y, size.z);
+    const fov = camera instanceof THREE.PerspectiveCamera ? camera.fov : 50;
+    const cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2 * Math.PI / 180)) * 1.5;
+    
+    // Position camera to look at the object from a good angle
+    const idealDistance = Math.max(cameraZ, maxDim * 2);
+    camera.position.set(
+      center.x + idealDistance * 0.7,
+      center.y + idealDistance * 0.7, 
+      center.z + idealDistance * 0.7
+    );
+    
+    // Look at the center of the object
+    camera.lookAt(center);
+    
+    // Update controls target to center of object
+    if (controlsRef.current) {
+      controlsRef.current.target.copy(center);
+      controlsRef.current.minDistance = maxDim * 0.1;
+      controlsRef.current.maxDistance = maxDim * 10;
+      controlsRef.current.update();
+    }
+    
+    console.log('Auto-fitted camera to object:', { center, size, idealDistance });
+  }, [camera]);
+  
+  useEffect(() => {
+    onAutoFit(fitCameraToObject);
+  }, [onAutoFit, fitCameraToObject]);
+  
+  return null;
+};
+
+// Enhanced model component with auto-fit
+const ModelWithAutoFit = ({ 
   fileUrl, 
   fileName,
-  wireframe = false 
+  wireframe = false,
+  onModelLoaded 
 }: { 
   fileUrl: string; 
   fileName: string; 
   wireframe?: boolean;
+  onModelLoaded?: (object: THREE.Object3D) => void;
 }) => {
   const meshRef = useRef<THREE.Mesh>(null);
+  const { scene } = useThree();
   
   // Determine file type
   const fileExtension = fileName.split('.').pop()?.toLowerCase() || '';
   
-  console.log('ActualModel: Loading', fileUrl, 'Type:', fileExtension);
+  console.log('ModelWithAutoFit: Loading', fileUrl, 'Type:', fileExtension);
+
+  // Auto-fit effect when model is loaded and added to scene
+  useEffect(() => {
+    if (meshRef.current && onModelLoaded) {
+      onModelLoaded(meshRef.current);
+    }
+  }, [onModelLoaded]);
 
   try {
     // Load model based on file type using React Three Fiber's useLoader
@@ -51,11 +109,19 @@ const ActualModel = ({
       console.log('GLTF loaded successfully:', gltf);
       
       if (gltf.scene) {
+        const clonedScene = gltf.scene.clone();
+        
+        useEffect(() => {
+          if (onModelLoaded && clonedScene) {
+            onModelLoaded(clonedScene);
+          }
+        }, [clonedScene, onModelLoaded]);
+        
         return (
           <Center>
             <primitive 
               ref={meshRef}
-              object={gltf.scene.clone()}
+              object={clonedScene}
               scale={[1, 1, 1]}
             />
           </Center>
@@ -67,7 +133,7 @@ const ActualModel = ({
       const geometry = useLoader(STLLoader, fileUrl);
       console.log('STL loaded successfully:', geometry);
       
-      return (
+      const mesh = (
         <Center>
           <mesh ref={meshRef}>
             <primitive object={geometry} />
@@ -80,17 +146,33 @@ const ActualModel = ({
           </mesh>
         </Center>
       );
+      
+      useEffect(() => {
+        if (meshRef.current && onModelLoaded) {
+          onModelLoaded(meshRef.current);
+        }
+      }, [onModelLoaded]);
+      
+      return mesh;
     }
     
     if (fileExtension === 'obj') {
       const obj = useLoader(OBJLoader, fileUrl);
       console.log('OBJ loaded successfully:', obj);
       
+      const clonedObj = obj.clone();
+      
+      useEffect(() => {
+        if (onModelLoaded && clonedObj) {
+          onModelLoaded(clonedObj);
+        }
+      }, [clonedObj, onModelLoaded]);
+      
       return (
         <Center>
           <primitive 
             ref={meshRef}
-            object={obj.clone()}
+            object={clonedObj}
             scale={[1, 1, 1]}
           />
         </Center>
@@ -111,7 +193,7 @@ const ActualModel = ({
   
   const color = colors[fileExtension as keyof typeof colors] || colors.default;
   
-  return (
+  const fallbackMesh = (
     <Center>
       <mesh ref={meshRef}>
         <boxGeometry args={[1.5, 1.5, 1.5]} />
@@ -124,6 +206,14 @@ const ActualModel = ({
       </mesh>
     </Center>
   );
+  
+  useEffect(() => {
+    if (meshRef.current && onModelLoaded) {
+      onModelLoaded(meshRef.current);
+    }
+  }, [onModelLoaded]);
+  
+  return fallbackMesh;
 };
 
 // Error boundary component
@@ -162,6 +252,7 @@ export const FixedModelViewer = ({
   const [wireframeMode, setWireframeMode] = useState(false);
   const [showInfo, setShowInfo] = useState(true);
   const [autoRotate, setAutoRotate] = useState(true);
+  const [autoFitCamera, setAutoFitCamera] = useState<((object: THREE.Object3D) => void) | null>(null);
   
   const controlsRef = useRef<any>(null);
   const { toast } = useToast();
@@ -170,7 +261,35 @@ export const FixedModelViewer = ({
     if (controlsRef.current) {
       controlsRef.current.reset();
     }
+    // Re-trigger auto-fit after reset
+    if (autoFitCamera) {
+      setTimeout(() => {
+        // Find the model in the scene and auto-fit to it
+        const scene = controlsRef.current?.object?.parent;
+        if (scene) {
+          scene.traverse((child: THREE.Object3D) => {
+            if (child instanceof THREE.Mesh || child.type === 'Group') {
+              autoFitCamera(child);
+              return;
+            }
+          });
+        }
+      }, 50);
+    }
   };
+
+  const handleAutoFit = useCallback((fitFunction: (object: THREE.Object3D) => void) => {
+    setAutoFitCamera(() => fitFunction);
+  }, []);
+
+  const handleModelLoaded = useCallback((object: THREE.Object3D) => {
+    if (autoFitCamera) {
+      // Small delay to ensure the model is fully rendered
+      setTimeout(() => {
+        autoFitCamera(object);
+      }, 100);
+    }
+  }, [autoFitCamera]);
 
   const fileExtension = fileName.split('.').pop()?.toUpperCase() || 'UNKNOWN';
 
@@ -193,7 +312,7 @@ export const FixedModelViewer = ({
             </CardTitle>
             <Badge variant="secondary">{fileExtension}</Badge>
             <Badge variant="outline" className="text-xs text-green-600">
-              Full Model
+              Auto-Fit Model
             </Badge>
           </div>
           
@@ -232,7 +351,7 @@ export const FixedModelViewer = ({
               variant="outline" 
               size="sm" 
               onClick={resetView}
-              title="Reset camera view"
+              title="Reset and fit camera view"
             >
               <RotateCcw className="h-4 w-4" />
             </Button>
@@ -252,13 +371,13 @@ export const FixedModelViewer = ({
           <div className="absolute top-4 left-4 z-10 bg-background/95 backdrop-blur rounded-lg p-3 text-sm max-w-xs border shadow-lg">
             <div className="flex items-center mb-2">
               <Info className="h-4 w-4 mr-2" />
-              <span className="font-medium">Full Model Rendering</span>
+              <span className="font-medium">Auto-Fit Model Viewer</span>
             </div>
             <div className="space-y-1">
               <div><strong>Format:</strong> {fileExtension}</div>
               <div><strong>File:</strong> {fileName}</div>
               <div className="text-xs text-muted-foreground mt-2">
-                Loading actual 3D model geometry. May take a moment for complex models.
+                Camera automatically fits to show entire model. Use Reset button to re-fit.
               </div>
             </div>
           </div>
@@ -266,7 +385,7 @@ export const FixedModelViewer = ({
 
         {/* 3D Canvas */}
         <Canvas
-          camera={{ position: [25, 25, 25], fov: 45 }}
+          camera={{ position: [10, 10, 10], fov: 45 }}
           onCreated={({ gl }) => {
             gl.setClearColor('#f8f9fa');
             gl.shadowMap.enabled = true;
@@ -282,6 +401,9 @@ export const FixedModelViewer = ({
                 </mesh>
               </Center>
             }>
+              {/* Camera controller for auto-fit */}
+              <CameraController onAutoFit={handleAutoFit} />
+              
               {/* Environment and lighting */}
               <Environment preset="studio" />
               
@@ -293,11 +415,12 @@ export const FixedModelViewer = ({
               />
               <directionalLight position={[-5, 5, 5]} intensity={0.4} />
               
-              {/* Actual Model with error boundary */}
-              <ActualModel 
+              {/* Model with auto-fit */}
+              <ModelWithAutoFit 
                 fileUrl={fileUrl}
                 fileName={fileName}
                 wireframe={wireframeMode}
+                onModelLoaded={handleModelLoaded}
               />
               
               {/* Controls */}
@@ -306,8 +429,8 @@ export const FixedModelViewer = ({
                 enablePan={true}
                 enableZoom={true}
                 enableRotate={true}
-                minDistance={0.5}
-                maxDistance={50}
+                minDistance={0.1}
+                maxDistance={1000}
                 enableDamping={true}
                 dampingFactor={0.05}
                 autoRotate={autoRotate}
@@ -320,14 +443,14 @@ export const FixedModelViewer = ({
         {/* Controls info */}
         <div className="absolute bottom-4 left-4 z-10 bg-background/90 rounded-md p-2">
           <p className="text-xs text-muted-foreground">
-            Left-click + drag: Rotate • Right-click + drag: Pan • Scroll: Zoom
+            Left-click + drag: Rotate • Right-click + drag: Pan • Scroll: Zoom • Reset: Auto-fit
           </p>
         </div>
 
         {/* File type indicator */}
         <div className="absolute bottom-4 right-4 z-10 bg-background/90 rounded-md p-2">
           <p className="text-xs text-muted-foreground">
-            Rendering {fileExtension} Model
+            Auto-Fit {fileExtension} Model
           </p>
         </div>
       </CardContent>
