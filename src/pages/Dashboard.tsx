@@ -1,14 +1,20 @@
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Switch } from "@/components/ui/switch";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { FormIQInsight } from "@/components/formiq/FormIQInsight";
+import { ModelsPagination } from "@/components/dashboard/ModelsPagination";
+import { useUserModels } from "@/hooks/useUserModels";
+import { useAuth } from "@/context/AuthContext";
+import { Toaster } from "@/components/ui/sonner";
 import { 
   ArrowRight, 
   Brain, 
@@ -22,45 +28,58 @@ import {
   TrendingUp,
   Upload, 
   Users,
-  BadgeCheck
+  BadgeCheck,
+  Loader2,
+  Trash2,
+  MoreHorizontal,
+  Edit
 } from "lucide-react";
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("models");
+  const [currentPage, setCurrentPage] = useState(1);
+  const { user } = useAuth();
+  const { models, stats, loading, error, hasMore, updating, updateModelPublishStatus, deleteModel } = useUserModels(currentPage);
 
-  const mockModels = [
-    {
-      id: "model-1",
-      name: "Industrial Gear Assembly",
-      thumbnail: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=1226&ixlib=rb-4.0.3",
-      status: "approved",
-      printabilityScore: 95,
-      downloads: 127,
-      revenue: 9650
-    },
-    {
-      id: "model-2",
-      name: "Modular Housing Frame",
-      thumbnail: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?auto=format&fit=crop&q=80&w=2072&ixlib=rb-4.0.3",
-      status: "pending",
-      printabilityScore: 82,
-      downloads: 0,
-      revenue: 0
-    },
-    {
-      id: "model-3",
-      name: "Medical Device Enclosure",
-      thumbnail: "https://images.unsplash.com/photo-1483058712412-4245e9b90334?auto=format&fit=crop&q=80&w=2070&ixlib=rb-4.0.3",
-      status: "rejected",
-      printabilityScore: 45,
-      downloads: 0,
-      revenue: 0
+  // Debounced toggle handler
+  const handleTogglePublish = useCallback((modelId: string, isPublished: boolean) => {
+    updateModelPublishStatus(modelId, isPublished);
+  }, [updateModelPublishStatus]);
+
+  const getStatusBadgeProps = (model: any) => {
+    if (model.quality_status === 'rejected' || model.admin_status === 'rejected') {
+      return { variant: "destructive" as const, text: "Needs Revision" };
     }
-  ];
+    if (model.quality_status === 'pending' || model.admin_status === 'pending') {
+      return { variant: "outline" as const, text: "Pending Review" };
+    }
+    if (model.is_published) {
+      return { variant: "default" as const, text: "Published" };
+    }
+    return { variant: "secondary" as const, text: "Draft" };
+  };
+
+  const calculateRevenue = (model: any) => {
+    return (model.price || 0) * (model.downloads || 0);
+  };
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-4">Please sign in to access your dashboard</h2>
+          <Button asChild>
+            <Link to="/auth">Sign In</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-muted/30">
       <Navbar />
+      <Toaster />
       
       <div className="container py-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
@@ -134,7 +153,7 @@ const Dashboard = () => {
             <CardContent className="p-6 flex items-center justify-between">
               <div>
                 <p className="text-muted-foreground text-sm">Total Models</p>
-                <p className="text-2xl font-bold">3</p>
+                <p className="text-2xl font-bold">{loading ? "..." : stats.totalModels}</p>
               </div>
               <FileImage className="h-8 w-8 text-muted-foreground/40" />
             </CardContent>
@@ -143,7 +162,7 @@ const Dashboard = () => {
             <CardContent className="p-6 flex items-center justify-between">
               <div>
                 <p className="text-muted-foreground text-sm">Total Downloads</p>
-                <p className="text-2xl font-bold">127</p>
+                <p className="text-2xl font-bold">{loading ? "..." : stats.totalDownloads}</p>
               </div>
               <Download className="h-8 w-8 text-muted-foreground/40" />
             </CardContent>
@@ -152,16 +171,16 @@ const Dashboard = () => {
             <CardContent className="p-6 flex items-center justify-between">
               <div>
                 <p className="text-muted-foreground text-sm">Revenue</p>
-                <p className="text-2xl font-bold">₹9,650</p>
+                <p className="text-2xl font-bold">{loading ? "..." : `$${stats.totalRevenue.toFixed(2)}`}</p>
               </div>
-              <File className="h-8 w-8 text-muted-foreground/40" />
+              <DollarSign className="h-8 w-8 text-muted-foreground/40" />
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-6 flex items-center justify-between">
               <div>
                 <p className="text-muted-foreground text-sm">Unique Buyers</p>
-                <p className="text-2xl font-bold">42</p>
+                <p className="text-2xl font-bold">{loading ? "..." : stats.uniqueBuyers}</p>
               </div>
               <Users className="h-8 w-8 text-muted-foreground/40" />
             </CardContent>
@@ -185,80 +204,174 @@ const Dashboard = () => {
                 <Button variant="outline" size="sm">Sort</Button>
               </div>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {mockModels.map((model) => (
-                <Card key={model.id} className="overflow-hidden">
-                  <div className="aspect-video w-full relative">
-                    <img 
-                      src={model.thumbnail} 
-                      alt={model.name} 
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute top-2 right-2">
-                      <Badge 
-                        variant={
-                          model.status === "approved" ? "default" : 
-                          model.status === "pending" ? "outline" : 
-                          "destructive"
-                        }
-                      >
-                        {model.status === "approved" ? "Approved" : 
-                          model.status === "pending" ? "Pending Review" : 
-                          "Needs Revision"
-                        }
-                      </Badge>
-                    </div>
-                  </div>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg">{model.name}</CardTitle>
-                    <CardDescription>
-                      Printability Score: {model.printabilityScore}/100
-                    </CardDescription>
-                    <Progress value={model.printabilityScore} className="h-2" />
-                  </CardHeader>
-                  <CardContent className="pb-2">
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <p className="text-xs text-muted-foreground">Downloads</p>
-                        <p className="text-sm font-medium">{model.downloads}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Revenue</p>
-                        <p className="text-sm font-medium">₹{model.revenue}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter>
-                    <div className="flex justify-between w-full">
-                      <Button variant="outline" size="sm" asChild>
-                        <Link to={`/printability/${model.id}`}>View Report</Link>
-                      </Button>
-                      <Button variant="ghost" size="sm" asChild>
-                        <Link to={`/model/${model.id}/history`}>
-                          History
-                          <Clock className="ml-1 h-4 w-4" />
-                        </Link>
-                      </Button>
-                    </div>
-                  </CardFooter>
-                </Card>
-              ))}
 
-              {/* Upload Card */}
-              <Card className="border-dashed flex flex-col items-center justify-center text-center p-6 h-full">
-                <Upload className="h-12 w-12 text-muted-foreground/60 mb-4" />
-                <h3 className="font-medium mb-2">Upload New Model</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Drag & drop or click to upload STL, OBJ, or STEP files
+            {loading ? (
+              <div className="flex items-center justify-center h-64">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                <p className="ml-2 text-muted-foreground">Loading your models...</p>
+              </div>
+            ) : error ? (
+              <div className="flex items-center justify-center h-64">
+                <p className="text-destructive">{error}</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {models.map((model) => {
+                  const statusProps = getStatusBadgeProps(model);
+                  const revenue = calculateRevenue(model);
+                  const isUpdating = updating === model.id;
+                  
+                  return (
+                    <Card key={model.id} className="overflow-hidden relative">
+                      {!model.is_published && (
+                        <div className="absolute inset-0 bg-muted/50 z-10 flex items-center justify-center">
+                          <Badge variant="outline" className="bg-background/90">
+                            Hidden from marketplace
+                          </Badge>
+                        </div>
+                      )}
+                      
+                      <div className="aspect-video w-full relative">
+                        <img 
+                          src={model.preview_image || "/placeholder.svg"} 
+                          alt={model.name} 
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute top-2 left-2">
+                          <Badge variant={statusProps.variant}>
+                            {statusProps.text}
+                          </Badge>
+                        </div>
+                        <div className="absolute top-2 right-2 flex items-center gap-2">
+                          <div className="flex items-center gap-1 bg-background/90 rounded-md px-2 py-1">
+                            <span className="text-xs font-medium">
+                              {model.is_published ? "Published" : "Unpublished"}
+                            </span>
+                            <Switch
+                              checked={model.is_published}
+                              onCheckedChange={(checked) => handleTogglePublish(model.id, checked)}
+                              disabled={isUpdating}
+                              className="scale-75"
+                            />
+                            {isUpdating && (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-lg">{model.name}</CardTitle>
+                        <CardDescription>
+                          Printability Score: {model.printability_score || 0}/100
+                        </CardDescription>
+                        <Progress value={model.printability_score || 0} className="h-2" />
+                      </CardHeader>
+                      
+                      <CardContent className="pb-2">
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <p className="text-xs text-muted-foreground">Downloads</p>
+                            <p className="text-sm font-medium">{model.downloads}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Revenue</p>
+                            <p className="text-sm font-medium">${revenue.toFixed(2)}</p>
+                          </div>
+                        </div>
+                        <div className="mt-2">
+                          <p className="text-xs text-muted-foreground">Category</p>
+                          <p className="text-sm font-medium">{model.category || "Uncategorized"}</p>
+                        </div>
+                      </CardContent>
+                      
+                      <CardFooter className="flex justify-between">
+                        <Button variant="outline" size="sm" asChild>
+                          <Link to={`/printability/${model.id}`}>View Report</Link>
+                        </Button>
+                        <div className="flex gap-1">
+                          <Button variant="ghost" size="sm" asChild>
+                            <Link to={`/model/${model.id}/history`}>
+                              <Clock className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                          <Button variant="ghost" size="sm" asChild>
+                            <Link to={`/model/${model.id}/edit`}>
+                              <Edit className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Trash2 className="h-4 w-4" />
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete Model</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to delete "{model.name}"? This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction 
+                                    onClick={() => deleteModel(model.id)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </Button>
+                        </div>
+                      </CardFooter>
+                    </Card>
+                  );
+                })}
+
+                {/* Upload Card */}
+                <Card className="border-dashed flex flex-col items-center justify-center text-center p-6 h-full">
+                  <Upload className="h-12 w-12 text-muted-foreground/60 mb-4" />
+                  <h3 className="font-medium mb-2">Upload New Model</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Drag & drop or click to upload STL, OBJ, or STEP files
+                  </p>
+                  <Button asChild>
+                    <Link to="/upload">
+                      Upload Model
+                    </Link>
+                  </Button>
+                </Card>
+              </div>
+            )}
+
+            {models.length === 0 && !loading && (
+              <div className="flex flex-col items-center justify-center h-64 text-center">
+                <Upload className="h-16 w-16 text-muted-foreground/40 mb-4" />
+                <h3 className="text-lg font-medium mb-2">No models yet</h3>
+                <p className="text-muted-foreground mb-4">
+                  Upload your first 3D model to get started
                 </p>
                 <Button asChild>
-                  <Link to="/upload">
-                    Upload Model
-                  </Link>
+                  <Link to="/upload">Upload Your First Model</Link>
                 </Button>
-              </Card>
-            </div>
+              </div>
+            )}
+
+            {/* Pagination */}
+            {models.length > 0 && (
+              <ModelsPagination 
+                currentPage={currentPage}
+                hasMore={hasMore}
+                onPageChange={setCurrentPage}
+                loading={loading}
+              />
+            )}
           </TabsContent>
           
           <TabsContent value="analytics">
