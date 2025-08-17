@@ -21,6 +21,7 @@ import {
   FileText
 } from 'lucide-react';
 import { UniversalCADLoader, LoadedCADModel, LoadProgress } from './UniversalCADLoader';
+import { SafeModelRenderer } from './SafeModelRenderer';
 import { LoadingIndicator3D } from './LoadingIndicator3D';
 import { useToast } from '@/hooks/use-toast';
 
@@ -76,37 +77,49 @@ const ModelRenderer = ({
     }
     
     // For loaded materials, extract properties safely and create new JSX materials
-    if (model.materials.length > 0) {
+    if (model.materials && model.materials.length > 0) {
       const originalMaterial = model.materials[0];
       
-      // Handle different material types safely
+      // Ensure we have a valid material
+      if (!originalMaterial || !(originalMaterial instanceof THREE.Material)) {
+        return (
+          <meshStandardMaterial 
+            color="#888888"
+            metalness={0.1}
+            roughness={0.3}
+            side={THREE.DoubleSide}
+          />
+        );
+      }
+      
+      // Handle different material types safely with null checks
       if (originalMaterial instanceof THREE.MeshStandardMaterial) {
         return (
           <meshStandardMaterial 
-            color={originalMaterial.color}
-            metalness={originalMaterial.metalness}
-            roughness={originalMaterial.roughness}
+            color={originalMaterial.color || "#888888"}
+            metalness={originalMaterial.metalness ?? 0.1}
+            roughness={originalMaterial.roughness ?? 0.3}
             side={THREE.DoubleSide}
-            map={originalMaterial.map}
-            normalMap={originalMaterial.normalMap}
+            map={originalMaterial.map || undefined}
+            normalMap={originalMaterial.normalMap || undefined}
           />
         );
       } else if (originalMaterial instanceof THREE.MeshPhongMaterial) {
         return (
           <meshPhongMaterial 
-            color={originalMaterial.color}
-            shininess={originalMaterial.shininess}
-            specular={originalMaterial.specular}
+            color={originalMaterial.color || "#888888"}
+            shininess={originalMaterial.shininess ?? 30}
+            specular={originalMaterial.specular || "#111111"}
             side={THREE.DoubleSide}
-            map={originalMaterial.map}
+            map={originalMaterial.map || undefined}
           />
         );
       } else if (originalMaterial instanceof THREE.MeshBasicMaterial) {
         return (
           <meshBasicMaterial 
-            color={originalMaterial.color}
+            color={originalMaterial.color || "#888888"}
             side={THREE.DoubleSide}
-            map={originalMaterial.map}
+            map={originalMaterial.map || undefined}
           />
         );
       }
@@ -123,9 +136,49 @@ const ModelRenderer = ({
     );
   };
 
+  // Validate geometry before rendering
+  if (!model.geometry || !model.geometry.attributes || !model.geometry.attributes.position) {
+    console.error('Invalid geometry data:', model.geometry);
+    return (
+      <Center>
+        <mesh>
+          <boxGeometry args={[1, 1, 1]} />
+          <meshStandardMaterial color="#ff0000" />
+        </mesh>
+      </Center>
+    );
+  }
+
   return (
     <Center>
-      <mesh ref={meshRef} geometry={model.geometry}>
+      <mesh ref={meshRef}>
+        <bufferGeometry 
+          ref={(geom) => {
+            if (geom && model.geometry) {
+              // Safely copy geometry attributes
+              if (model.geometry.attributes.position) {
+                geom.setAttribute('position', model.geometry.attributes.position);
+              }
+              if (model.geometry.attributes.normal) {
+                geom.setAttribute('normal', model.geometry.attributes.normal);
+              }
+              if (model.geometry.attributes.uv) {
+                geom.setAttribute('uv', model.geometry.attributes.uv);
+              }
+              if (model.geometry.index) {
+                geom.setIndex(model.geometry.index);
+              }
+              
+              // Compute missing attributes safely
+              if (!geom.attributes.normal) {
+                geom.computeVertexNormals();
+              }
+              
+              geom.computeBoundingBox();
+              geom.computeBoundingSphere();
+            }
+          }}
+        />
         {renderMaterial()}
       </mesh>
     </Center>
@@ -439,7 +492,7 @@ export const UniversalModelViewer = ({
             
             {/* 3D Model */}
             {model && (
-              <ModelRenderer 
+              <SafeModelRenderer 
                 model={model} 
                 wireframeMode={wireframeMode}
                 autoRotate={autoRotate}

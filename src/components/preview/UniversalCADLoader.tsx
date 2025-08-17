@@ -530,33 +530,52 @@ export class UniversalCADLoader {
 
   // Process geometry for consistent rendering
   private static processGeometry(geometry: THREE.BufferGeometry): void {
-    if (!geometry.attributes.normal) {
-      geometry.computeVertexNormals();
-    }
-    
-    if (!geometry.boundingBox) {
-      geometry.computeBoundingBox();
-    }
-    
-    if (!geometry.boundingSphere) {
-      geometry.computeBoundingSphere();
-    }
-    
-    // Ensure the geometry is properly centered and scaled
-    const box = geometry.boundingBox;
-    if (box) {
-      const center = box.getCenter(new THREE.Vector3());
-      const size = box.getSize(new THREE.Vector3());
-      
-      // Center the geometry
-      geometry.translate(-center.x, -center.y, -center.z);
-      
-      // Scale to reasonable size if too large
-      const maxDim = Math.max(size.x, size.y, size.z);
-      if (maxDim > 10) {
-        const scale = 5 / maxDim;
-        geometry.scale(scale, scale, scale);
+    try {
+      // Ensure geometry has valid attributes
+      if (!geometry.attributes || !geometry.attributes.position) {
+        console.error('Geometry missing position attribute');
+        return;
       }
+
+      // Safely compute normals if missing
+      if (!geometry.attributes.normal) {
+        geometry.computeVertexNormals();
+      }
+      
+      // Safely compute bounding data
+      if (!geometry.boundingBox) {
+        geometry.computeBoundingBox();
+      }
+      
+      if (!geometry.boundingSphere) {
+        geometry.computeBoundingSphere();
+      }
+      
+      // Ensure the geometry is properly centered and scaled
+      const box = geometry.boundingBox;
+      if (box && box.min && box.max) {
+        const center = box.getCenter(new THREE.Vector3());
+        const size = box.getSize(new THREE.Vector3());
+        
+        // Only translate if center values are valid numbers
+        if (!isNaN(center.x) && !isNaN(center.y) && !isNaN(center.z)) {
+          geometry.translate(-center.x, -center.y, -center.z);
+        }
+        
+        // Scale to reasonable size if too large
+        const maxDim = Math.max(size.x || 1, size.y || 1, size.z || 1);
+        if (maxDim > 10 && !isNaN(maxDim)) {
+          const scale = 5 / maxDim;
+          geometry.scale(scale, scale, scale);
+        }
+      }
+      
+      // Mark geometry as needing update
+      geometry.computeBoundingBox();
+      geometry.computeBoundingSphere();
+      
+    } catch (error) {
+      console.error('Error processing geometry:', error);
     }
   }
 
