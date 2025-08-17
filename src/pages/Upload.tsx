@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { FormIQAnalysisResult } from "@/services/formiq";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
+import { ModelInsightsService } from "@/services/modelInsights";
 
 // Import refactored components
 import { FileUploader } from "@/components/upload/FileUploader";
@@ -140,15 +141,13 @@ const Upload = () => {
     setQualityStatus(result.qualityStatus);
     setQualityNotes(result.qualityNotes || '');
     
-    // Generate tags based on analysis
-    setAiGeneratedTags([
-      "industrial", 
-      "gear", 
-      "mechanical", 
-      "engineering", 
-      "precision", 
-      "manufacturing"
-    ]);
+    // Generate insights and tags based on model name and description
+    const insights = ModelInsightsService.generateInsights(modelName, modelDescription);
+    setAiGeneratedTags(insights.tags);
+    
+    // Update material recommendations and printing techniques with generated insights
+    setMaterialRecommendations([...result.materialRecommendations, ...insights.materialRecommendations]);
+    setPrintingTechniques([...result.printingTechniques, ...insights.printingTechniques]);
     
     // Set suggested price based on analysis
     const newPrice = Math.floor((1500 + (result.printabilityScore * 25)) / 100) * 100;
@@ -175,6 +174,11 @@ const Upload = () => {
     setModelName(name);
     setModelDescription(description);
     setCustomTags(tags);
+    
+    // Regenerate insights based on updated name and description
+    const insights = ModelInsightsService.generateInsights(name, description);
+    setAiGeneratedTags(insights.tags);
+    
     setCurrentStep(3);
   };
 
@@ -211,7 +215,8 @@ const Upload = () => {
 
       // Determine category from metadata and tags
       const category = modelMetadata.industry.toLowerCase();
-      const allTags = [...aiGeneratedTags, ...customTags];
+      const insights = ModelInsightsService.generateInsights(modelName, modelDescription);
+      const allTags = [...insights.tags, ...customTags];
 
       // Create model record in database with all required fields
       const { data: modelData, error: modelError } = await supabase

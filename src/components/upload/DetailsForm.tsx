@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Brain, ChevronRight } from "lucide-react";
 import { FormIQInsight } from "@/components/formiq/FormIQInsight";
 import { Info, Printer } from "lucide-react";
+import { ModelInsightsService } from "@/services/modelInsights";
 
 interface DetailsFormProps {
   aiGeneratedTags: string[];
@@ -30,6 +32,7 @@ export const DetailsForm = ({
   const [description, setDescription] = useState(initialDescription);
   const [customTags, setCustomTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState("");
+  const [generatedInsights, setGeneratedInsights] = useState<any>(null);
 
   const handleAddTag = () => {
     if (newTag && !customTags.includes(newTag) && !aiGeneratedTags.includes(newTag)) {
@@ -48,6 +51,15 @@ export const DetailsForm = ({
     }
     onContinue(name, description, customTags);
   };
+
+  // Update insights when name or description changes
+  React.useEffect(() => {
+    if (name || description) {
+      const insights = ModelInsightsService.generateInsights(name, description);
+      const formatted = ModelInsightsService.formatInsightsForDisplay(insights);
+      setGeneratedInsights(formatted);
+    }
+  }, [name, description]);
 
   return (
     <div className="space-y-6">
@@ -89,26 +101,57 @@ export const DetailsForm = ({
           </span>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormIQInsight
-            title="Market Analysis"
-            content="This model has high demand in the engineering and industrial sectors."
-            icon={<Info className="h-4 w-4 text-primary" />}
-            metrics={[
-              { label: "Market Demand", value: "High" },
-              { label: "Target Industries", value: "Engineering, Manufacturing" }
-            ]}
-          />
-          
-          <FormIQInsight
-            title="Printing Techniques"
-            content="Optimal results with FDM printing using 0.1mm layer height."
-            icon={<Printer className="h-4 w-4 text-primary" />}
-            metrics={[
-              { label: "Recommended Technique", value: "FDM" },
-              { label: "Alternative", value: "SLA for detail" }
-            ]}
-          />
+        {/* AI Generated Insights */}
+        {generatedInsights ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormIQInsight
+              title="Market Analysis"
+              content={`This model has ${generatedInsights.marketAnalysis.demand.toLowerCase()} demand in relevant industries.`}
+              icon={<Info className="h-4 w-4 text-primary" />}
+              metrics={[
+                { label: "Market Demand", value: generatedInsights.marketAnalysis.demand },
+                { label: "Target Industries", value: generatedInsights.marketAnalysis.industries }
+              ]}
+            />
+            
+            <FormIQInsight
+              title="Printing Recommendations"
+              content={`Optimal results with ${generatedInsights.printingRecommendations.techniques[0]} printing.`}
+              icon={<Printer className="h-4 w-4 text-primary" />}
+              metrics={[
+                { label: "Primary Technique", value: generatedInsights.printingRecommendations.techniques[0] },
+                { label: "Materials", value: generatedInsights.printingRecommendations.materials.slice(0, 2).join(', ') }
+              ]}
+            />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormIQInsight
+              title="Market Analysis"
+              content="Enter model name and description to generate insights."
+              icon={<Info className="h-4 w-4 text-muted-foreground" />}
+              metrics={[
+                { label: "Market Demand", value: "Analyzing..." },
+                { label: "Target Industries", value: "Analyzing..." }
+              ]}
+            />
+            
+            <FormIQInsight
+              title="Printing Recommendations"
+              content="Insights will be generated based on your model details."
+              icon={<Printer className="h-4 w-4 text-muted-foreground" />}
+              metrics={[
+                { label: "Primary Technique", value: "Analyzing..." },
+                { label: "Materials", value: "Analyzing..." }
+              ]}
+            />
+          </div>
+        )}
+
+        {/* Auto-generated badge */}
+        <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 p-2 rounded-lg">
+          <Brain className="h-3 w-3" />
+          <span>Auto-generated insights • These are placeholder insights until AI integration is ready</span>
         </div>
       </div>
       
