@@ -1,5 +1,6 @@
 
 import { APIService } from './api';
+import { supabase } from '@/integrations/supabase/client';
 
 // Global type declarations are in src/types/global.d.ts
 
@@ -65,9 +66,25 @@ export class RazorpayProvider implements PaymentProvider {
   }
 
   async verifyPayment(paymentId: string): Promise<boolean> {
-    // In a real implementation, this would verify the payment signature
-    // with your backend server
-    return true;
+    try {
+      // Verify payment via Supabase Edge Function
+      const { data, error } = await supabase.functions.invoke('verify-payment', {
+        body: { 
+          payment_id: paymentId, 
+          provider: 'razorpay' 
+        }
+      });
+      
+      if (error) {
+        console.error('Payment verification error:', error);
+        return false;
+      }
+      
+      return data?.verified === true;
+    } catch (error) {
+      console.error('Payment verification failed:', error);
+      return false;
+    }
   }
 }
 
@@ -123,8 +140,25 @@ export class PayPalProvider implements PaymentProvider {
   }
 
   async verifyPayment(paymentId: string): Promise<boolean> {
-    // Verify with PayPal API
-    return true;
+    try {
+      // Verify payment via Supabase Edge Function
+      const { data, error } = await supabase.functions.invoke('verify-payment', {
+        body: { 
+          payment_id: paymentId, 
+          provider: 'paypal' 
+        }
+      });
+      
+      if (error) {
+        console.error('Payment verification error:', error);
+        return false;
+      }
+      
+      return data?.verified === true;
+    } catch (error) {
+      console.error('Payment verification failed:', error);
+      return false;
+    }
   }
 }
 

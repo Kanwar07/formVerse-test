@@ -25,14 +25,18 @@ export class APIService {
     return data;
   }
 
+  // SECURE: Only admins can update user roles via database function
   static async updateUserRole(userId: string, role: 'creator' | 'buyer' | 'admin') {
-    const { data, error } = await supabase
-      .from('profiles')
-      .update({ role })
-      .eq('id', userId);
-    
-    if (error) throw error;
-    return data;
+    const { error } = await supabase.rpc('update_user_role_secure', {
+      target_user_id: userId,
+      new_role: role
+    });
+
+    if (error) {
+      throw new Error(`Failed to update user role: ${error.message}`);
+    }
+
+    return { success: true };
   }
 
   // Models Management
