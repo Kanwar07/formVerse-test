@@ -1,6 +1,5 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { Client } from "https://cdn.skypack.dev/@gradio/client";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -50,76 +49,55 @@ async function performHealthCheck(): Promise<{ success: boolean; retryAfter?: nu
   return { success: false, retryAfter: 30 };
 }
 
-// Warm up the model with a minimal request
-async function warmUpModel(client: any): Promise<boolean> {
-  try {
-    console.log('Warming up CADQUA model...');
-    
-    // Create a minimal 1x1 pixel image for warm-up
-    const canvas = new OffscreenCanvas(1, 1);
-    const ctx = canvas.getContext('2d');
-    ctx!.fillStyle = '#000000';
-    ctx!.fillRect(0, 0, 1, 1);
-    
-    const blob = await canvas.convertToBlob({ type: 'image/png' });
-    const warmupFile = new File([blob], 'warmup.png', { type: 'image/png' });
-    
-    await Promise.race([
-      client.predict("/generate_and_extract__glb", {
-        image: warmupFile,
-        multiimages: [],
-        is_multiimage: false,
-        seed: 0,
-        randomize_seed: false,
-        ss_guidance_strength: 1.0,
-        ss_sampling_steps: 1,
-        slat_guidance_strength: 1.0,
-        slat_sampling_steps: 1,
-        multiimage_algo: "stochastic",
-        mesh_simplify: 0.95,
-        texture_size: 512
-      }),
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Warmup timeout')), 30000)
-      )
-    ]);
-    
-    console.log('Model warmed up successfully');
-    return true;
-  } catch (error) {
-    console.log('Model warmup failed (this is expected):', (error as Error).message);
-    return false; // Warmup failure is acceptable
-  }
-}
-
-// Generate 3D model with retries
-async function generateModel(client: any, imageFile: File): Promise<any> {
+// Call Modal API directly via HTTP
+async function callModalAPI(imageFile: File): Promise<any> {
   const maxRetries = 2;
   const retryDelay = 3000; // 3s
   
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      console.log(`Generation attempt ${attempt + 1}/${maxRetries + 1}`);
+      console.log(`Modal API call attempt ${attempt + 1}/${maxRetries + 1}`);
+      console.log(`Calling Modal API: ${CADQUA_API_URL}`);
       
-      const result = await Promise.race([
-        client.predict("/generate_and_extract__glb", {
-          image: imageFile,
-          multiimages: [],
-          is_multiimage: false,
-          seed: 0,
-          randomize_seed: true,
-          ss_guidance_strength: 7.5,
-          ss_sampling_steps: 12,
-          slat_guidance_strength: 3.0,
-          slat_sampling_steps: 12,
-          multiimage_algo: "stochastic",
-          mesh_simplify: 0.95,
-          texture_size: 1024
+      // Create FormData for the Modal API
+      const formData = new FormData();
+      formData.append('input_image', imageFile);
+      
+      console.log('Request payload:', {
+        method: 'POST',
+        url: CADQUA_API_URL + '/run/generate_and_extract__glb',
+        headers: {
+          'Accept': 'application/json',
+        },
+        fileSize: imageFile.size,
+        fileName: imageFile.name,
+        fileType: imageFile.type
+      });
+      
+      const response = await Promise.race([
+        fetch(CADQUA_API_URL + '/run/generate_and_extract__glb', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+          },
+          body: formData
         }),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Generation timeout')), 120000) // 2 minutes
+        new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('Request timeout')), 120000) // 2 minutes
         )
       ]);
+      
+      console.log('Modal API response status:', response.status);
+      console.log('Modal API response headers:', Object.fromEntries(response.headers.entries()));
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Modal API error response:', errorText);
+        throw new Error(`Modal API returned ${response.status}: ${errorText}`);
+      }
+      
+      const result = await response.json();
+      console.log('Modal API success response:', result);
       
       // Validate response structure
       if (!result || !result.data || !result.data[2]) {
@@ -131,11 +109,11 @@ async function generateModel(client: any, imageFile: File): Promise<any> {
         throw new Error('Invalid GLB URL in response');
       }
       
-      console.log('Generation successful');
+      console.log('Modal API call successful, GLB URL:', glbUrl);
       return result;
       
     } catch (error) {
-      console.error(`Generation attempt ${attempt + 1} failed:`, error);
+      console.error(`Modal API attempt ${attempt + 1} failed:`, error);
       
       if (attempt < maxRetries && !(error as Error).message.includes('timeout')) {
         console.log(`Retrying in ${retryDelay}ms...`);
@@ -146,6 +124,7 @@ async function generateModel(client: any, imageFile: File): Promise<any> {
     }
   }
 }
+
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -215,23 +194,9 @@ serve(async (req) => {
       });
     }
 
-    // Step 2: Connect to Gradio client
-    console.log('Connecting to Gradio client...');
-    const client = await Promise.race([
-      Client.connect(CADQUA_API_URL),
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Connection timeout')), 30000)
-      )
-    ]) as any;
-    
-    console.log('Gradio client connected successfully');
-
-    // Step 3: Warm up the model (optional - don't fail if this doesn't work)
-    await warmUpModel(client);
-
-    // Step 4: Generate the actual model with retries
-    console.log('Starting model generation...');
-    const result = await generateModel(client, imageFile);
+    // Step 2: Call Modal API directly
+    console.log('Starting model generation via Modal API...');
+    const result = await callModalAPI(imageFile);
 
     console.log('Model generation completed successfully');
     return new Response(JSON.stringify(result), {

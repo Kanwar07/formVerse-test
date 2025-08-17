@@ -96,27 +96,46 @@ const ImageToCAD = () => {
         type: selectedImage.type
       });
       
-      // Call our edge function
+      // Call our edge function with detailed logging
       const { data, error } = await supabase.functions.invoke('modal-image-to-cad', {
         body: formData,
       });
       
       if (error) {
-        console.error('Edge function error:', error);
-        throw new Error(`Conversion failed: ${error.message}`);
+        console.error('Edge function error details:', {
+          message: error.message,
+          details: error.details,
+          code: error.code,
+          context: error.context
+        });
+        
+        // Handle specific error codes with user-friendly messages
+        if (error.code === 'SERVICE_UNAVAILABLE') {
+          throw new Error(`CADQUA AI service is unavailable. ${error.details || 'Please try again in a few minutes.'}`);
+        } else if (error.code === 'CONNECTION_TIMEOUT') {
+          throw new Error(`Connection timeout. The service may be starting up. Please try again in 30 seconds.`);
+        } else if (error.code === 'GENERATION_TIMEOUT') {
+          throw new Error(`Generation timed out. Try with a smaller image or simpler content.`);
+        } else if (error.code === 'INVALID_RESPONSE') {
+          throw new Error(`The AI service returned an invalid response. Please try again.`);
+        } else if (error.code === 'NETWORK_ERROR') {
+          throw new Error(`Network connection failed. Please check your internet connection.`);
+        } else {
+          throw new Error(error.details || error.message || 'Failed to generate 3D model');
+        }
       }
       
       console.log('Modal API Response via edge function:', data);
       
       // Extract the generated model URL from the response
       let modelUrl = null;
-      if (data && data.data && data.data[0]) {
-        modelUrl = data.data[0].url || data.data[0];
+      if (data && data.data && data.data[2]) {
+        modelUrl = data.data[2];
       }
       
-      if (!modelUrl) {
-        console.warn('No model URL found in response:', data);
-        // Still create the model entry but mark it as requiring manual check
+      if (!modelUrl || typeof modelUrl !== 'string') {
+        console.error('Invalid response structure:', data);
+        throw new Error('Invalid response from CADQUA AI - no 3D model generated. Please try again.');
       }
       
       const newModel: ConvertedModel = {

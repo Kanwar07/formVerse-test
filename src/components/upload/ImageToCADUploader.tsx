@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { UploadIcon, FileCheck, Sparkles, AlertCircle, Search, Settings, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 
 interface ImageToCADUploaderProps {
@@ -14,7 +15,7 @@ interface ImageToCADUploaderProps {
   setUploading: (uploading: boolean) => void;
 }
 
-type GenerationStage = 'idle' | 'uploading' | 'health-check' | 'warming-up' | 'generating' | 'downloading' | 'finalizing' | 'complete' | 'error';
+type GenerationStage = 'idle' | 'uploading' | 'health-check' | 'warming-up' | 'generating' | 'downloading' | 'finalizing' | 'complete' | 'error' | 'retrying';
 
 interface ErrorInfo {
   message: string;
@@ -36,6 +37,7 @@ export const ImageToCADUploader = ({
   const [retryCountdown, setRetryCountdown] = useState(0);
   const { toast } = useToast();
   const { user, session } = useAuth();
+  const navigate = useNavigate();
 
   // Countdown timer for retry button
   useEffect(() => {
@@ -124,6 +126,13 @@ export const ImageToCADUploader = ({
           title: "Finalizing upload...",
           description: "Almost ready!",
           progress: 95
+        };
+      case 'retrying':
+        return {
+          icon: Settings,
+          title: "Retrying...",
+          description: "Attempting generation again",
+          progress: 30
         };
       case 'complete':
         return {
@@ -216,31 +225,61 @@ export const ImageToCADUploader = ({
       
       setConversionStage('health-check');
       
-      // Call the edge function
+      // Call the edge function with detailed logging
+      console.log('Calling modal-image-to-cad edge function...', {
+        fileName: imageFile.name,
+        fileSize: imageFile.size,
+        fileType: imageFile.type
+      });
+      
       const { data, error } = await supabase.functions.invoke('modal-image-to-cad', {
         body: formData
       });
 
       if (error) {
-        console.error('Edge function error:', error);
-        throw new Error(error.message);
+        console.error('Edge function error details:', {
+          message: error.message,
+          details: error.details,
+          code: error.code,
+          context: error.context
+        });
+        
+        // Handle specific error codes
+        if (error.code === 'SERVICE_UNAVAILABLE') {
+          throw new Error(`CADQUA AI service is unavailable. ${error.details || 'Please try again in a few minutes.'}`);
+        } else if (error.code === 'CONNECTION_TIMEOUT') {
+          throw new Error(`Connection timeout. The service may be starting up. Please try again in 30 seconds.`);
+        } else if (error.code === 'GENERATION_TIMEOUT') {
+          throw new Error(`Generation timed out. Try with a smaller image or simpler content.`);
+        } else {
+          throw new Error(error.details || error.message || 'Failed to generate 3D model');
+        }
       }
 
       console.log('Edge function response:', data);
       
       if (!data || !data.data || !data.data[2]) {
-        throw new Error("Invalid response from CADQUA API - no 3D model generated");
+        console.error('Invalid response structure:', data);
+        throw new Error("Invalid response from CADQUA AI - no 3D model generated. Please try again.");
       }
       
       const glbUrl = data.data[2];
       if (typeof glbUrl !== 'string' || !glbUrl) {
-        throw new Error("Invalid GLB file URL received from API");
+        console.error('Invalid GLB URL:', glbUrl);
+        throw new Error("Invalid 3D model file received from AI service. Please try again.");
       }
       
+      console.log('3D model generation successful:', glbUrl);
       return glbUrl;
     } catch (error) {
       console.error('Generation error:', error);
-      throw error;
+      
+      // Re-throw with user-friendly message
+      if (error instanceof Error) {
+        throw error;
+      } else {
+        throw new Error('Unexpected error during 3D model generation. Please try again.');
+      }
     }
   };
 
@@ -252,114 +291,150 @@ export const ImageToCADUploader = ({
     setConversionStage('uploading');
     setError(null);
     
-    try {
-      // Step 1: Upload image to Supabase storage
-      const timestamp = Date.now();
-      const imagePath = `${user.id}/images/${timestamp}-${selectedImage.name}`;
+    const maxRetries = 2;
+    let currentAttempt = 0;
+    
+    const attemptGeneration = async (): Promise<void> => {
+      currentAttempt++;
       
-      console.log('Uploading image to storage...');
-      
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('3d-models')
-        .upload(imagePath, selectedImage);
-
-      if (uploadError) {
-        throw new Error(`Image upload failed: ${uploadError.message}`);
-      }
-      
-      setConversionProgress(20);
-      setConversionStage('generating');
-      
-      // Step 2: Generate 3D model using CADQUA API
-      const glbUrl = await generate3DModelFromImage(selectedImage);
-      
-      setConversionProgress(70);
-      setConversionStage('downloading');
-      
-      // Step 3: Download the generated GLB file
-      console.log('Downloading GLB from:', glbUrl);
-      const modelResponse = await fetch(glbUrl);
-      if (!modelResponse.ok) {
-        throw new Error(`Failed to download generated model: ${modelResponse.status} ${modelResponse.statusText}`);
-      }
-      
-      const modelBlob = await modelResponse.blob();
-      const modelFile = new File([modelBlob], `generated-${timestamp}.glb`, { type: 'model/gltf-binary' });
-      
-      setConversionProgress(85);
-      setConversionStage('finalizing');
-      
-      // Step 4: Upload the generated model to storage
-      const modelPath = `${user.id}/${timestamp}-generated-model.glb`;
-      
-      const { data: modelUploadData, error: modelUploadError } = await supabase.storage
-        .from('3d-models')
-        .upload(modelPath, modelFile);
-
-      if (modelUploadError) {
-        throw new Error(`Failed to upload generated model: ${modelUploadError.message}`);
-      }
-      
-      setConversionProgress(100);
-      setConversionStage('complete');
-      
-      // Step 5: Pass to the main upload flow
-      const fileInfo = extractFileInfo(modelFile);
-      onModelGenerated(modelFile, modelUploadData.path, fileInfo, imagePath);
-      
-      toast({
-        title: "Success!",
-        description: "Your 3D model has been generated successfully from the image.",
-      });
-      
-      // Reset state after success
-      setTimeout(() => {
-        setConversionProgress(0);
-        setConversionStage('idle');
-        setSelectedImage(null);
-        setImagePreview("");
-        setRetryCount(0);
-      }, 2000);
-      
-    } catch (error: any) {
-      console.error('Image to CAD conversion error:', error);
-      
-      let errorInfo: ErrorInfo;
-      
-      // Parse error response to extract structured error info
       try {
-        if (error.message) {
-          const errorData = JSON.parse(error.message);
-          errorInfo = {
-            message: errorData.error || errorData.details || error.message,
-            code: errorData.code,
-            retryAfter: errorData.retryAfter
-          };
-        } else {
-          errorInfo = { message: error.message || "Model generation failed" };
+        // Step 1: Upload image to Supabase storage
+        const timestamp = Date.now();
+        const imagePath = `${user.id}/images/${timestamp}-${selectedImage.name}`;
+        
+        console.log('Uploading image to storage...');
+        
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('3d-models')
+          .upload(imagePath, selectedImage);
+
+        if (uploadError) {
+          throw new Error(`Image upload failed: ${uploadError.message}`);
         }
-      } catch {
-        errorInfo = { message: error.message || "Model generation failed" };
+        
+        setConversionProgress(20);
+        setConversionStage('generating');
+
+        // Step 2: Generate 3D model
+        const glbUrl = await generate3DModelFromImage(selectedImage);
+        
+        setConversionProgress(70);
+        setConversionStage('downloading');
+        
+        // Step 3: Download the generated GLB file
+        console.log('Downloading GLB from:', glbUrl);
+        const modelResponse = await fetch(glbUrl);
+        if (!modelResponse.ok) {
+          throw new Error(`Failed to download generated model: ${modelResponse.status} ${modelResponse.statusText}`);
+        }
+        
+        const modelBlob = await modelResponse.blob();
+        const modelFile = new File([modelBlob], `generated-${timestamp}.glb`, { type: 'model/gltf-binary' });
+        
+        setConversionProgress(85);
+        setConversionStage('finalizing');
+        
+        // Step 4: Upload the generated model to storage
+        const modelPath = `${user.id}/${timestamp}-generated-model.glb`;
+        
+        const { data: modelUploadData, error: modelUploadError } = await supabase.storage
+          .from('3d-models')
+          .upload(modelPath, modelFile);
+
+        if (modelUploadError) {
+          throw new Error(`Failed to upload generated model: ${modelUploadError.message}`);
+        }
+        
+        setConversionProgress(100);
+        setConversionStage('complete');
+        
+        // Step 5: Pass to the main upload flow
+        const fileInfo = extractFileInfo(modelFile);
+        onModelGenerated(modelFile, modelUploadData.path, fileInfo, imagePath);
+        
+        toast({
+          title: "Success!",
+          description: "Your 3D model has been generated successfully from the image.",
+        });
+        
+        // Reset state after success
+        setTimeout(() => {
+          setConversionProgress(0);
+          setConversionStage('idle');
+          setSelectedImage(null);
+          setImagePreview("");
+          setRetryCount(0);
+        }, 2000);
+
+      } catch (error) {
+        console.error(`Generation attempt ${currentAttempt} failed:`, error);
+        
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        
+        // Check if we should retry
+        const shouldRetry = currentAttempt < maxRetries && 
+          (errorMessage.includes('timeout') || 
+           errorMessage.includes('unavailable') || 
+           errorMessage.includes('network') ||
+           errorMessage.includes('starting up'));
+        
+        if (shouldRetry) {
+          const retryDelay = Math.pow(2, currentAttempt - 1) * 2000; // 2s, 4s exponential backoff
+          
+          toast({
+            title: `Attempt ${currentAttempt} failed`,
+            description: `Retrying in ${retryDelay / 1000} seconds... (${currentAttempt}/${maxRetries})`,
+            variant: "default"
+          });
+          
+          setConversionStage('retrying');
+          
+          setTimeout(() => {
+            attemptGeneration();
+          }, retryDelay);
+          
+        } else {
+          // Final failure - parse error response to extract structured error info
+          let errorInfo: ErrorInfo;
+          
+          try {
+            if (errorMessage) {
+              const errorData = JSON.parse(errorMessage);
+              errorInfo = {
+                message: errorData.error || errorData.details || errorMessage,
+                code: errorData.code,
+                retryAfter: errorData.retryAfter
+              };
+            } else {
+              errorInfo = { message: errorMessage || "Model generation failed" };
+            }
+          } catch {
+            errorInfo = { message: errorMessage || "Model generation failed" };
+          }
+          
+          setError(errorInfo);
+          setConversionProgress(0);
+          setConversionStage('error');
+          
+          // Set countdown if retryAfter is provided
+          if (errorInfo.retryAfter) {
+            setRetryCountdown(errorInfo.retryAfter);
+          }
+          
+          const errorDisplay = getErrorMessage(errorInfo);
+          toast({
+            title: errorDisplay.title,
+            description: errorDisplay.message,
+            variant: "destructive"
+          });
+        }
       }
-      
-      setError(errorInfo);
-      setConversionProgress(0);
-      setConversionStage('error');
-      
-      // Set countdown if retryAfter is provided
-      if (errorInfo.retryAfter) {
-        setRetryCountdown(errorInfo.retryAfter);
-      }
-      
-      const errorDisplay = getErrorMessage(errorInfo);
-      toast({
-        title: errorDisplay.title,
-        description: errorDisplay.message,
-        variant: "destructive"
-      });
-    } finally {
-      setUploading(false);
-    }
+    };
+    
+    // Start the generation process
+    await attemptGeneration();
+    
+    setUploading(false);
   };
 
   const retry = async () => {
