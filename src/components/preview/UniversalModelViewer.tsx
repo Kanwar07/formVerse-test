@@ -61,30 +61,72 @@ const ModelRenderer = ({
     return () => cancelAnimationFrame(animationId);
   }, [autoRotate]);
 
+  // Create safe material JSX based on the loaded materials
+  const renderMaterial = () => {
+    if (wireframeMode) {
+      return (
+        <meshBasicMaterial 
+          color="#00d4ff" 
+          wireframe={true}
+          transparent={true}
+          opacity={0.8}
+          side={THREE.DoubleSide}
+        />
+      );
+    }
+    
+    // For loaded materials, extract properties safely and create new JSX materials
+    if (model.materials.length > 0) {
+      const originalMaterial = model.materials[0];
+      
+      // Handle different material types safely
+      if (originalMaterial instanceof THREE.MeshStandardMaterial) {
+        return (
+          <meshStandardMaterial 
+            color={originalMaterial.color}
+            metalness={originalMaterial.metalness}
+            roughness={originalMaterial.roughness}
+            side={THREE.DoubleSide}
+            map={originalMaterial.map}
+            normalMap={originalMaterial.normalMap}
+          />
+        );
+      } else if (originalMaterial instanceof THREE.MeshPhongMaterial) {
+        return (
+          <meshPhongMaterial 
+            color={originalMaterial.color}
+            shininess={originalMaterial.shininess}
+            specular={originalMaterial.specular}
+            side={THREE.DoubleSide}
+            map={originalMaterial.map}
+          />
+        );
+      } else if (originalMaterial instanceof THREE.MeshBasicMaterial) {
+        return (
+          <meshBasicMaterial 
+            color={originalMaterial.color}
+            side={THREE.DoubleSide}
+            map={originalMaterial.map}
+          />
+        );
+      }
+    }
+    
+    // Default fallback material
+    return (
+      <meshStandardMaterial 
+        color="#888888"
+        metalness={0.1}
+        roughness={0.3}
+        side={THREE.DoubleSide}
+      />
+    );
+  };
+
   return (
     <Center>
       <mesh ref={meshRef} geometry={model.geometry}>
-        {wireframeMode ? (
-          <meshBasicMaterial 
-            color="#00d4ff" 
-            wireframe={true}
-            transparent={true}
-            opacity={0.8}
-          />
-        ) : (
-          model.materials.length > 0 ? (
-            // Use original materials
-            <primitive object={model.materials[0]} />
-          ) : (
-            // Default material
-            <meshStandardMaterial 
-              color="#888888"
-              metalness={0.1}
-              roughness={0.3}
-              side={THREE.DoubleSide}
-            />
-          )
-        )}
+        {renderMaterial()}
       </mesh>
     </Center>
   );

@@ -177,13 +177,16 @@ export class UniversalCADLoader {
 
     onProgress?.({ progress: 80, stage: 'Creating materials' });
     
-    // Create standard material for STL
+  // Create standard material for STL
     const material = new THREE.MeshPhongMaterial({
       color: 0x888888,
       side: THREE.DoubleSide,
       shininess: 30,
       specular: 0x111111
     });
+
+    // Mark material for proper React Three Fiber handling
+    material.needsUpdate = true;
 
     return {
       geometry,
@@ -259,6 +262,13 @@ export class UniversalCADLoader {
       ? Array.isArray(mesh.material) ? mesh.material : [mesh.material]
       : [new THREE.MeshPhongMaterial({ color: 0x888888, side: THREE.DoubleSide })];
 
+    // Ensure materials are properly configured
+    materials.forEach(mat => {
+      if (mat instanceof THREE.Material) {
+        mat.needsUpdate = true;
+      }
+    });
+
     return {
       geometry: mesh.geometry,
       materials
@@ -319,6 +329,8 @@ export class UniversalCADLoader {
         if ('map' in material && material.map && material.map instanceof THREE.Texture) {
           material.map.flipY = false;
         }
+        // Ensure the material is properly configured for React Three Fiber
+        material.needsUpdate = true;
       }
     });
 
@@ -364,6 +376,9 @@ export class UniversalCADLoader {
       vertexColors: geometry.hasAttribute('color')
     });
 
+    // Mark for proper React Three Fiber handling
+    material.needsUpdate = true;
+
     return {
       geometry,
       materials: [material]
@@ -398,6 +413,9 @@ export class UniversalCADLoader {
         side: THREE.DoubleSide,
         shininess: 30
       });
+
+      // Mark for proper React Three Fiber handling
+      material.needsUpdate = true;
 
       return {
         geometry,
