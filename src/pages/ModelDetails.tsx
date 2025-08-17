@@ -401,15 +401,16 @@ const ModelDetails = () => {
                   onError={(error) => console.error('Model load error:', error)}
                 />
               ) : (
-                <PreviewSelector
-                  modelName={model.name}
-                  thumbnail={model.thumbnail}
-                  fileUrl={purchased ? model.fileUrl : undefined}
-                  fileName={purchased ? "industrial-gear-assembly.stl" : undefined}
-                  fileType={purchased ? model.fileFormat : undefined}
-                  isOwner={false}
-                  isPurchased={purchased}
-                  price={model.price}
+                <Enhanced3DViewer
+                  modelUrl={model.fileUrl}
+                  fileName={model.name}
+                  fileType={model.fileFormat}
+                  width={600}
+                  height={400}
+                  showControls={true}
+                  autoRotate={false}
+                  onModelLoad={(info) => console.log('Model loaded:', info)}
+                  onError={(error) => console.error('Model load error:', error)}
                 />
               )}
               
