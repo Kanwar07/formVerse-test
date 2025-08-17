@@ -266,7 +266,7 @@ export const FixedModelViewer = ({
 
         {/* 3D Canvas */}
         <Canvas
-          camera={{ position: [8, 8, 8], fov: 50 }}
+          camera={{ position: [15, 15, 15], fov: 50 }}
           onCreated={({ gl }) => {
             gl.setClearColor('#f8f9fa');
             gl.shadowMap.enabled = true;
