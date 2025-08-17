@@ -4,14 +4,12 @@ import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Model3DThumbnail } from "@/components/dashboard/Model3DThumbnail";
-import { Search, Download, Eye, Heart, Filter } from "lucide-react";
+import { CachedModelThumbnail } from "@/components/preview/CachedModelThumbnail";
+import { Search, Download, Eye, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface Model {
@@ -20,7 +18,7 @@ interface Model {
   description: string;
   file_path: string;
   file_type: string;
-  preview_image: string;
+  preview_image: string | null;
   price: number;
   tags: string[];
   downloads: number;
@@ -241,13 +239,14 @@ const Discover = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredModels.map((model) => (
-              <Card key={model.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={() => handleModelClick(model.id)}>
+              <Card key={model.id} className="group overflow-hidden hover:shadow-lg transition-all duration-200 cursor-pointer" onClick={() => handleModelClick(model.id)}>
                 <CardContent className="p-0">
                   <div className="aspect-square relative">
-                    <Model3DThumbnail
-                      modelId={model.id}
-                      filePath={model.file_path}
+                    <CachedModelThumbnail
+                      thumbnailUrl={model.preview_image}
+                      modelName={model.name}
                       className="w-full h-full"
+                      fallbackIcon={<FileText className="w-8 h-8 text-muted-foreground mb-2" />}
                     />
                     
                     {/* Price Badge */}
@@ -266,7 +265,9 @@ const Discover = () => {
                   </div>
                   
                   <div className="p-4">
-                    <h3 className="font-semibold text-lg mb-2 line-clamp-1">{model.name}</h3>
+                    <h3 className="font-semibold text-lg mb-2 line-clamp-1 group-hover:text-primary transition-colors">
+                      {model.name}
+                    </h3>
                     
                     {model.description && (
                       <p className="text-sm text-muted-foreground mb-3 line-clamp-2">

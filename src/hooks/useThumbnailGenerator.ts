@@ -1,7 +1,7 @@
 
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { ThumbnailService } from '@/services/thumbnailService';
+import { OffscreenThumbnailGenerator } from '@/services/offscreenThumbnailGenerator';
 
 export const useThumbnailGenerator = () => {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -22,11 +22,19 @@ export const useThumbnailGenerator = () => {
     setThumbnailUrl(null); // Reset previous thumbnail
     
     try {
-      const result = await ThumbnailService.generateThumbnail(
+      const result = await OffscreenThumbnailGenerator.generateThumbnail(
         modelFileUrl,
         fileName,
         fileType,
-        userId
+        userId,
+        {
+          width: 512,
+          height: 512,
+          quality: 0.85,
+          format: 'png',
+          backgroundColor: '#f8fafc',
+          lightIntensity: 1.2
+        }
       );
       
       console.log('=== HOOK: Thumbnail generation result ===', result);
@@ -34,16 +42,16 @@ export const useThumbnailGenerator = () => {
       if (result.success && result.thumbnailUrl) {
         setThumbnailUrl(result.thumbnailUrl);
         toast({
-          title: "Model preview generated!",
-          description: "Your 3D model preview is ready.",
+          title: "3D Preview Generated!",
+          description: `High-quality 3D thumbnail created (${result.metadata?.vertices.toLocaleString()} vertices)`,
         });
         return result.thumbnailUrl;
       } else {
-        console.warn('Thumbnail generation failed:', result.error);
+        console.warn('3D thumbnail generation failed:', result.error);
         toast({
-          title: "Using basic preview",
-          description: "Generated a placeholder preview for your model.",
-          variant: "default"
+          title: "Preview generation failed",
+          description: "Could not generate 3D preview, using fallback.",
+          variant: "destructive"
         });
         return null;
       }

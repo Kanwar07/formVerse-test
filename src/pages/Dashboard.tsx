@@ -1,6 +1,6 @@
 
 import { useState, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,7 +13,7 @@ import { Footer } from "@/components/footer";
 import { FormIQInsight } from "@/components/formiq/FormIQInsight";
 import { ModelsPagination } from "@/components/dashboard/ModelsPagination";
 import { ModelFilters } from "@/components/dashboard/ModelFilters";
-import { Model3DThumbnail } from "@/components/dashboard/Model3DThumbnail";
+import { CachedModelThumbnail } from "@/components/preview/CachedModelThumbnail";
 import { useUserModels } from "@/hooks/useUserModels";
 import { useAuth } from "@/context/AuthContext";
 import { Toaster } from "@/components/ui/sonner";
@@ -25,6 +25,7 @@ import {
   Download, 
   File, 
   FileImage, 
+  FileText,
   Tag,
   DollarSign,
   Check,
@@ -45,6 +46,7 @@ const Dashboard = () => {
   const [filters, setFilters] = useState({ status: 'all' as const, category: undefined as string | undefined });
   const [sort, setSort] = useState({ field: 'created_at' as const, direction: 'desc' as const });
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { models, stats, loading, error, hasMore, updating, updateModelPublishStatus, updateModel, deleteModel, refetch } = useUserModels(currentPage, 12, filters, sort);
 
   // Debounced toggle handler
@@ -261,10 +263,12 @@ const Dashboard = () => {
                       
                       <div className="aspect-video w-full relative bg-muted rounded-t-lg overflow-hidden">
                         {model.file_path ? (
-                          <Model3DThumbnail 
-                            modelId={model.id}
-                            filePath={model.file_path}
+                          <CachedModelThumbnail
+                            thumbnailUrl={model.preview_image}
+                            modelName={model.name}
                             className="absolute inset-0"
+                            fallbackIcon={<FileText className="w-8 h-8 text-muted-foreground" />}
+                            onClick={() => navigate(`/model/${model.id}`)}
                           />
                         ) : (
                           <div className="w-full h-full bg-muted flex items-center justify-center">

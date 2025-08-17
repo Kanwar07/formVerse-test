@@ -2,44 +2,32 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { OptimizedModelCard } from "@/components/dashboard/OptimizedModelCard";
 import { 
   Upload, 
-  Eye, 
-  Download, 
-  Edit, 
-  MoreHorizontal, 
   FileText,
   DollarSign,
-  TrendingUp,
-  Star,
-  Users,
-  Settings,
-  Lock,
-  Unlock
+  Eye, 
+  Download
 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 interface Model {
   id: string;
   name: string;
   description: string;
-  preview_image: string;
+  preview_image: string | null;
   price: number;
   downloads: number;
   view_count: number;
   status: string;
+  quality_status: string;
+  is_published: boolean;
   created_at: string;
   printability_score: number;
   tags: string[];
@@ -75,10 +63,24 @@ const CreatorDashboard = () => {
     try {
       setLoading(true);
       
-      // Fetch models for this creator
+      // Fetch models for this creator with all necessary fields
       const { data: modelsData, error: modelsError } = await supabase
         .from('models')
-        .select('*')
+        .select(`
+          id,
+          name,
+          description,
+          preview_image,
+          price,
+          downloads,
+          view_count,
+          status,
+          quality_status,
+          is_published,
+          created_at,
+          printability_score,
+          tags
+        `)
         .eq('user_id', id)
         .order('created_at', { ascending: false });
 
@@ -123,7 +125,10 @@ const CreatorDashboard = () => {
     try {
       const { error } = await supabase
         .from('models')
-        .update({ status: newStatus })
+        .update({ 
+          status: newStatus,
+          is_published: newStatus === 'published'
+        })
         .eq('id', modelId);
 
       if (error) {
@@ -151,16 +156,39 @@ const CreatorDashboard = () => {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'published':
-        return 'bg-green-100 text-green-800';
-      case 'draft':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'archived':
-        return 'bg-gray-100 text-gray-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+  const handleDeleteModel = async (modelId: string) => {
+    if (!confirm('Are you sure you want to delete this model? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('models')
+        .delete()
+        .eq('id', modelId);
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to delete model",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      toast({
+        title: "Success",
+        description: "Model deleted successfully",
+      });
+
+      // Refresh models
+      fetchCreatorModels();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete model",
+        variant: "destructive"
+      });
     }
   };
 
@@ -192,11 +220,9 @@ const CreatorDashboard = () => {
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold">
-              {canEdit ? "My Models" : "Creator Dashboard"}
-            </h1>
+            <h1 className="text-3xl font-bold">Creator Dashboard</h1>
             <p className="text-muted-foreground">
-              {canEdit ? "Manage your uploaded 3D models" : "View creator's models and stats"}
+              Manage your uploaded 3D models and track performance
             </p>
           </div>
           
@@ -276,97 +302,17 @@ const CreatorDashboard = () => {
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {models.map((model) => (
-                  <Card key={model.id} className="overflow-hidden">
-                    <div className="aspect-video bg-muted relative">
-                      <img
-                        src={model.preview_image || '/placeholder.svg'}
-                        alt={model.name}
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute top-2 right-2">
-                        <Badge className={getStatusColor(model.status)}>
-                          {model.status === 'published' && <Unlock className="h-3 w-3 mr-1" />}
-                          {model.status === 'draft' && <Lock className="h-3 w-3 mr-1" />}
-                          {model.status.charAt(0).toUpperCase() + model.status.slice(1)}
-                        </Badge>
-                      </div>
-                    </div>
-                    
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-semibold text-lg truncate">{model.name}</h3>
-                        {canEdit && (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => navigate(`/model/${model.id}`)}>
-                                <Eye className="h-4 w-4 mr-2" />
-                                View
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                <Edit className="h-4 w-4 mr-2" />
-                                Edit
-                              </DropdownMenuItem>
-                              {model.status === 'draft' && (
-                                <DropdownMenuItem 
-                                  onClick={() => handleModelStatusChange(model.id, 'published')}
-                                >
-                                  <Unlock className="h-4 w-4 mr-2" />
-                                  Publish
-                                </DropdownMenuItem>
-                              )}
-                              {model.status === 'published' && (
-                                <DropdownMenuItem 
-                                  onClick={() => handleModelStatusChange(model.id, 'draft')}
-                                >
-                                  <Lock className="h-4 w-4 mr-2" />
-                                  Make Draft
-                                </DropdownMenuItem>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        )}
-                      </div>
-                      
-                      <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                        {model.description}
-                      </p>
-                      
-                      <div className="flex justify-between items-center text-sm text-muted-foreground mb-3">
-                        <span className="flex items-center gap-1">
-                          <Eye className="h-3 w-3" />
-                          {model.view_count || 0}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Download className="h-3 w-3" />
-                          {model.downloads || 0}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Star className="h-3 w-3" />
-                          {model.printability_score || 0}%
-                        </span>
-                      </div>
-                      
-                      <div className="flex justify-between items-center">
-                        <span className="font-semibold text-lg">
-                          {formatPrice(model.price || 0)}
-                        </span>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => navigate(`/model/${model.id}`)}
-                        >
-                          View Details
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <OptimizedModelCard
+                    key={model.id}
+                    model={model}
+                    onEdit={canEdit ? (modelId) => navigate(`/edit-model/${modelId}`) : undefined}
+                    onDelete={canEdit ? handleDeleteModel : undefined}
+                    onTogglePublish={canEdit ? (modelId, isPublished) => 
+                      handleModelStatusChange(modelId, isPublished ? 'published' : 'draft') : undefined
+                    }
+                  />
                 ))}
               </div>
             )}
@@ -375,92 +321,19 @@ const CreatorDashboard = () => {
           {/* Filter by status */}
           {['published', 'draft', 'archived'].map((status) => (
             <TabsContent key={status} value={status} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {models
                   .filter((model) => model.status === status)
                   .map((model) => (
-                    <Card key={model.id} className="overflow-hidden">
-                      <div className="aspect-video bg-muted relative">
-                        <img
-                          src={model.preview_image || '/placeholder.svg'}
-                          alt={model.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      
-                      <CardContent className="p-4">
-                        <div className="flex justify-between items-start mb-2">
-                          <h3 className="font-semibold text-lg truncate">{model.name}</h3>
-                          {canEdit && (
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => navigate(`/model/${model.id}`)}>
-                                  <Eye className="h-4 w-4 mr-2" />
-                                  View
-                                </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                  <Edit className="h-4 w-4 mr-2" />
-                                  Edit
-                                </DropdownMenuItem>
-                                {model.status === 'draft' && (
-                                  <DropdownMenuItem 
-                                    onClick={() => handleModelStatusChange(model.id, 'published')}
-                                  >
-                                    <Unlock className="h-4 w-4 mr-2" />
-                                    Publish
-                                  </DropdownMenuItem>
-                                )}
-                                {model.status === 'published' && (
-                                  <DropdownMenuItem 
-                                    onClick={() => handleModelStatusChange(model.id, 'draft')}
-                                  >
-                                    <Lock className="h-4 w-4 mr-2" />
-                                    Make Draft
-                                  </DropdownMenuItem>
-                                )}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          )}
-                        </div>
-                        
-                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                          {model.description}
-                        </p>
-                        
-                        <div className="flex justify-between items-center text-sm text-muted-foreground mb-3">
-                          <span className="flex items-center gap-1">
-                            <Eye className="h-3 w-3" />
-                            {model.view_count || 0}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Download className="h-3 w-3" />
-                            {model.downloads || 0}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Star className="h-3 w-3" />
-                            {model.printability_score || 0}%
-                          </span>
-                        </div>
-                        
-                        <div className="flex justify-between items-center">
-                          <span className="font-semibold text-lg">
-                            {formatPrice(model.price || 0)}
-                          </span>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => navigate(`/model/${model.id}`)}
-                          >
-                            View Details
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
+                    <OptimizedModelCard
+                      key={model.id}
+                      model={model}
+                      onEdit={canEdit ? (modelId) => navigate(`/edit-model/${modelId}`) : undefined}
+                      onDelete={canEdit ? handleDeleteModel : undefined}
+                      onTogglePublish={canEdit ? (modelId, isPublished) => 
+                        handleModelStatusChange(modelId, isPublished ? 'published' : 'draft') : undefined
+                      }
+                    />
                   ))}
               </div>
               
