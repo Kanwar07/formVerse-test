@@ -21,6 +21,7 @@ interface Model {
   tags: string[];
   quality_status: string;
   admin_status: string;
+  file_path: string;
 }
 
 interface UserStats {

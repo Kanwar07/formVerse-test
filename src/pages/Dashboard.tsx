@@ -13,6 +13,7 @@ import { Footer } from "@/components/footer";
 import { FormIQInsight } from "@/components/formiq/FormIQInsight";
 import { ModelsPagination } from "@/components/dashboard/ModelsPagination";
 import { ModelFilters } from "@/components/dashboard/ModelFilters";
+import { Model3DThumbnail } from "@/components/dashboard/Model3DThumbnail";
 import { useUserModels } from "@/hooks/useUserModels";
 import { useAuth } from "@/context/AuthContext";
 import { Toaster } from "@/components/ui/sonner";
@@ -258,12 +259,18 @@ const Dashboard = () => {
                         </div>
                       )}
                       
-                      <div className="aspect-video w-full relative">
-                        <img 
-                          src={model.preview_image || "/placeholder.svg"} 
-                          alt={model.name} 
-                          className="w-full h-full object-cover rounded-t-lg"
-                        />
+                      <div className="aspect-video w-full relative bg-muted rounded-t-lg overflow-hidden">
+                        {model.file_path ? (
+                          <Model3DThumbnail 
+                            modelId={model.id}
+                            filePath={model.file_path}
+                            className="absolute inset-0"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-muted flex items-center justify-center">
+                            <div className="text-xs text-muted-foreground">No preview</div>
+                          </div>
+                        )}
                         <div className="absolute top-2 left-2">
                           <Badge variant={statusProps.variant}>
                             {statusProps.text}
