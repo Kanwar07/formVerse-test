@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { Upload, Brain, Users, Search, User, LogOut, Plus, Image, Twitter } from "lucide-react";
+import { Upload, Brain, Users, Search, User, LogOut, Plus, Image, X } from "lucide-react";
 import { useState, useEffect } from "react";
 
 import {
@@ -199,7 +199,7 @@ export function Navbar() {
                   : "p-2 border border-white/10 bg-white/5"
               }`}
             >
-              <Twitter className={`text-white/70 group-hover:text-white transition-all duration-300 ${
+              <X className={`text-white/70 group-hover:text-white transition-all duration-300 ${
                 isScrolled ? "h-3.5 w-3.5" : "h-4 w-4"
               }`} />
               {/* Enhanced glow on hover when scrolled */}
