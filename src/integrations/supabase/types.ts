@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -895,47 +895,59 @@ export type Database = {
     Functions: {
       generate_download_token: {
         Args: {
-          user_id_param: string
-          model_id_param: string
           license_id_param: string
+          model_id_param: string
+          user_id_param: string
         }
+        Returns: string
+      }
+      get_current_user_role: {
+        Args: Record<PropertyKey, never>
         Returns: string
       }
       get_own_profile: {
         Args: Record<PropertyKey, never>
         Returns: {
-          id: string
-          email: string
-          username: string
           avatar_url: string
           bio: string
-          location: string
-          website: string
-          specialties: string[]
-          role: string
-          is_public: boolean
           created_at: string
+          email: string
+          id: string
+          is_public: boolean
+          location: string
+          role: string
+          specialties: string[]
           updated_at: string
+          username: string
+          website: string
         }[]
       }
       get_public_profile_safe: {
         Args: { profile_user_id: string }
         Returns: {
-          id: string
-          username: string
           avatar_url: string
           bio: string
-          location: string
-          website: string
-          specialties: string[]
-          role: string
           created_at: string
-          updated_at: string
+          id: string
           is_public: boolean
+          location: string
+          role: string
+          specialties: string[]
+          updated_at: string
+          username: string
+          website: string
         }[]
+      }
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
       }
       revoke_existing_licenses: {
         Args: { target_model_id: string }
+        Returns: undefined
+      }
+      update_user_role_secure: {
+        Args: { new_role: string; target_user_id: string }
         Returns: undefined
       }
     }
