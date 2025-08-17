@@ -44,24 +44,6 @@ const ActualModel = ({
   
   console.log('ActualModel: Loading', fileUrl, 'Type:', fileExtension);
 
-  // Auto rotation
-  React.useEffect(() => {
-    if (!meshRef.current) return;
-    
-    let animationId: number;
-    const animate = () => {
-      if (meshRef.current) {
-        meshRef.current.rotation.y += 0.01;
-        animationId = requestAnimationFrame(animate);
-      }
-    };
-    animationId = requestAnimationFrame(animate);
-    
-    return () => {
-      if (animationId) cancelAnimationFrame(animationId);
-    };
-  }, []);
-
   try {
     // Load model based on file type using React Three Fiber's useLoader
     if (fileExtension === 'gltf' || fileExtension === 'glb') {
@@ -179,6 +161,7 @@ export const FixedModelViewer = ({
 }: FixedModelViewerProps) => {
   const [wireframeMode, setWireframeMode] = useState(false);
   const [showInfo, setShowInfo] = useState(true);
+  const [autoRotate, setAutoRotate] = useState(true);
   
   const controlsRef = useRef<any>(null);
   const { toast } = useToast();
@@ -223,6 +206,16 @@ export const FixedModelViewer = ({
               title="Toggle wireframe mode"
             >
               {wireframeMode ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </Button>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setAutoRotate(!autoRotate)}
+              className={autoRotate ? 'bg-primary/10' : ''}
+              title="Toggle auto rotation"
+            >
+              {autoRotate ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
             </Button>
             
             <Button
@@ -273,7 +266,7 @@ export const FixedModelViewer = ({
 
         {/* 3D Canvas */}
         <Canvas
-          camera={{ position: [3, 3, 3], fov: 50 }}
+          camera={{ position: [8, 8, 8], fov: 50 }}
           onCreated={({ gl }) => {
             gl.setClearColor('#f8f9fa');
             gl.shadowMap.enabled = true;
@@ -313,11 +306,11 @@ export const FixedModelViewer = ({
                 enablePan={true}
                 enableZoom={true}
                 enableRotate={true}
-                minDistance={1}
-                maxDistance={20}
+                minDistance={0.5}
+                maxDistance={50}
                 enableDamping={true}
                 dampingFactor={0.05}
-                autoRotate={true}
+                autoRotate={autoRotate}
                 autoRotateSpeed={1}
               />
             </Suspense>
