@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { Upload, Brain, Users, Search, User, LogOut, Plus, Image, X } from "lucide-react";
+import { Upload, Brain, Users, Search, User, LogOut, Plus, Image } from "lucide-react";
 import { useState, useEffect } from "react";
 
 import {
@@ -199,9 +199,11 @@ export function Navbar() {
                   : "p-2 border border-white/10 bg-white/5"
               }`}
             >
-              <X className={`text-white/70 group-hover:text-white transition-all duration-300 ${
+              <svg className={`text-white/70 group-hover:text-white transition-all duration-300 ${
                 isScrolled ? "h-3.5 w-3.5" : "h-4 w-4"
-              }`} />
+              }`} fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+              </svg>
               {/* Enhanced glow on hover when scrolled */}
               {isScrolled && (
                 <div className="absolute inset-0 bg-gradient-to-r from-cyber-blue/20 to-cyber-purple/20 rounded-full opacity-0 group-hover:opacity-60 transition-opacity duration-300 blur-sm"></div>
