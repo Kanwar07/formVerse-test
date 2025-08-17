@@ -13,7 +13,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CadQuaPricing } from "@/components/printing/CadQuaPricing";
 import { ModelPreview } from "@/components/preview/ModelPreview";
-import { Enhanced3DViewer } from "@/components/three/Enhanced3DViewer";
+import { SimpleSTLViewer } from "@/components/preview/SimpleSTLViewer";
 import { EngagementGate } from "@/components/buyer/EngagementGate";
 import { PreviewSelector } from "@/components/preview/PreviewSelector";
 import { ModelAnalysisReport } from "@/components/analysis/ModelAnalysisReport";
@@ -42,6 +42,8 @@ const ModelDetails = () => {
   const [secureModelUrl, setSecureModelUrl] = useState<string | null>(null);
   const [model, setModel] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [background, setBackground] = useState<'white' | 'grey' | 'black' | 'custom'>('white');
+  const [backgroundImage, setBackgroundImage] = useState<string>();
   const { toast } = useToast();
   
   const paymentManager = new PaymentManager();
@@ -389,29 +391,27 @@ const ModelDetails = () => {
             {/* Enhanced Model Preview */}
             <div className="space-y-4">
               {purchased ? (
-                <Enhanced3DViewer
-                  modelUrl={secureModelUrl || model.fileUrl}
-                  fileName="industrial-gear-assembly.stl"
-                  fileType={model.fileFormat}
-                  width={600}
-                  height={400}
-                  showControls={true}
-                  autoRotate={true}
-                  onModelLoad={(info) => console.log('Model loaded:', info)}
-                  onError={(error) => console.error('Model load error:', error)}
-                />
+                <div className="border rounded-lg overflow-hidden">
+                  <SimpleSTLViewer 
+                    fileUrl={secureModelUrl || model.fileUrl}
+                    background={background}
+                    backgroundImage={backgroundImage}
+                    onBackgroundChange={setBackground}
+                    onBackgroundImageUpload={setBackgroundImage}
+                    className="w-full h-[400px]"
+                  />
+                </div>
               ) : (
-                <Enhanced3DViewer
-                  modelUrl={model.fileUrl}
-                  fileName={model.name}
-                  fileType={model.fileFormat}
-                  width={600}
-                  height={400}
-                  showControls={true}
-                  autoRotate={false}
-                  onModelLoad={(info) => console.log('Model loaded:', info)}
-                  onError={(error) => console.error('Model load error:', error)}
-                />
+                <div className="border rounded-lg overflow-hidden">
+                  <SimpleSTLViewer 
+                    fileUrl={model.fileUrl}
+                    background={background}
+                    backgroundImage={backgroundImage}
+                    onBackgroundChange={setBackground}
+                    onBackgroundImageUpload={setBackgroundImage}
+                    className="w-full h-[400px]"
+                  />
+                </div>
               )}
               
               <Card>
