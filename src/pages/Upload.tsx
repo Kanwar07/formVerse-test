@@ -21,7 +21,7 @@ import { MetadataForm, ModelMetadata } from "@/components/upload/MetadataForm";
 import { PricingForm } from "@/components/upload/PricingForm";
 import { ReviewForm } from "@/components/upload/ReviewForm";
 import { ModelPreview } from "@/components/preview/ModelPreview";
-import { SimpleUniversalViewer } from "@/components/preview/SimpleUniversalViewer";
+import { FixedModelViewer } from "@/components/preview/FixedModelViewer";
 import { useThumbnailGenerator } from "@/hooks/useThumbnailGenerator";
 
 const Upload = () => {
@@ -360,7 +360,7 @@ const Upload = () => {
                   </div>
                 )}
                 
-                <SimpleUniversalViewer
+                <FixedModelViewer
                   fileUrl={getFileUrl() || ''}
                   fileName={modelFile.name}
                   className="h-[400px]"
