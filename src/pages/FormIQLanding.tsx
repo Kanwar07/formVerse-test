@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
-import { ArrowRight, Zap, Shield, Factory, Users, Brain, Sparkles, Tag, DollarSign, Check, Search } from "lucide-react";
+import { ArrowRight, Zap, Shield, Factory, Users, Brain, Sparkles, Tag, DollarSign, Check, Search, Camera } from "lucide-react";
 
 const FormIQLanding = () => {
   return (
@@ -245,6 +245,31 @@ const FormIQLanding = () => {
                 <div className="flex items-center gap-2 text-sm">
                   <div className="w-2 h-2 bg-pink-500 rounded-full"></div>
                   <span>Opportunity alerts</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Image to CAD to 3D Print */}
+            <div className="group bg-card rounded-xl p-6 border hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
+              <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                <Camera className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="text-xl font-semibold mb-3">Image to CAD to 3D Print</h3>
+              <p className="text-muted-foreground mb-4">
+                Transform 2D images into printable 3D CAD models using advanced AI vision and reconstruction technology.
+              </p>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-2 h-2 bg-cyan-500 rounded-full"></div>
+                  <span>95% accuracy rate</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-2 h-2 bg-cyan-500 rounded-full"></div>
+                  <span>5x faster modeling</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-2 h-2 bg-cyan-500 rounded-full"></div>
+                  <span>Print-ready output</span>
                 </div>
               </div>
             </div>
