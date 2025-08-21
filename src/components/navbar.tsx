@@ -75,11 +75,11 @@ export function Navbar() {
           <div className="hidden lg:flex items-center space-x-1">
             <div className="flex items-center space-x-1 bg-white/5 rounded-full p-1 border border-white/10">
               {[
-                { path: '/discover', label: 'Discover', icon: '🔍' },
-                { path: '/creators', label: 'Creators', icon: '👥' },
-                { path: '/image-to-cad', label: 'Image to CAD', icon: '🎨' },
-                { path: '/formiq-landing', label: 'FormIQ', icon: '🧠' },
-                { path: '/pricing', label: 'Pricing', icon: '💎' }
+                { path: '/discover', label: 'Discover' },
+                { path: '/creators', label: 'Creators' },
+                { path: '/image-to-cad', label: 'Image to CAD' },
+                { path: '/formiq-landing', label: 'FormIQ' },
+                { path: '/pricing', label: 'Pricing' }
               ].map((item) => {
                 const isActive = isActivePath(item.path) || (item.path === '/formiq-landing' && isActivePath('/formiq'));
                 return (
@@ -94,11 +94,8 @@ export function Navbar() {
                         : 'text-white/70 hover:text-white hover:bg-white/10'
                       }
                     `}
-                  >
-                    <span className="text-xs opacity-60 group-hover:opacity-100 transition-opacity duration-200">
-                      {item.icon}
-                    </span>
-                    <span>{item.label}</span>
+                   >
+                     <span>{item.label}</span>
                     {isActive && (
                       <div className="absolute inset-0 bg-gradient-to-r from-purple-400/10 to-blue-400/10 rounded-full"></div>
                     )}
@@ -121,10 +118,9 @@ export function Navbar() {
                     hover:shadow-lg hover:scale-105
                   "
                 >
-                  <Link to="/upload" className="flex items-center space-x-2">
-                    <span className="text-xs">📤</span>
-                    <span>Upload</span>
-                  </Link>
+                   <Link to="/upload">
+                     <span>Upload</span>
+                   </Link>
                 </Button>
                 
                 <DropdownMenu>
@@ -150,24 +146,21 @@ export function Navbar() {
                     shadow-2xl shadow-black/50
                   ">
                     <DropdownMenuItem asChild>
-                      <Link to="/dashboard" className="cursor-pointer text-white hover:text-purple-300 rounded-xl p-3 transition-colors duration-200">
-                        <span className="mr-3">📊</span>
-                        Dashboard
-                      </Link>
+                       <Link to="/dashboard" className="cursor-pointer text-white hover:text-purple-300 rounded-xl p-3 transition-colors duration-200">
+                         Dashboard
+                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link to="/upload" className="cursor-pointer text-white hover:text-purple-300 rounded-xl p-3 transition-colors duration-200">
-                        <span className="mr-3">📤</span>
-                        Upload Model
-                      </Link>
+                       <Link to="/upload" className="cursor-pointer text-white hover:text-purple-300 rounded-xl p-3 transition-colors duration-200">
+                         Upload Model
+                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator className="bg-white/10 my-2" />
                     <DropdownMenuItem
                       onClick={handleSignOut}
                       className="cursor-pointer text-red-400 hover:text-red-300 rounded-xl p-3 transition-colors duration-200"
                     >
-                      <span className="mr-3">🚪</span>
-                      Sign Out
+                       Sign Out
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -210,10 +203,9 @@ export function Navbar() {
                     e.currentTarget.style.boxShadow = '0 4px 15px rgba(0, 212, 255, 0.4)';
                   }}
                 >
-                  <Link to="/auth?mode=signup" className="flex items-center space-x-2">
-                    <span>Sign Up</span>
-                    <span className="text-xs group-hover:translate-x-1 transition-transform duration-200">✨</span>
-                  </Link>
+                   <Link to="/auth?mode=signup">
+                     <span>Sign Up</span>
+                   </Link>
                 </Button>
               </div>
             )}
