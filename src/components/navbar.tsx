@@ -1,9 +1,9 @@
 
 import { Button } from "@/components/ui/button";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { Upload, Brain, Users, Search, User, LogOut, Plus, Image } from "lucide-react";
 import { useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
 
 import {
   DropdownMenu,
@@ -19,17 +19,6 @@ export function Navbar() {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const { toast } = useToast();
-  const [isScrolled, setIsScrolled] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrolled = window.scrollY > 20;
-      setIsScrolled(scrolled);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   const handleSignOut = async () => {
     try {
@@ -52,243 +41,123 @@ export function Navbar() {
   const isActivePath = (path: string) => location.pathname === path;
 
   return (
-    <nav className={`relative sticky top-0 z-50 transition-all duration-500 ease-out ${
-      isScrolled 
-        ? "border-b border-white/20 bg-black/80 backdrop-blur-3xl supports-[backdrop-filter]:bg-black/60 shadow-2xl shadow-black/50" 
-        : "border-b border-white/5 bg-transparent backdrop-blur-sm"
-    }`}>
-      {/* Enhanced background effects */}
-      <div className={`absolute inset-0 transition-opacity duration-500 ${
-        isScrolled ? "opacity-20" : "opacity-5"
-      }`}>
-        <div className="elegant-grid"></div>
-      </div>
-      <div className={`absolute inset-0 transition-opacity duration-500 ${
-        isScrolled 
-          ? "bg-gradient-to-r from-cyber-blue/5 via-cyber-purple/3 to-cyber-pink/5 opacity-80" 
-          : "bg-gradient-to-r from-cyber-blue/2 via-transparent to-cyber-purple/2 opacity-40"
-      }`}></div>
-      
-      {/* Animated glow effect on scroll */}
-      {isScrolled && (
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-pulse"></div>
-      )}
-      
-      <div className="container mx-auto px-4 relative z-10">
-        <div className={`flex items-center justify-between transition-all duration-500 ${
-          isScrolled ? "h-14" : "h-16"
-        }`}>
-          {/* Logo Section - Enhanced with scroll behavior */}
-          <div className="flex items-center flex-shrink-0">
-            <div 
-              className="flex items-center space-x-3 cursor-pointer group" 
-              onClick={() => navigate("/")}
-            >
-              <div className={`relative transition-all duration-500 ease-out ${
-                isScrolled ? "h-8 w-8" : "h-10 w-10"
-              }`}>
-                <img 
-                  src="/lovable-uploads/02a4ca94-e61c-4f7c-9ef0-942b8abb8bb3.png" 
-                  alt="FormVerse Logo" 
-                  className={`elegant-glow-effect group-hover:animate-glow-pulse transition-all duration-500 ${
-                    isScrolled ? "h-8 w-8" : "h-10 w-10"
-                  }`}
-                />
-                {/* Enhanced glow effect on scroll */}
-                {isScrolled && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-cyber-blue/30 to-cyber-purple/30 blur-md opacity-50 animate-pulse"></div>
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/10 backdrop-blur-xl border-b border-white/10">
+      <div className="container mx-auto px-6">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo */}
+          <div className="flex items-center space-x-2 cursor-pointer" onClick={() => navigate("/")}>
+            <img 
+              src="/lovable-uploads/02a4ca94-e61c-4f7c-9ef0-942b8abb8bb3.png" 
+              alt="FormVerse Logo" 
+              className="h-6 w-6"
+            />
+            <span className="text-lg font-semibold text-foreground">
+              FormVerse
+            </span>
+          </div>
+
+          {/* Navigation Links - Center */}
+          <div className="hidden md:flex items-center space-x-8">
+            {[
+              { path: '/discover', label: 'Discover' },
+              { path: '/creators', label: 'Creators' },
+              { path: '/image-to-cad', label: 'Image to CAD' },
+              { path: '/formiq-landing', label: 'FormIQ' },
+              { path: '/pricing', label: 'Pricing' }
+            ].map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={cn(
+                  "text-sm font-medium transition-colors duration-200",
+                  isActivePath(item.path) || (item.path === '/formiq-landing' && isActivePath('/formiq'))
+                    ? "text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
                 )}
-              </div>
-              <span className={`font-space-grotesk font-bold tracking-tight transition-all duration-500 ${
-                isScrolled ? "text-lg" : "text-xl"
-              }`}>
-                <span className="text-white">FORM</span>
-                <span className="bg-gradient-to-r from-purple-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">VERSE</span>
-              </span>
-            </div>
-          </div>
-          
-          {/* Navigation Links - Enhanced glass morphism with scroll response */}
-          <div className="hidden lg:flex items-center justify-center flex-1 mx-8">
-            <div className={`flex items-center space-x-2 elegant-glass rounded-full backdrop-blur-2xl transition-all duration-500 ${
-              isScrolled 
-                ? "p-1.5 border border-white/20 bg-black/40 shadow-xl shadow-black/20" 
-                : "p-2 border border-white/10 bg-white/5"
-            }`}>
-              <Button
-                variant="ghost"
-                onClick={() => navigate("/discover")}
-                className={`group relative overflow-hidden rounded-full px-4 py-2 h-9 text-sm font-medium transition-all duration-300 ${
-                  isActivePath("/discover") 
-                    ? "bg-gradient-to-r from-cyber-blue/20 to-cyber-blue/10 text-white border border-cyber-blue/30 shadow-lg shadow-cyber-blue/20" 
-                    : "text-white/80 hover:text-white hover:bg-white/10 border border-transparent"
-                }`}
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-cyber-blue/20 to-transparent opacity-0 group-hover:opacity-50 transition-opacity duration-300 rounded-full"></div>
-                <Search className="h-4 w-4 mr-2 relative z-10" />
-                <span className="relative z-10">Discover</span>
-              </Button>
-              
-              <Button
-                variant="ghost"
-                onClick={() => navigate("/creators")}
-                className={`group relative overflow-hidden rounded-full px-4 py-2 h-9 text-sm font-medium transition-all duration-300 ${
-                  isActivePath("/creators") 
-                    ? "bg-gradient-to-r from-cyber-purple/20 to-cyber-purple/10 text-white border border-cyber-purple/30 shadow-lg shadow-cyber-purple/20" 
-                    : "text-white/80 hover:text-white hover:bg-white/10 border border-transparent"
-                }`}
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-cyber-purple/20 to-transparent opacity-0 group-hover:opacity-50 transition-opacity duration-300 rounded-full"></div>
-                <Users className="h-4 w-4 mr-2 relative z-10" />
-                <span className="relative z-10">Creators</span>
-              </Button>
-              
-              <Button
-                variant="ghost"
-                onClick={() => navigate("/image-to-cad")}
-                className={`group relative overflow-hidden rounded-full px-4 py-2 h-9 text-sm font-medium transition-all duration-300 ${
-                  isActivePath("/image-to-cad") 
-                    ? "bg-gradient-to-r from-cyber-green/20 to-cyber-green/10 text-white border border-cyber-green/30 shadow-lg shadow-cyber-green/20" 
-                    : "text-white/80 hover:text-white hover:bg-white/10 border border-transparent"
-                }`}
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-cyber-green/20 to-transparent opacity-0 group-hover:opacity-50 transition-opacity duration-300 rounded-full"></div>
-                <Image className="h-4 w-4 mr-2 relative z-10" />
-                <span className="relative z-10">Image to CAD</span>
-              </Button>
-              
-              <Button
-                variant="ghost"
-                onClick={() => navigate("/formiq-landing")}
-                className={`group relative overflow-hidden rounded-full px-4 py-2 h-9 text-sm font-medium transition-all duration-300 ${
-                  isActivePath("/formiq-landing") || isActivePath("/formiq") 
-                    ? "bg-gradient-to-r from-cyber-pink/20 to-cyber-pink/10 text-white border border-cyber-pink/30 shadow-lg shadow-cyber-pink/20" 
-                    : "text-white/80 hover:text-white hover:bg-white/10 border border-transparent"
-                }`}
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-cyber-pink/20 to-transparent opacity-0 group-hover:opacity-50 transition-opacity duration-300 rounded-full"></div>
-                <Brain className="h-4 w-4 mr-2 relative z-10" />
-                <span className="relative z-10">FormIQ</span>
-              </Button>
-
-              <Button
-                variant="ghost"
-                onClick={() => navigate("/pricing")}
-                className={`group relative overflow-hidden rounded-full px-4 py-2 h-9 text-sm font-medium transition-all duration-300 ${
-                  isActivePath("/pricing") 
-                    ? "bg-gradient-to-r from-cyber-yellow/20 to-cyber-yellow/10 text-white border border-cyber-yellow/30 shadow-lg shadow-cyber-yellow/20" 
-                    : "text-white/80 hover:text-white hover:bg-white/10 border border-transparent"
-                }`}
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-cyber-yellow/20 to-transparent opacity-0 group-hover:opacity-50 transition-opacity duration-300 rounded-full"></div>
-                <span className="relative z-10">Pricing</span>
-              </Button>
-            </div>
+                {item.label}
+              </Link>
+            ))}
           </div>
 
-          {/* Right Section - Enhanced with scroll response */}
-          <div className="flex items-center space-x-3 flex-shrink-0">
-            {/* Twitter/X Link - Enhanced */}
-            <a 
-              href="https://x.com/FormverseD" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className={`group elegant-glass rounded-full transition-all duration-500 hover:scale-105 ${
-                isScrolled 
-                  ? "p-1.5 border border-white/20 bg-black/30 shadow-lg" 
-                  : "p-2 border border-white/10 bg-white/5"
-              }`}
+          {/* Right Side Actions */}
+          <div className="flex items-center space-x-3">
+            {/* Theme Toggle */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-9 h-9 p-0 text-muted-foreground hover:text-foreground"
             >
-              <svg className={`text-white/70 group-hover:text-white transition-all duration-300 ${
-                isScrolled ? "h-3.5 w-3.5" : "h-4 w-4"
-              }`} fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
               </svg>
-              {/* Enhanced glow on hover when scrolled */}
-              {isScrolled && (
-                <div className="absolute inset-0 bg-gradient-to-r from-cyber-blue/20 to-cyber-purple/20 rounded-full opacity-0 group-hover:opacity-60 transition-opacity duration-300 blur-sm"></div>
-              )}
-            </a>
-            
+            </Button>
+
+            {/* Auth Actions */}
             {user ? (
-              <div className="flex items-center space-x-3">
+              <>
                 <Button
+                  asChild
+                  size="sm"
                   variant="outline"
-                  onClick={() => navigate("/upload")}
-                  className={`group relative overflow-hidden elegant-glass border transition-all duration-500 hover:scale-105 ${
-                    isScrolled 
-                      ? "border-white/30 bg-gradient-to-r from-cyber-blue/15 to-cyber-purple/15 hover:from-cyber-blue/25 hover:to-cyber-purple/25 text-white text-sm rounded-full px-5 py-1.5 h-8 shadow-lg" 
-                      : "border-white/20 bg-gradient-to-r from-cyber-blue/10 to-cyber-purple/10 hover:from-cyber-blue/20 hover:to-cyber-purple/20 text-white text-sm rounded-full px-6 py-2 h-9"
-                  } font-medium hover:shadow-lg hover:shadow-cyber-blue/20`}
+                  className="border-border/50 bg-background/50 hover:bg-accent text-foreground"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-cyber-blue/30 to-cyber-purple/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full"></div>
-                  <Plus className={`mr-2 relative z-10 ${isScrolled ? "h-3.5 w-3.5" : "h-4 w-4"}`} />
-                  <span className="hidden sm:inline relative z-10">Upload</span>
-                  {/* Enhanced glow effect when scrolled */}
-                  {isScrolled && (
-                    <div className="absolute inset-0 bg-gradient-to-r from-cyber-blue/20 to-cyber-purple/20 blur-md opacity-0 group-hover:opacity-50 transition-opacity duration-300 rounded-full"></div>
-                  )}
+                  <Link to="/upload">Upload Model</Link>
                 </Button>
                 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      className="group relative overflow-hidden elegant-glass border border-white/15 bg-white/5 hover:bg-white/10 text-white hover:text-white rounded-full px-4 py-2 h-9 font-medium transition-all duration-300 hover:scale-105"
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="flex items-center space-x-2 text-foreground hover:bg-accent"
                     >
-                      <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full"></div>
-                      <User className="h-4 w-4 mr-2 relative z-10" />
-                      <span className="hidden sm:inline text-white/90 max-w-32 truncate relative z-10">
-                        {user.email}
-                      </span>
+                      <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center">
+                        <span className="text-xs font-semibold">
+                          {user.email?.charAt(0).toUpperCase() || 'U'}
+                        </span>
+                      </div>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent 
-                    align="end" 
-                    className="w-56 elegant-glass border border-white/20 backdrop-blur-3xl bg-black/40 rounded-2xl p-2"
-                  >
-                    <DropdownMenuItem 
-                      onClick={() => navigate("/dashboard")} 
-                      className="hover:bg-white/10 text-white/90 rounded-xl m-1 px-3 py-2 transition-all duration-200 hover:scale-[1.02]"
-                    >
-                      <User className="mr-3 h-4 w-4 text-white/70" />
-                      Dashboard
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem asChild>
+                      <Link to="/dashboard" className="cursor-pointer">
+                        Dashboard
+                      </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => navigate("/upload")} 
-                      className="hover:bg-white/10 text-white/90 rounded-xl m-1 px-3 py-2 transition-all duration-200 hover:scale-[1.02]"
-                    >
-                      <Upload className="mr-3 h-4 w-4 text-white/70" />
-                      Upload Model
+                    <DropdownMenuItem asChild>
+                      <Link to="/upload" className="cursor-pointer">
+                        Upload Model
+                      </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator className="bg-white/20 my-2" />
-                    <DropdownMenuItem 
-                      onClick={handleSignOut} 
-                      className="text-red-400 hover:bg-red-500/10 rounded-xl m-1 px-3 py-2 transition-all duration-200 hover:scale-[1.02]"
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={handleSignOut}
+                      className="cursor-pointer text-destructive focus:text-destructive"
                     >
-                      <LogOut className="mr-3 h-4 w-4" />
                       Sign Out
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-              </div>
+              </>
             ) : (
-              <div className="flex items-center space-x-2 elegant-glass rounded-full p-1 border border-white/10">
+              <>
                 <Button
-                  variant="ghost"
-                  onClick={() => navigate("/auth")}
-                  className="text-white/80 hover:text-white hover:bg-white/10 text-sm rounded-full px-4 py-2 h-8 font-medium transition-all duration-300"
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className="border-border/50 bg-background/50 hover:bg-accent text-foreground"
                 >
-                  Sign In
+                  <Link to="/auth?mode=signin">Log In</Link>
                 </Button>
                 <Button
-                  onClick={() => navigate("/auth")}
-                  className="group relative overflow-hidden bg-gradient-to-r from-cyber-blue/20 to-cyber-purple/20 border border-white/20 text-white hover:from-cyber-blue/30 hover:to-cyber-purple/30 hover:border-white/30 text-sm rounded-full px-4 py-2 h-8 font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-cyber-blue/20"
+                  asChild
+                  size="sm"
+                  className="bg-foreground text-background hover:bg-foreground/90"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-cyber-blue/40 to-cyber-purple/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full"></div>
-                  <span className="relative z-10">Sign Up</span>
+                  <Link to="/auth?mode=signup">Request a Demo</Link>
                 </Button>
-              </div>
+              </>
             )}
           </div>
         </div>
