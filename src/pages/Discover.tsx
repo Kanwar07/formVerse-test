@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { CachedModelThumbnail } from "@/components/preview/CachedModelThumbnail";
+import { Model3DThumbnail } from "@/components/dashboard/Model3DThumbnail";
 import { Search, Download, Eye, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -242,11 +242,10 @@ const Discover = () => {
               <Card key={model.id} className="group overflow-hidden hover:shadow-lg transition-all duration-200 cursor-pointer" onClick={() => handleModelClick(model.id)}>
                 <CardContent className="p-0">
                   <div className="aspect-square relative">
-                    <CachedModelThumbnail
-                      thumbnailUrl={model.preview_image}
-                      modelName={model.name}
+                    <Model3DThumbnail
+                      modelId={model.id}
+                      filePath={model.file_path}
                       className="w-full h-full"
-                      fallbackIcon={<FileText className="w-8 h-8 text-muted-foreground mb-2" />}
                     />
                     
                     {/* Price Badge */}

@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CachedModelThumbnail } from '@/components/preview/CachedModelThumbnail';
+import { Model3DThumbnail } from '@/components/dashboard/Model3DThumbnail';
 import { 
   Eye, 
   Download, 
@@ -26,6 +26,7 @@ interface OptimizedModelCardProps {
     id: string;
     name: string;
     preview_image?: string | null;
+    file_path?: string;
     price?: number;
     downloads?: number;
     view_count?: number;
@@ -84,12 +85,17 @@ export const OptimizedModelCard: React.FC<OptimizedModelCardProps> = ({
       <CardContent className="p-0">
         {/* Thumbnail */}
         <div className="aspect-square relative">
-          <CachedModelThumbnail
-            thumbnailUrl={model.preview_image}
-            modelName={model.name}
-            className="w-full h-full"
-            onClick={() => window.open(`/model/${model.id}`, '_blank')}
-          />
+          {model.file_path ? (
+            <Model3DThumbnail
+              modelId={model.id}
+              filePath={model.file_path}
+              className="w-full h-full cursor-pointer"
+            />
+          ) : (
+            <div className="w-full h-full bg-muted flex items-center justify-center">
+              <div className="text-xs text-muted-foreground">No preview</div>
+            </div>
+          )}
           
           {/* Quick Actions Overlay */}
           <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">

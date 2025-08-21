@@ -13,7 +13,7 @@ import { Footer } from "@/components/footer";
 import { FormIQInsight } from "@/components/formiq/FormIQInsight";
 import { ModelsPagination } from "@/components/dashboard/ModelsPagination";
 import { ModelFilters } from "@/components/dashboard/ModelFilters";
-import { CachedModelThumbnail } from "@/components/preview/CachedModelThumbnail";
+import { Model3DThumbnail } from "@/components/dashboard/Model3DThumbnail";
 import { useUserModels } from "@/hooks/useUserModels";
 import { useAuth } from "@/context/AuthContext";
 import { Toaster } from "@/components/ui/sonner";
@@ -261,14 +261,12 @@ const Dashboard = () => {
                         </div>
                       )}
                       
-                      <div className="aspect-video w-full relative bg-muted rounded-t-lg overflow-hidden">
+                      <div className="aspect-video w-full relative bg-muted rounded-t-lg overflow-hidden cursor-pointer" onClick={() => navigate(`/model/${model.id}`)}>
                         {model.file_path ? (
-                          <CachedModelThumbnail
-                            thumbnailUrl={model.preview_image}
-                            modelName={model.name}
+                          <Model3DThumbnail
+                            modelId={model.id}
+                            filePath={model.file_path}
                             className="absolute inset-0"
-                            fallbackIcon={<FileText className="w-8 h-8 text-muted-foreground" />}
-                            onClick={() => navigate(`/model/${model.id}`)}
                           />
                         ) : (
                           <div className="w-full h-full bg-muted flex items-center justify-center">
