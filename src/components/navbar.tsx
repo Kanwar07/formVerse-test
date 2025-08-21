@@ -41,43 +41,49 @@ export function Navbar() {
   const isActivePath = (path: string) => location.pathname === path;
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/10 backdrop-blur-xl border-b border-white/10">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-transparent backdrop-blur-sm border-b border-white/5">
       <div className="container mx-auto px-6">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <div className="flex items-center space-x-2 cursor-pointer" onClick={() => navigate("/")}>
-            <img 
-              src="/lovable-uploads/02a4ca94-e61c-4f7c-9ef0-942b8abb8bb3.png" 
-              alt="FormVerse Logo" 
-              className="h-6 w-6"
-            />
-            <span className="text-lg font-semibold text-foreground">
-              FormVerse
+          <div className="flex items-center space-x-3 cursor-pointer group" onClick={() => navigate("/")}>
+            <div className="relative">
+              <img 
+                src="/lovable-uploads/02a4ca94-e61c-4f7c-9ef0-942b8abb8bb3.png" 
+                alt="FormVerse Logo" 
+                className="h-8 w-8 transition-all duration-300 group-hover:scale-110"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-secondary/30 blur-md opacity-0 group-hover:opacity-50 transition-opacity duration-300 rounded-full"></div>
+            </div>
+            <span className="text-xl font-bold tracking-tight">
+              <span className="text-white">FORM</span>
+              <span className="bg-gradient-to-r from-purple-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">VERSE</span>
             </span>
           </div>
 
-          {/* Navigation Links - Center */}
-          <div className="hidden md:flex items-center space-x-8">
-            {[
-              { path: '/discover', label: 'Discover' },
-              { path: '/creators', label: 'Creators' },
-              { path: '/image-to-cad', label: 'Image to CAD' },
-              { path: '/formiq-landing', label: 'FormIQ' },
-              { path: '/pricing', label: 'Pricing' }
-            ].map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={cn(
-                  "text-sm font-medium transition-colors duration-200",
-                  isActivePath(item.path) || (item.path === '/formiq-landing' && isActivePath('/formiq'))
-                    ? "text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {item.label}
-              </Link>
-            ))}
+          {/* Navigation Links - Center with Glassmorphism */}
+          <div className="hidden md:flex items-center justify-center flex-1 mx-8">
+            <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-xl border border-white/10 rounded-full p-2 shadow-lg">
+              {[
+                { path: '/discover', label: 'Discover' },
+                { path: '/creators', label: 'Creators' },
+                { path: '/image-to-cad', label: 'Image to CAD' },
+                { path: '/formiq-landing', label: 'FormIQ' },
+                { path: '/pricing', label: 'Pricing' }
+              ].map((item) => (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={cn(
+                    "px-4 py-2 text-sm font-medium transition-all duration-200 rounded-full relative group",
+                    isActivePath(item.path) || (item.path === '/formiq-landing' && isActivePath('/formiq'))
+                      ? "text-white bg-white/20 shadow-lg"
+                      : "text-white/70 hover:text-white hover:bg-white/10"
+                  )}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
           </div>
 
           {/* Right Side Actions */}
