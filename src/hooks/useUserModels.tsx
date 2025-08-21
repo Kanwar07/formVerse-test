@@ -99,6 +99,9 @@ export const useUserModels = (page = 1, limit = 12, filters: FilterOptions = {},
 
       if (modelsError) throw modelsError;
 
+      console.log('Dashboard - fetched models:', modelsData?.length);
+      console.log('Dashboard - first model sample:', modelsData?.[0]);
+
       let sortedData = modelsData || [];
       
       // Custom sort for revenue since we can't sort by calculated field in Supabase

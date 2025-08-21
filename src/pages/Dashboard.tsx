@@ -263,11 +263,14 @@ const Dashboard = () => {
                       
                       <div className="aspect-video w-full relative bg-muted rounded-t-lg overflow-hidden cursor-pointer" onClick={() => navigate(`/model/${model.id}`)}>
                         {model.file_path ? (
-                          <Model3DThumbnail
-                            modelId={model.id}
-                            filePath={model.file_path}
-                            className="absolute inset-0"
-                          />
+                          <>
+                            <Model3DThumbnail
+                              modelId={model.id}
+                              filePath={model.file_path}
+                              className="absolute inset-0"
+                            />
+                            {console.log(`Dashboard rendering 3D thumbnail for model ${model.id} with file_path: ${model.file_path}`)}
+                          </>
                         ) : (
                           <div className="w-full h-full bg-muted flex items-center justify-center">
                             <div className="text-xs text-muted-foreground">No preview</div>

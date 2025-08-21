@@ -20,6 +20,7 @@ function ModelMesh({ url, onLoaded }: { url: string; onLoaded: () => void }) {
     loader.load(
       url,
       (loadedGeometry) => {
+        console.log('STL geometry loaded successfully');
         // Center and scale the geometry
         const box = new Box3().setFromBufferAttribute(loadedGeometry.attributes.position as any);
         const center = box.getCenter(new Vector3());
@@ -39,7 +40,9 @@ function ModelMesh({ url, onLoaded }: { url: string; onLoaded: () => void }) {
         setGeometry(loadedGeometry);
         onLoaded();
       },
-      undefined,
+      (progress) => {
+        console.log('STL loading progress:', progress);
+      },
       (error) => {
         console.error('Error loading STL:', error);
         onLoaded();
@@ -205,6 +208,17 @@ export const Model3DThumbnail = ({ modelId, filePath, className = "" }: Model3DT
           antialias: true, 
           alpha: true,
           preserveDrawingBuffer: false,
+        }}
+        onCreated={(state) => {
+          console.log('Canvas created successfully');
+          // Handle WebGL context loss
+          state.gl.domElement.addEventListener('webglcontextlost', (event) => {
+            console.warn('WebGL context lost, preventing default');
+            event.preventDefault();
+          });
+          state.gl.domElement.addEventListener('webglcontextrestored', () => {
+            console.log('WebGL context restored');
+          });
         }}
         dpr={window.devicePixelRatio > 2 ? 2 : window.devicePixelRatio}
       >
