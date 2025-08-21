@@ -132,16 +132,21 @@ export const Model3DThumbnail = ({ modelId, filePath, className = "" }: Model3DT
     setError(false);
     
     try {
+      console.log('Loading model from filePath:', filePath);
       const { data, error } = await supabase.storage
         .from('3d-models')
         .download(filePath);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase storage error:', error);
+        throw error;
+      }
       
+      console.log('Model data loaded successfully, size:', data.size);
       const url = URL.createObjectURL(data);
       setModelUrl(url);
     } catch (err) {
-      console.error('Error loading model for thumbnail:', err);
+      console.error('Error loading model for thumbnail:', err, 'filePath:', filePath);
       setError(true);
     } finally {
       setIsLoading(false);

@@ -65,10 +65,13 @@ const Discover = () => {
           view_count,
           printability_score,
           created_at,
-          user_id
-        `)
-        .eq('status', 'published')
-        .eq('is_published', true);
+          user_id,
+          status,
+          is_published
+        `);
+        // Temporarily removed published filter to debug
+        // .eq('status', 'published')
+        // .eq('is_published', true);
 
       // Apply sorting
       switch (sortBy) {
@@ -99,6 +102,9 @@ const Discover = () => {
         });
         return;
       }
+
+      console.log('Fetched models:', modelsData?.length, 'models');
+      console.log('First model sample:', modelsData?.[0]);
 
       // Fetch profiles separately for each model
       const modelsWithProfiles: Model[] = [];
