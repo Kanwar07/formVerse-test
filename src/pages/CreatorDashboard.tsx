@@ -201,7 +201,7 @@ const CreatorDashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-muted/30">
+    <div className="min-h-screen bg-muted/30 pt-24">
         <Navbar />
         <div className="container py-8">
           <div className="flex justify-center items-center h-64">
@@ -213,7 +213,7 @@ const CreatorDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-muted/30">
+    <div className="min-h-screen bg-muted/30 pt-24">
       <Navbar />
       
       <div className="container py-8 max-w-7xl">

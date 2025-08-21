@@ -165,7 +165,7 @@ const Discover = () => {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
-        <main className="container py-8 flex-grow">
+        <main className="container py-8 flex-grow pt-24">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {[...Array(8)].map((_, i) => (
               <Card key={i} className="animate-pulse">
@@ -189,7 +189,7 @@ const Discover = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
-      <main className="container py-8 flex-grow">
+      <main className="container py-8 flex-grow pt-24">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-4">Discover 3D Models</h1>
           <p className="text-muted-foreground mb-6">

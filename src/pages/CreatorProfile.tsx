@@ -105,7 +105,7 @@ const CreatorProfile = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col pt-24">
       <Navbar />
       
       <main className="flex-grow container py-8">

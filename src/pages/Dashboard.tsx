@@ -108,7 +108,7 @@ const Dashboard = () => {
       <Navbar />
       <Toaster />
       
-      <div className="container py-8">
+      <div className="container py-8 pt-24">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold mb-1">Creator Dashboard</h1>

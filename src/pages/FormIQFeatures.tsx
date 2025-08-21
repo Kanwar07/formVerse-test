@@ -131,7 +131,7 @@ const FormIQFeatures = () => {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-muted/30">
+    <div className="min-h-screen flex flex-col bg-muted/30 pt-24">
       <Navbar />
       
       <div className="container py-8">

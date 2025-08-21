@@ -311,7 +311,7 @@ const ModelDetails = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col bg-muted/30">
+    <div className="min-h-screen flex flex-col bg-muted/30 pt-24">
         <Navbar />
         <div className="container py-8 max-w-6xl">
           <div className="flex items-center justify-center h-96">
@@ -328,7 +328,7 @@ const ModelDetails = () => {
 
   if (!model) {
     return (
-      <div className="min-h-screen flex flex-col bg-muted/30">
+    <div className="min-h-screen flex flex-col bg-muted/30 pt-24">
         <Navbar />
         <div className="container py-8 max-w-6xl">
           <div className="text-center py-16">
@@ -345,7 +345,7 @@ const ModelDetails = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-muted/30">
+    <div className="min-h-screen flex flex-col bg-muted/30 pt-24">
       <Navbar />
       
       <div className="container py-8 max-w-6xl">

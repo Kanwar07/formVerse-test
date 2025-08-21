@@ -122,7 +122,7 @@ const Pricing = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
-      <main className="container py-8 flex-grow">
+      <main className="container py-8 flex-grow pt-24">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 mb-4">
