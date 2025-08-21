@@ -82,11 +82,11 @@ export function Navbar() {
               </Button>
             )}
             <div className="relative">
-              <div className="absolute -inset-4 bg-gradient-to-r from-purple-400/20 to-blue-400/20 rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <div className="absolute -inset-2 bg-gradient-to-r from-purple-400/20 to-blue-400/20 rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               <img 
                 src="/lovable-uploads/02a4ca94-e61c-4f7c-9ef0-942b8abb8bb3.png" 
                 alt="FormVerse Logo" 
-                className="relative h-20 w-20 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6"
+                className="relative h-10 w-10 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6"
               />
             </div>
             <div className="text-2xl font-bold tracking-tight">
