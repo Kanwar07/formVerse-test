@@ -4,6 +4,7 @@ import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { ArrowLeft } from "lucide-react";
 
 import {
   DropdownMenu,
@@ -39,6 +40,11 @@ export function Navbar() {
   };
 
   const isActivePath = (path: string) => location.pathname === path;
+  const isHomePage = location.pathname === "/" || location.pathname === "/landing";
+
+  const handleBack = () => {
+    window.history.back();
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-transparent">
@@ -57,12 +63,30 @@ export function Navbar() {
             className="flex items-center space-x-4 cursor-pointer group" 
             onClick={() => navigate("/")}
           >
+            {!isHomePage && (
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleBack();
+                }}
+                variant="ghost"
+                size="sm"
+                className="
+                  flex items-center justify-center w-10 h-10 rounded-full 
+                  bg-white/10 hover:bg-white/20 text-white border border-white/20
+                  backdrop-blur-sm hover:scale-110 transition-all duration-200
+                  mr-2
+                "
+              >
+                <ArrowLeft size={18} />
+              </Button>
+            )}
             <div className="relative">
-              <div className="absolute -inset-4 bg-gradient-to-r from-purple-400/20 to-blue-400/20 rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <div className="absolute -inset-8 bg-gradient-to-r from-purple-400/20 to-blue-400/20 rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               <img 
                 src="/lovable-uploads/02a4ca94-e61c-4f7c-9ef0-942b8abb8bb3.png" 
                 alt="FormVerse Logo" 
-                className="relative h-30 w-30 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6"
+                className="relative h-60 w-60 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6"
               />
             </div>
             <div className="text-2xl font-bold tracking-tight">
