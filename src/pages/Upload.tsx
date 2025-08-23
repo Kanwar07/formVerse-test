@@ -500,6 +500,9 @@ const Upload = () => {
             <CardContent className="pt-6">
               <PricingForm 
                 suggestedPrice={suggestedPrice}
+                modelName={modelName}
+                description={modelDescription}
+                printabilityScore={printabilityScore}
                 onBack={() => setCurrentStep(3)}
                 onContinue={(price, license) => {
                   handlePricingSubmit(price, license);
