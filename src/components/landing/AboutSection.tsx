@@ -9,13 +9,13 @@ export function AboutSection() {
           <div>
             <h2 className="text-3xl font-bold mb-4">About <span className="font-space-grotesk bg-gradient-to-r from-purple-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">FormVerse</span></h2>
             <p className="text-muted-foreground mb-4">
-              <span className="font-space-grotesk font-bold bg-gradient-to-r from-purple-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">FormVerse</span> is India's first AI-powered platform dedicated to helping CAD creators monetize their designs while providing OEMs with access to high-quality, verified 3D models.
+              <span className="font-space-grotesk font-bold bg-gradient-to-r from-purple-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">FormVerse</span> is India's pioneering global CAD marketplace, revolutionizing how designers monetize their creativity while connecting manufacturers with premium, AI-validated 3D models and designs.
             </p>
             <p className="text-muted-foreground mb-4">
-              Our proprietary AI system, FormIQ, helps validate model printability, suggest optimal pricing, and ensure designs meet industry standards before they reach the marketplace.
+              Powered by our cutting-edge FormIQ AI engine, we analyze design complexity, optimize pricing strategies, validate printability scores, and ensure every model meets the highest quality standards for modern manufacturing needs.
             </p>
             <p className="text-muted-foreground">
-              Founded in 2023, we're on a mission to bridge the gap between CAD creators and manufacturers, fostering innovation and growth in India's 3D printing and manufacturing ecosystem.
+              Founded in 2025, we're transforming the future of design commerce by empowering creators to turn their CAD expertise into sustainable income while accelerating innovation across India's rapidly expanding manufacturing and 3D printing industries.
             </p>
             <Button variant="outline" className="mt-6">Learn More</Button>
           </div>
