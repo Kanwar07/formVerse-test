@@ -32,6 +32,8 @@ import SignUp from "./pages/SignUp";
 import ImageToCAD from "./pages/ImageToCAD";
 import FormVerseUpload from "./pages/FormVerseUpload";
 import FormIQLanding from "./pages/FormIQLanding";
+import TermsOfService from "./pages/TermsOfService";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -85,6 +87,8 @@ function App() {
                 <Route path="/signup" element={<SignUp />} />
                 <Route path="/test-download" element={<TestDownload />} />
                 <Route path="/test-image-to-cad" element={<TestImageToCAD />} />
+                <Route path="/terms-of-service" element={<TermsOfService />} />
+                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
