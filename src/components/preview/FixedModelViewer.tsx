@@ -173,8 +173,7 @@ const ModelWithAutoFit = ({
       
       const mesh = (
         <Center>
-          <mesh ref={meshRef}>
-            <primitive object={geometry} />
+          <mesh ref={meshRef} geometry={geometry}>
             <meshStandardMaterial 
               color={wireframe ? "#00d4ff" : "#888888"} 
               wireframe={wireframe}
