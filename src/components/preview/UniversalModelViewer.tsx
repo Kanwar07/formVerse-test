@@ -40,7 +40,7 @@ interface UniversalModelViewerProps {
   onBackgroundImageUpload?: (imageUrl: string) => void;
 }
 
-// Model renderer component
+// Use SafeModelRenderer instead of inline ModelRenderer
 const ModelRenderer = ({ 
   model, 
   wireframeMode, 
@@ -50,143 +50,12 @@ const ModelRenderer = ({
   wireframeMode: boolean; 
   autoRotate: boolean;
 }) => {
-  const meshRef = useRef<THREE.Mesh>(null);
-  
-  // Auto rotation
-  React.useEffect(() => {
-    if (!meshRef.current || !autoRotate) return;
-    
-    const animate = () => {
-      if (meshRef.current) {
-        meshRef.current.rotation.y += 0.005;
-        requestAnimationFrame(animate);
-      }
-    };
-    
-    const animationId = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(animationId);
-  }, [autoRotate]);
-
-  // Create safe material JSX based on the loaded materials
-  const renderMaterial = () => {
-    if (wireframeMode) {
-      return (
-        <meshBasicMaterial 
-          color="#00d4ff" 
-          wireframe={true}
-          transparent={true}
-          opacity={0.8}
-          side={THREE.DoubleSide}
-        />
-      );
-    }
-    
-    // For loaded materials, extract properties safely and create new JSX materials
-    if (model.materials && model.materials.length > 0) {
-      const originalMaterial = model.materials[0];
-      
-      // Ensure we have a valid material
-      if (!originalMaterial || !(originalMaterial instanceof THREE.Material)) {
-        return (
-          <meshStandardMaterial 
-            color="#888888"
-            metalness={0.1}
-            roughness={0.3}
-            side={THREE.DoubleSide}
-          />
-        );
-      }
-      
-      // Handle different material types safely with null checks
-      if (originalMaterial instanceof THREE.MeshStandardMaterial) {
-        return (
-          <meshStandardMaterial 
-            color={originalMaterial.color || "#888888"}
-            metalness={originalMaterial.metalness ?? 0.1}
-            roughness={originalMaterial.roughness ?? 0.3}
-            side={THREE.DoubleSide}
-            map={originalMaterial.map || undefined}
-            normalMap={originalMaterial.normalMap || undefined}
-          />
-        );
-      } else if (originalMaterial instanceof THREE.MeshPhongMaterial) {
-        return (
-          <meshPhongMaterial 
-            color={originalMaterial.color || "#888888"}
-            shininess={originalMaterial.shininess ?? 30}
-            specular={originalMaterial.specular || "#111111"}
-            side={THREE.DoubleSide}
-            map={originalMaterial.map || undefined}
-          />
-        );
-      } else if (originalMaterial instanceof THREE.MeshBasicMaterial) {
-        return (
-          <meshBasicMaterial 
-            color={originalMaterial.color || "#888888"}
-            side={THREE.DoubleSide}
-            map={originalMaterial.map || undefined}
-          />
-        );
-      }
-    }
-    
-    // Default fallback material
-    return (
-      <meshStandardMaterial 
-        color="#888888"
-        metalness={0.1}
-        roughness={0.3}
-        side={THREE.DoubleSide}
-      />
-    );
-  };
-
-  // Validate geometry before rendering
-  if (!model.geometry || !model.geometry.attributes || !model.geometry.attributes.position) {
-    console.error('Invalid geometry data:', model.geometry);
-    return (
-      <Center>
-        <mesh>
-          <boxGeometry args={[1, 1, 1]} />
-          <meshStandardMaterial color="#ff0000" />
-        </mesh>
-      </Center>
-    );
-  }
-
   return (
-    <Center>
-      <mesh ref={meshRef}>
-        <bufferGeometry 
-          ref={(geom) => {
-            if (geom && model.geometry) {
-              // Safely copy geometry attributes
-              if (model.geometry.attributes.position) {
-                geom.setAttribute('position', model.geometry.attributes.position);
-              }
-              if (model.geometry.attributes.normal) {
-                geom.setAttribute('normal', model.geometry.attributes.normal);
-              }
-              if (model.geometry.attributes.uv) {
-                geom.setAttribute('uv', model.geometry.attributes.uv);
-              }
-              if (model.geometry.index) {
-                geom.setIndex(model.geometry.index);
-              }
-              
-              // Compute missing attributes safely
-              if (!geom.attributes.normal) {
-                geom.computeVertexNormals();
-              }
-              
-              geom.computeBoundingBox();
-              geom.computeBoundingSphere();
-            }
-          }}
-        />
-        {renderMaterial()}
-      </mesh>
-    </Center>
+    <SafeModelRenderer 
+      model={model}
+      wireframeMode={wireframeMode}
+      autoRotate={autoRotate}
+    />
   );
 };
 
