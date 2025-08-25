@@ -18,7 +18,8 @@ import {
   Play,
   Pause,
   Settings,
-  FileText
+  FileText,
+  ImageUp
 } from 'lucide-react';
 import { UniversalCADLoader, LoadedCADModel, LoadProgress } from './UniversalCADLoader';
 import { SafeModelRenderer } from './SafeModelRenderer';
@@ -33,6 +34,10 @@ interface UniversalModelViewerProps {
   autoRotate?: boolean;
   showGrid?: boolean;
   showGizmo?: boolean;
+  background?: 'white' | 'grey' | 'black' | 'custom';
+  backgroundImage?: string;
+  onBackgroundChange?: (bg: 'white' | 'grey' | 'black' | 'custom') => void;
+  onBackgroundImageUpload?: (imageUrl: string) => void;
 }
 
 // Model renderer component
@@ -192,7 +197,11 @@ export const UniversalModelViewer = ({
   className,
   autoRotate: initialAutoRotate = false,
   showGrid: initialShowGrid = true,
-  showGizmo: initialShowGizmo = true
+  showGizmo: initialShowGizmo = true,
+  background = 'white',
+  backgroundImage,
+  onBackgroundChange,
+  onBackgroundImageUpload
 }: UniversalModelViewerProps) => {
   const [model, setModel] = useState<LoadedCADModel | null>(null);
   const [loading, setLoading] = useState(true);
@@ -299,6 +308,59 @@ export const UniversalModelViewer = ({
           </div>
           
           <div className="flex items-center space-x-2">
+            {/* Background controls */}
+            {onBackgroundChange && (
+              <div className="flex items-center gap-1 mr-2">
+                {[
+                  { value: 'white', label: 'W', bgColor: 'bg-white', textColor: 'text-black' },
+                  { value: 'grey', label: 'G', bgColor: 'bg-muted', textColor: 'text-foreground' },
+                  { value: 'black', label: 'B', bgColor: 'bg-black', textColor: 'text-white' }
+                ].map(({ value, label, bgColor, textColor }) => (
+                  <Button
+                    key={value}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onBackgroundChange(value as any)}
+                    className={`w-8 h-8 p-0 ${bgColor} ${textColor} ${
+                      background === value ? 'ring-2 ring-primary' : ''
+                    }`}
+                    disabled={loading || !!error}
+                    title={`${value.charAt(0).toUpperCase() + value.slice(1)} Background`}
+                  >
+                    {label}
+                  </Button>
+                ))}
+                
+                {/* Custom Background Upload */}
+                <div className="relative">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file && onBackgroundImageUpload) {
+                        const imageUrl = URL.createObjectURL(file);
+                        onBackgroundImageUpload(imageUrl);
+                        onBackgroundChange('custom');
+                      }
+                      e.target.value = '';
+                    }}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    disabled={loading || !!error}
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={`${background === 'custom' && backgroundImage ? 'ring-2 ring-primary' : ''}`}
+                    disabled={loading || !!error}
+                    title="Upload Background Image"
+                  >
+                    <ImageUp className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+            
             {/* View controls */}
             <Button
               variant="outline"
@@ -451,11 +513,28 @@ export const UniversalModelViewer = ({
         <Canvas
           camera={{ position: [5, 5, 5], fov: 50 }}
           onCreated={({ gl }) => {
-            gl.setClearColor('#f8f9fa');
+            // Set background color based on selection
+            const bgColor = background === 'white' 
+              ? '#ffffff'
+              : background === 'grey'
+              ? '#64748b'
+              : background === 'black'
+              ? '#000000'
+              : '#f8f9fa';
+            
+            gl.setClearColor(bgColor);
             gl.shadowMap.enabled = true;
             gl.shadowMap.type = THREE.PCFSoftShadowMap;
             gl.toneMapping = THREE.ACESFilmicToneMapping;
             gl.toneMappingExposure = 1;
+          }}
+          style={{
+            background: background === 'custom' && backgroundImage 
+              ? `url(${backgroundImage})` 
+              : undefined,
+            backgroundSize: background === 'custom' ? 'cover' : undefined,
+            backgroundPosition: background === 'custom' ? 'center' : undefined,
+            backgroundRepeat: background === 'custom' ? 'no-repeat' : undefined
           }}
         >
           <Suspense fallback={<LoadingIndicator3D />}>

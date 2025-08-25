@@ -28,11 +28,13 @@ type ViewerType = 'universal' | 'simple' | 'legacy';
 export const ModelPreviewSelector = ({
   fileUrl,
   fileName,
-  fileType,
+  fileType,  
   className
 }: ModelPreviewSelectorProps) => {
   const [viewerType, setViewerType] = useState<ViewerType>('universal');
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [background, setBackground] = useState<'white' | 'grey' | 'black' | 'custom'>('white');
+  const [backgroundImage, setBackgroundImage] = useState<string | undefined>(undefined);
 
   // Determine supported formats
   const isSTLFile = fileType.toLowerCase() === 'stl';
@@ -92,6 +94,10 @@ export const ModelPreviewSelector = ({
             autoRotate={false}
             showGrid={true}
             showGizmo={true}
+            background={background}
+            backgroundImage={backgroundImage}
+            onBackgroundChange={setBackground}
+            onBackgroundImageUpload={setBackgroundImage}
           />
         );
         
@@ -101,7 +107,10 @@ export const ModelPreviewSelector = ({
             <SimpleSTLViewer
               fileUrl={fileUrl}
               className={commonProps.className}
-              background="white"
+              background={background}
+              backgroundImage={backgroundImage}
+              onBackgroundChange={setBackground}
+              onBackgroundImageUpload={setBackgroundImage}
             />
           );
         }
@@ -110,6 +119,10 @@ export const ModelPreviewSelector = ({
           <UniversalModelViewer
             {...commonProps}
             onClose={isFullscreen ? () => setIsFullscreen(false) : undefined}
+            background={background}
+            backgroundImage={backgroundImage}
+            onBackgroundChange={setBackground}
+            onBackgroundImageUpload={setBackgroundImage}
           />
         );
         
@@ -118,6 +131,10 @@ export const ModelPreviewSelector = ({
           <UniversalModelViewer
             {...commonProps}
             onClose={isFullscreen ? () => setIsFullscreen(false) : undefined}
+            background={background}
+            backgroundImage={backgroundImage}
+            onBackgroundChange={setBackground}
+            onBackgroundImageUpload={setBackgroundImage}
           />
         );
     }
