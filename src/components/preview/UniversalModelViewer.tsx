@@ -310,53 +310,56 @@ export const UniversalModelViewer = ({
           <div className="flex items-center space-x-2">
             {/* Background controls */}
             {onBackgroundChange && (
-              <div className="flex items-center gap-1 mr-2">
-                {[
-                  { value: 'white', label: 'W', bgColor: 'bg-white', textColor: 'text-black' },
-                  { value: 'grey', label: 'G', bgColor: 'bg-muted', textColor: 'text-foreground' },
-                  { value: 'black', label: 'B', bgColor: 'bg-black', textColor: 'text-white' }
-                ].map(({ value, label, bgColor, textColor }) => (
-                  <Button
-                    key={value}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onBackgroundChange(value as any)}
-                    className={`w-8 h-8 p-0 ${bgColor} ${textColor} ${
-                      background === value ? 'ring-2 ring-primary' : ''
-                    }`}
-                    disabled={loading || !!error}
-                    title={`${value.charAt(0).toUpperCase() + value.slice(1)} Background`}
-                  >
-                    {label}
-                  </Button>
-                ))}
-                
-                {/* Custom Background Upload */}
-                <div className="relative">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file && onBackgroundImageUpload) {
-                        const imageUrl = URL.createObjectURL(file);
-                        onBackgroundImageUpload(imageUrl);
-                        onBackgroundChange('custom');
-                      }
-                      e.target.value = '';
-                    }}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    disabled={loading || !!error}
-                  />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className={`${background === 'custom' && backgroundImage ? 'ring-2 ring-primary' : ''}`}
-                    disabled={loading || !!error}
-                    title="Upload Background Image"
-                  >
-                    <ImageUp className="h-4 w-4" />
-                  </Button>
+              <div className="flex items-center gap-2 mr-3 px-3 py-1 bg-muted/50 rounded-lg border">
+                <span className="text-xs font-medium text-muted-foreground">Background:</span>
+                <div className="flex items-center gap-1">
+                  {[
+                    { value: 'white', label: 'W', bgColor: 'bg-white border-2 border-border', textColor: 'text-black' },
+                    { value: 'grey', label: 'G', bgColor: 'bg-muted', textColor: 'text-foreground' },
+                    { value: 'black', label: 'B', bgColor: 'bg-black', textColor: 'text-white' }
+                  ].map(({ value, label, bgColor, textColor }) => (
+                    <Button
+                      key={value}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onBackgroundChange(value as any)}
+                      className={`w-8 h-8 p-0 ${bgColor} ${textColor} ${
+                        background === value ? 'ring-2 ring-primary scale-110' : 'hover:scale-105'
+                      } transition-all duration-200`}
+                      disabled={loading || !!error}
+                      title={`${value.charAt(0).toUpperCase() + value.slice(1)} Background`}
+                    >
+                      {label}
+                    </Button>
+                  ))}
+                  
+                  {/* Custom Background Upload */}
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file && onBackgroundImageUpload) {
+                          const imageUrl = URL.createObjectURL(file);
+                          onBackgroundImageUpload(imageUrl);
+                          onBackgroundChange('custom');
+                        }
+                        e.target.value = '';
+                      }}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      disabled={loading || !!error}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className={`h-8 px-2 ${background === 'custom' && backgroundImage ? 'ring-2 ring-primary scale-110' : 'hover:scale-105'} transition-all duration-200`}
+                      disabled={loading || !!error}
+                      title="Upload Background Image"
+                    >
+                      <ImageUp className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             )}
