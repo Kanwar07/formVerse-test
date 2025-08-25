@@ -21,7 +21,7 @@ import { MetadataForm, ModelMetadata } from "@/components/upload/MetadataForm";
 import { PricingForm } from "@/components/upload/PricingForm";
 import { ReviewForm } from "@/components/upload/ReviewForm";
 import { ModelPreview } from "@/components/preview/ModelPreview";
-import { FixedModelViewer } from "@/components/preview/FixedModelViewer";
+import { SimpleSTLViewer } from "@/components/preview/SimpleSTLViewer";
 import { useThumbnailGenerator } from "@/hooks/useThumbnailGenerator";
 
 const Upload = () => {
@@ -44,6 +44,10 @@ const Upload = () => {
   const [modelDescription, setModelDescription] = useState<string>("");
   const [qualityStatus, setQualityStatus] = useState<'approved' | 'declined' | 'reviewing'>('reviewing');
   const [qualityNotes, setQualityNotes] = useState<string>("");
+  
+  // Background controls state for enhanced viewer
+  const [background, setBackground] = useState<'white' | 'grey' | 'black' | 'custom'>('white');
+  const [backgroundImage, setBackgroundImage] = useState<string | undefined>(undefined);
   
   // Upload method tracking
   const [uploadMethod, setUploadMethod] = useState<'file' | 'image'>('file');
@@ -353,25 +357,27 @@ const Upload = () => {
                     <div className="flex items-center">
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600 mr-3"></div>
                       <div>
-                        <span className="text-sm font-medium text-blue-800">Generating accurate CAD model preview...</span>
-                        <p className="text-xs text-blue-600 mt-1">Analyzing geometry and creating 3D visualization</p>
+                        <span className="text-sm font-medium text-blue-800">Generating enhanced 3D model preview...</span>
+                        <p className="text-xs text-blue-600 mt-1">Loading advanced viewer with background controls</p>
                       </div>
                     </div>
                   </div>
                 )}
                 
-                <FixedModelViewer
+                <SimpleSTLViewer
                   fileUrl={getFileUrl() || ''}
-                  fileName={modelFile.name}
                   className="h-[400px]"
+                  background={background}
+                  backgroundImage={backgroundImage}
+                  onBackgroundChange={setBackground}
+                  onBackgroundImageUpload={setBackgroundImage}
                 />
-                
                 
                 {thumbnailUrl && (
                   <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                     <div className="flex items-center">
                       <div className="w-4 h-4 bg-green-500 rounded-full mr-2"></div>
-                      <span className="text-sm text-green-800 font-medium">CAD model preview generated successfully!</span>
+                      <span className="text-sm text-green-800 font-medium">Enhanced 3D model preview ready!</span>
                     </div>
                   </div>
                 )}
