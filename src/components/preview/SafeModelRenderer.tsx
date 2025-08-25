@@ -183,12 +183,50 @@ export const SafeModelRenderer = ({
   }
 
   try {
-    const safeGeometry = createSafeGeometry();
     const safeMaterial = createSafeMaterial();
 
     return (
       <Center>
-        <mesh ref={meshRef} geometry={safeGeometry}>
+        <mesh ref={meshRef}>
+          <bufferGeometry
+            ref={(geom) => {
+              if (geom && model.geometry) {
+                try {
+                  // Clear any existing attributes to avoid conflicts
+                  geom.dispose();
+                  
+                  // Safely copy essential attributes only
+                  if (model.geometry.attributes.position) {
+                    geom.setAttribute('position', model.geometry.attributes.position.clone());
+                  }
+                  
+                  if (model.geometry.attributes.normal) {
+                    geom.setAttribute('normal', model.geometry.attributes.normal.clone());
+                  } else {
+                    geom.computeVertexNormals();
+                  }
+                  
+                  if (model.geometry.attributes.uv) {
+                    geom.setAttribute('uv', model.geometry.attributes.uv.clone());
+                  }
+                  
+                  if (model.geometry.index) {
+                    geom.setIndex(model.geometry.index.clone());
+                  }
+                  
+                  // Compute bounds safely
+                  geom.computeBoundingBox();
+                  geom.computeBoundingSphere();
+                } catch (error) {
+                  console.error('Error setting up geometry:', error);
+                  // Fallback to a simple box if geometry setup fails
+                  geom.dispose();
+                  const boxGeom = new THREE.BoxGeometry(1, 1, 1);
+                  geom.copy(boxGeom);
+                }
+              }
+            }}
+          />
           {safeMaterial}
         </mesh>
       </Center>

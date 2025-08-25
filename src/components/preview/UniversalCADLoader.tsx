@@ -185,6 +185,10 @@ export class UniversalCADLoader {
       specular: 0x111111
     });
 
+    // Clean up any potential property conflicts
+    delete (material as any).lov;
+    delete (material as any)._listeners;
+    
     // Mark material for proper React Three Fiber handling
     material.needsUpdate = true;
 
@@ -265,6 +269,9 @@ export class UniversalCADLoader {
     // Ensure materials are properly configured
     materials.forEach(mat => {
       if (mat instanceof THREE.Material) {
+        // Clean up any potential property conflicts
+        delete (mat as any).lov;
+        delete (mat as any)._listeners;
         mat.needsUpdate = true;
       }
     });
@@ -322,15 +329,27 @@ export class UniversalCADLoader {
       ? Array.isArray(mesh.material) ? mesh.material : [mesh.material]
       : [];
 
-    // Apply consistent material settings
+    // Apply consistent material settings and clean up potential conflicts
     materials.forEach(material => {
       if (material instanceof THREE.Material) {
-        material.side = THREE.DoubleSide;
-        if ('map' in material && material.map && material.map instanceof THREE.Texture) {
-          material.map.flipY = false;
+        // Create a clean copy of the material to avoid property conflicts
+        const cleanMaterial = material.clone();
+        cleanMaterial.side = THREE.DoubleSide;
+        
+        if ('map' in cleanMaterial && cleanMaterial.map && cleanMaterial.map instanceof THREE.Texture) {
+          cleanMaterial.map.flipY = false;
         }
-        // Ensure the material is properly configured for React Three Fiber
-        material.needsUpdate = true;
+        
+        // Remove any potentially conflicting properties
+        delete (cleanMaterial as any).lov;
+        delete (cleanMaterial as any)._listeners;
+        
+        // Mark for proper React Three Fiber handling
+        cleanMaterial.needsUpdate = true;
+        
+        // Replace the original material with the clean one
+        const index = materials.indexOf(material);
+        materials[index] = cleanMaterial;
       }
     });
 
@@ -376,6 +395,10 @@ export class UniversalCADLoader {
       vertexColors: geometry.hasAttribute('color')
     });
 
+    // Clean up any potential property conflicts
+    delete (material as any).lov;
+    delete (material as any)._listeners;
+    
     // Mark for proper React Three Fiber handling
     material.needsUpdate = true;
 
@@ -414,6 +437,10 @@ export class UniversalCADLoader {
         shininess: 30
       });
 
+      // Clean up any potential property conflicts
+      delete (material as any).lov;
+      delete (material as any)._listeners;
+      
       // Mark for proper React Three Fiber handling
       material.needsUpdate = true;
 
@@ -521,6 +548,12 @@ export class UniversalCADLoader {
       side: THREE.DoubleSide,
       shininess: 50
     });
+
+    // Clean up any potential property conflicts
+    delete (material as any).lov;
+    delete (material as any)._listeners;
+    
+    material.needsUpdate = true;
 
     return {
       geometry,
