@@ -125,7 +125,11 @@ const ModelWithAutoFit = ({
   wireframe?: boolean;
   onModelLoaded?: (object: THREE.Object3D) => void;
 }) => {
-  const meshRef = useRef<THREE.Mesh>(null);
+  const meshRef = useRef<THREE.Object3D>(null);
+  const groupRef = useRef<THREE.Group>(null);
+  const stlMeshRef = useRef<THREE.Mesh>(null);
+  const objGroupRef = useRef<THREE.Group>(null);
+  const fallbackMeshRef = useRef<THREE.Mesh>(null);
   const { scene } = useThree();
   
   // Determine file type
@@ -150,18 +154,23 @@ const ModelWithAutoFit = ({
         const clonedScene = gltf.scene.clone();
         
         useEffect(() => {
-          if (onModelLoaded && clonedScene) {
-            onModelLoaded(clonedScene);
+          if (onModelLoaded && groupRef.current) {
+            onModelLoaded(groupRef.current);
           }
-        }, [clonedScene, onModelLoaded]);
+        }, [onModelLoaded]);
         
         return (
           <Center>
-            <primitive 
-              ref={meshRef}
-              object={clonedScene}
-              scale={[1, 1, 1]}
-            />
+            <group ref={groupRef} scale={[1, 1, 1]}>
+              {clonedScene.children.map((child, index) => {
+                if (child instanceof THREE.Mesh) {
+                  return (
+                    <mesh key={index} geometry={child.geometry} material={child.material} />
+                  );
+                }
+                return null;
+              })}
+            </group>
           </Center>
         );
       }
@@ -173,7 +182,7 @@ const ModelWithAutoFit = ({
       
       const mesh = (
         <Center>
-          <mesh ref={meshRef} geometry={geometry}>
+          <mesh ref={stlMeshRef} geometry={geometry}>
             <meshStandardMaterial 
               color={wireframe ? "#00d4ff" : "#888888"} 
               wireframe={wireframe}
@@ -185,8 +194,8 @@ const ModelWithAutoFit = ({
       );
       
       useEffect(() => {
-        if (meshRef.current && onModelLoaded) {
-          onModelLoaded(meshRef.current);
+        if (stlMeshRef.current && onModelLoaded) {
+          onModelLoaded(stlMeshRef.current);
         }
       }, [onModelLoaded]);
       
@@ -200,18 +209,23 @@ const ModelWithAutoFit = ({
       const clonedObj = obj.clone();
       
       useEffect(() => {
-        if (onModelLoaded && clonedObj) {
-          onModelLoaded(clonedObj);
+        if (onModelLoaded && objGroupRef.current) {
+          onModelLoaded(objGroupRef.current);
         }
-      }, [clonedObj, onModelLoaded]);
+      }, [onModelLoaded]);
       
       return (
         <Center>
-          <primitive 
-            ref={meshRef}
-            object={clonedObj}
-            scale={[1, 1, 1]}
-          />
+          <group ref={objGroupRef} scale={[1, 1, 1]}>
+            {clonedObj.children.map((child, index) => {
+              if (child instanceof THREE.Mesh) {
+                return (
+                  <mesh key={index} geometry={child.geometry} material={child.material} />
+                );
+              }
+              return null;
+            })}
+          </group>
         </Center>
       );
     }
@@ -232,7 +246,7 @@ const ModelWithAutoFit = ({
   
   const fallbackMesh = (
     <Center>
-      <mesh ref={meshRef}>
+      <mesh ref={fallbackMeshRef}>
         <boxGeometry args={[1.5, 1.5, 1.5]} />
         <meshStandardMaterial 
           color={wireframe ? "#00d4ff" : color}
@@ -245,8 +259,8 @@ const ModelWithAutoFit = ({
   );
   
   useEffect(() => {
-    if (meshRef.current && onModelLoaded) {
-      onModelLoaded(meshRef.current);
+    if (fallbackMeshRef.current && onModelLoaded) {
+      onModelLoaded(fallbackMeshRef.current);
     }
   }, [onModelLoaded]);
   
