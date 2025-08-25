@@ -184,13 +184,11 @@ export const SafeModelRenderer = ({
 
   try {
     const safeMaterial = createSafeMaterial();
+    const safeGeometry = createSafeGeometry();
 
     return (
       <Center>
-        <mesh ref={meshRef}>
-          <primitive 
-            object={createSafeGeometry()} 
-          />
+        <mesh ref={meshRef} geometry={safeGeometry}>
           {safeMaterial}
         </mesh>
       </Center>
