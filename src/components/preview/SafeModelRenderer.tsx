@@ -73,41 +73,11 @@ export const SafeModelRenderer = ({
         );
       }
       
-      // Check if we have valid materials
-      if (model.materials && Array.isArray(model.materials) && model.materials.length > 0) {
-        const originalMaterial = model.materials[0];
-        
-        if (originalMaterial && originalMaterial instanceof THREE.Material) {
-          // Extract safe properties from the original material
-          if (originalMaterial instanceof THREE.MeshStandardMaterial) {
-            return (
-              <meshStandardMaterial 
-                color={originalMaterial.color?.getHex?.() ? `#${originalMaterial.color.getHex().toString(16).padStart(6, '0')}` : "#888888"}
-                metalness={typeof originalMaterial.metalness === 'number' ? originalMaterial.metalness : 0.1}
-                roughness={typeof originalMaterial.roughness === 'number' ? originalMaterial.roughness : 0.3}
-                side={THREE.DoubleSide}
-              />
-            );
-          } else if (originalMaterial instanceof THREE.MeshPhongMaterial) {
-            return (
-              <meshPhongMaterial 
-                color={originalMaterial.color?.getHex?.() ? `#${originalMaterial.color.getHex().toString(16).padStart(6, '0')}` : "#888888"}
-                shininess={typeof originalMaterial.shininess === 'number' ? originalMaterial.shininess : 30}
-                side={THREE.DoubleSide}
-              />
-            );
-          } else if (originalMaterial instanceof THREE.MeshBasicMaterial) {
-            return (
-              <meshBasicMaterial 
-                color={originalMaterial.color?.getHex?.() ? `#${originalMaterial.color.getHex().toString(16).padStart(6, '0')}` : "#888888"}
-                side={THREE.DoubleSide}
-              />
-            );
-          }
-        }
-      }
+      // Always create fresh materials to avoid serialization issues
+      // Don't try to reuse the original materials as they may have lost their methods
+      // after being passed through React state/props
       
-      // Default safe fallback material
+      // Use a default material appropriate for CAD models
       return (
         <meshStandardMaterial 
           color="#888888"
