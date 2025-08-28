@@ -75,7 +75,7 @@ export function ImageToCADSection() {
   };
 
   const handleConvertToCAD = async () => {
-    if (!selectedImage || !cadquaClient) {
+    if (!selectedImage) {
       toast({
         title: "No image selected",
         description: "Please upload an image first.",
@@ -88,59 +88,91 @@ export function ImageToCADSection() {
     setProgress({ step: 'initialization', progress: 0, message: 'Starting generation...' });
     
     try {
-      console.log('Starting CADQUA 3D generation...');
+      console.log('Starting CADQUA 3D generation via Edge Function...');
       
-      // Generate 3D model using CADQUA client
-      const result = await cadquaClient.generate3D(selectedImage, {
-        settings: {
-          randomize_seed: true,
-          ss_guidance_strength: 7.5,
-          ss_sampling_steps: 12,
-          slat_guidance_strength: 3.0,
-          slat_sampling_steps: 12,
-          multiimage_algo: 'stochastic',
-          mesh_simplify: 0.95,
-          texture_size: 1024
-        }
+      // Create FormData for the Edge Function
+      const formData = new FormData();
+      formData.append('image', selectedImage);
+      
+      setProgress({ step: 'upload', progress: 20, message: 'Uploading image...' });
+      
+      // Call the Supabase Edge Function
+      const response = await fetch('https://zqnzxpbthldfqqbzzjct.supabase.co/functions/v1/modal-image-to-cad', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpxbnp4cGJ0aGxkZnFxYnp6amN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg5MzIxNzgsImV4cCI6MjA2NDUwODE3OH0.7YWUyL31eeOtauM4TqHjQXm8PB1Y-wVB7Cj0dSMQ0SA`,
+          // Let the browser set Content-Type automatically for FormData
+        },
       });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      setProgress({ step: 'processing', progress: 60, message: 'Processing 3D model...' });
+      
+      const result = await response.json();
+      console.log('Generation result:', result);
       
       if (result.task_id) {
         setTaskId(result.task_id);
         console.log('Generation successful, Task ID:', result.task_id);
         
-        // Download generated files
-        try {
-          const [videoFile, glbFile] = await Promise.allSettled([
-            cadquaClient.downloadFile('video', result.task_id),
-            cadquaClient.downloadFile('glb', result.task_id)
-          ]);
+        setProgress({ step: 'download', progress: 80, message: 'Preparing downloads...' });
+        
+        // Download generated files using CADQUA client
+        if (cadquaClient && result.api_base_url) {
+          // Update client base URL if needed
+          const clientWithCorrectUrl = new CADQUAClient(result.api_base_url);
           
-          const downloads: Record<string, FileDownload> = {};
-          
-          if (videoFile.status === 'fulfilled') {
-            downloads.video = videoFile.value;
+          try {
+            const [videoFile, glbFile] = await Promise.allSettled([
+              clientWithCorrectUrl.downloadFile('video', result.task_id),
+              clientWithCorrectUrl.downloadFile('glb', result.task_id)
+            ]);
+            
+            const downloads: Record<string, FileDownload> = {};
+            
+            if (videoFile.status === 'fulfilled') {
+              downloads.video = videoFile.value;
+            }
+            
+            if (glbFile.status === 'fulfilled') {
+              downloads.glb = glbFile.value;
+            }
+            
+            setDownloadedFiles(downloads);
+            setModelReady(true);
+            
+            setProgress({ step: 'complete', progress: 100, message: 'Generation completed!' });
+            
+            toast({
+              title: "3D Generation Completed!",
+              description: `Generated ${Object.keys(downloads).length} files successfully.`,
+            });
+            
+          } catch (downloadError) {
+            console.warn('Some downloads failed:', downloadError);
+            setModelReady(true); // Still show as ready, downloads can be retried
+            
+            setProgress({ step: 'complete', progress: 100, message: 'Generation completed!' });
+            
+            toast({
+              title: "Generation completed",
+              description: "Model generated but some downloads failed. You can try downloading again.",
+              variant: "default"
+            });
           }
-          
-          if (glbFile.status === 'fulfilled') {
-            downloads.glb = glbFile.value;
-          }
-          
-          setDownloadedFiles(downloads);
+        } else {
+          // Fallback: Set model ready even without client
           setModelReady(true);
+          setProgress({ step: 'complete', progress: 100, message: 'Generation completed!' });
           
           toast({
             title: "3D Generation Completed!",
-            description: `Generated ${Object.keys(downloads).length} files successfully.`,
-          });
-          
-        } catch (downloadError) {
-          console.warn('Some downloads failed:', downloadError);
-          setModelReady(true); // Still show as ready, downloads can be retried
-          
-          toast({
-            title: "Generation completed",
-            description: "Model generated but some downloads failed. You can try downloading again.",
-            variant: "default"
+            description: "Model generated successfully. Download links are available.",
           });
         }
       }
@@ -200,7 +232,7 @@ export function ImageToCADSection() {
   };
 
   const retryDownload = async (fileType: 'video' | 'glb') => {
-    if (!cadquaClient || !taskId) {
+    if (!taskId) {
       toast({
         title: "Cannot retry",
         description: "No active generation task.",
@@ -210,7 +242,10 @@ export function ImageToCADSection() {
     }
 
     try {
-      const fileData = await cadquaClient.downloadFile(fileType, taskId);
+      // Create a client pointing to the Modal API directly for retries
+      const modalClient = new CADQUAClient('https://formversedude--cadqua-3d-api-fastapi-app.modal.run');
+      
+      const fileData = await modalClient.downloadFile(fileType, taskId);
       setDownloadedFiles(prev => ({ ...prev, [fileType]: fileData }));
       
       toast({

@@ -15,38 +15,34 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 // Health check with retries
 async function performHealthCheck(): Promise<{ success: boolean; retryAfter?: number }> {
-  const maxRetries = 3;
-  const baseDelay = 1000; // 1s
-
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
-    try {
-      console.log(`Health check attempt ${attempt + 1}/${maxRetries}`);
+  try {
+    console.log('Performing health check...');
+    
+    const response = await fetch(CADQUA_API_URL + '/health', {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+      signal: AbortSignal.timeout(15000) // 15s timeout
+    });
+    
+    if (response.ok) {
+      const health = await response.json();
+      console.log('Health check passed:', health);
       
-      const response = await fetch(CADQUA_API_URL, {
-        method: 'GET',
-        headers: { 'Accept': 'application/json' },
-        signal: AbortSignal.timeout(10000) // 10s timeout
-      });
-      
-      if (response.ok) {
-        console.log('Health check passed');
+      if (health.pipeline_loaded) {
         return { success: true };
+      } else {
+        console.log('Pipeline not loaded, treating as unhealthy');
+        return { success: false, retryAfter: 30 };
       }
-      
-      console.log(`Health check failed with status: ${response.status}`);
-    } catch (error) {
-      console.error(`Health check attempt ${attempt + 1} failed:`, error);
     }
     
-    if (attempt < maxRetries - 1) {
-      const delayMs = baseDelay * Math.pow(2, attempt);
-      console.log(`Waiting ${delayMs}ms before next attempt...`);
-      await delay(delayMs);
-    }
+    console.log(`Health check failed with status: ${response.status}`);
+    return { success: false, retryAfter: 30 };
+    
+  } catch (error) {
+    console.error('Health check failed:', error);
+    return { success: false, retryAfter: 30 };
   }
-  
-  // All attempts failed - suggest retry after 30 seconds
-  return { success: false, retryAfter: 30 };
 }
 
 // Call Modal API directly via HTTP
@@ -122,24 +118,16 @@ async function callModalAPI(imageFile: File): Promise<any> {
       if (result.task_id) {
         console.log('FastAPI format response detected');
         
-        // Try to download the generated files and return URLs
-        try {
-          const downloads = await downloadGeneratedFiles(result.task_id);
-          return {
-            task_id: result.task_id,
-            status: result.status,
-            video: downloads.video || null,
-            glb: downloads.glb || null,
-            download: downloads.glb || null // Use GLB as the main download
-          };
-        } catch (downloadError) {
-          console.warn('File download failed, returning task info only:', downloadError);
-          return {
-            task_id: result.task_id,
-            status: result.status,
-            message: 'Generation completed but downloads failed'
-          };
-        }
+        // Return the task info with download URLs
+        return {
+          task_id: result.task_id,
+          status: result.status || 'completed',
+          video_url: `/download/video/${result.task_id}`,
+          glb_url: `/download/glb/${result.task_id}`,
+          download_url: `/download/glb/${result.task_id}`, // Use GLB as the main download
+          api_base_url: CADQUA_API_URL,
+          message: result.message || '3D model generated successfully'
+        };
       }
       
       // Fallback: Check for old Gradio response format
@@ -168,42 +156,25 @@ async function callModalAPI(imageFile: File): Promise<any> {
   }
 }
 
-// Download generated files from FastAPI endpoints
-async function downloadGeneratedFiles(taskId: string): Promise<any> {
-  const downloads: any = {};
-  
+// Verify files are available for download
+async function verifyFilesAvailable(taskId: string): Promise<boolean> {
   try {
-    // Try to download GLB file
-    console.log(`Downloading GLB file for task ${taskId}`);
-    const glbResponse = await fetch(`${CADQUA_API_URL}/download/glb/${taskId}`);
+    // Check if GLB file is available
+    const glbResponse = await fetch(`${CADQUA_API_URL}/download/glb/${taskId}`, {
+      method: 'HEAD' // Just check if file exists
+    });
+    
     if (glbResponse.ok) {
-      const glbBlob = await glbResponse.blob();
-      downloads.glb = URL.createObjectURL(glbBlob);
-      console.log('GLB file downloaded successfully');
+      console.log(`Files verified for task ${taskId}`);
+      return true;
     } else {
-      console.warn(`GLB download failed: ${glbResponse.status}`);
+      console.warn(`File verification failed for task ${taskId}: ${glbResponse.status}`);
+      return false;
     }
   } catch (error) {
-    console.warn('GLB download failed:', error);
+    console.warn('File verification failed:', error);
+    return false;
   }
-  
-  try {
-    // Try to download video file
-    console.log(`Downloading video file for task ${taskId}`);
-    const videoResponse = await fetch(`${CADQUA_API_URL}/download/video/${taskId}`);
-    if (videoResponse.ok) {
-      const videoBlob = await videoResponse.blob();
-      downloads.video = URL.createObjectURL(videoBlob);
-      console.log('Video file downloaded successfully');
-    } else {
-      console.warn(`Video download failed: ${videoResponse.status}`);
-    }
-  } catch (error) {
-    console.warn('Video download failed:', error);
-  }
-  
-  console.log(`Downloaded ${Object.keys(downloads).length} files for task ${taskId}`);
-  return downloads;
 }
 
 serve(async (req) => {
@@ -214,10 +185,28 @@ serve(async (req) => {
 
   try {
     console.log('Modal Image to CAD conversion request received');
+    console.log('Request method:', req.method);
+    console.log('Request headers:', Object.fromEntries(req.headers.entries()));
     
     // Get the form data from the request
-    const formData = await req.formData();
-    const imageFile = formData.get('input_image') as File;
+    let formData;
+    let imageFile;
+    
+    try {
+      formData = await req.formData();
+      imageFile = formData.get('image') as File || formData.get('input_image') as File;
+      console.log('Successfully parsed form data');
+    } catch (parseError) {
+      console.error('Failed to parse form data:', parseError);
+      return new Response(JSON.stringify({ 
+        error: 'Unable to parse body as form data',
+        details: (parseError as Error).message,
+        code: 'FORM_DATA_PARSE_ERROR'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
     
     if (!imageFile) {
       return new Response(JSON.stringify({ 
