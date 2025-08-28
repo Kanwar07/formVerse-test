@@ -47,7 +47,7 @@ export function ImageToCADSection() {
       console.log('Sending image to Modal API...');
       
       // Call the Modal API
-      const response = await fetch('https://formversedude--cadqua-3d-generator-gradio-app.modal.run/api/predict', {
+      const response = await fetch('https://formversedude--cadqua-3d-generator-gradio-app.modal.run/generate_and_extract_glb', {
         method: 'POST',
         body: formData,
       });
@@ -59,10 +59,16 @@ export function ImageToCADSection() {
       const result = await response.json();
       console.log('Modal API Response:', result);
       
-      // Extract the generated model URL from the response
-      // The response structure may vary, adjust based on actual API response
-      if (result && result.data && result.data[0]) {
-        setModelFileUrl(result.data[0].url || result.data[0]);
+      // Handle the new response format
+      if (result) {
+        // New format: { video: videoPath, glb: glbPath, download: downloadPath }
+        if (result.glb || result.download) {
+          setModelFileUrl(result.glb || result.download);
+        }
+        // Fallback to old format if new format not available
+        else if (result.data && result.data[0]) {
+          setModelFileUrl(result.data[0].url || result.data[0]);
+        }
       }
       
       setIsProcessing(false);

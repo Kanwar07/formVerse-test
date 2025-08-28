@@ -65,7 +65,7 @@ async function callModalAPI(imageFile: File): Promise<any> {
       
       console.log('Request payload:', {
         method: 'POST',
-        url: CADQUA_API_URL + '/run/generate_and_extract__glb',
+        url: CADQUA_API_URL + '/generate_and_extract_glb',
         headers: {
           'Accept': 'application/json',
         },
@@ -75,7 +75,7 @@ async function callModalAPI(imageFile: File): Promise<any> {
       });
       
       const response = await Promise.race([
-        fetch(CADQUA_API_URL + '/run/generate_and_extract__glb', {
+        fetch(CADQUA_API_URL + '/generate_and_extract_glb', {
           method: 'POST',
           headers: {
             'Accept': 'application/json',
@@ -83,7 +83,7 @@ async function callModalAPI(imageFile: File): Promise<any> {
           body: formData
         }),
         new Promise<never>((_, reject) => 
-          setTimeout(() => reject(new Error('Request timeout')), 120000) // 2 minutes
+          setTimeout(() => reject(new Error('Request timeout')), 300000) // 5 minutes for longer processing
         )
       ]);
       
@@ -99,17 +99,27 @@ async function callModalAPI(imageFile: File): Promise<any> {
       const result = await response.json();
       console.log('Modal API success response:', result);
       
-      // Validate response structure
-      if (!result || !result.data || !result.data[2]) {
-        throw new Error('Invalid response structure - no GLB file generated');
+      // Validate response structure for new format
+      if (!result || typeof result !== 'object') {
+        throw new Error('Invalid response structure from Modal API');
       }
       
-      const glbUrl = result.data[2];
-      if (typeof glbUrl !== 'string' || !glbUrl.trim()) {
-        throw new Error('Invalid GLB URL in response');
+      // Check for the new response format with video, glb, and download
+      if (!result.video && !result.glb && !result.download) {
+        // Fallback to old format if new format not available
+        if (!result.data || !result.data[2]) {
+          throw new Error('Invalid response structure - no model file generated');
+        }
+        // Convert old format to new format
+        const modelUrl = result.data[2];
+        result = {
+          video: result.data[0] || null,
+          glb: modelUrl,
+          download: modelUrl
+        };
       }
       
-      console.log('Modal API call successful, GLB URL:', glbUrl);
+      console.log('Modal API call successful, result:', result);
       return result;
       
     } catch (error) {

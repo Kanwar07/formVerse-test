@@ -258,12 +258,20 @@ export const ImageToCADUploader = ({
 
       console.log('Edge function response:', data);
       
-      if (!data || !data.data || !data.data[2]) {
+      // Handle new response format: { video, glb, download }
+      let glbUrl;
+      if (data && (data.glb || data.download)) {
+        glbUrl = data.glb || data.download;
+      }
+      // Fallback to old format if new format not available
+      else if (data && data.data && data.data[2]) {
+        glbUrl = data.data[2];
+      }
+      else {
         console.error('Invalid response structure:', data);
         throw new Error("Invalid response from CADQUA AI - no 3D model generated. Please try again.");
       }
       
-      const glbUrl = data.data[2];
       if (typeof glbUrl !== 'string' || !glbUrl) {
         console.error('Invalid GLB URL:', glbUrl);
         throw new Error("Invalid 3D model file received from AI service. Please try again.");
