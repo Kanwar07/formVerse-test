@@ -8,7 +8,7 @@ const corsHeaders = {
   'Access-Control-Allow-Credentials': 'true',
 };
 
-const CADQUA_API_URL = "https://formversedude--cadqua-3d-generator-gradio-app.modal.run";
+const CADQUA_API_URL = "https://formversedude--cadqua-3d-api-fastapi-app.modal.run";
 
 // Utility function for exponential backoff delay
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -59,23 +59,37 @@ async function callModalAPI(imageFile: File): Promise<any> {
       console.log(`Modal API call attempt ${attempt + 1}/${maxRetries + 1}`);
       console.log(`Calling Modal API: ${CADQUA_API_URL}`);
       
-      // Create FormData for the Modal API
+      // Create FormData for the new FastAPI endpoint
       const formData = new FormData();
-      formData.append('input_image', imageFile);
+      formData.append('image', imageFile); // Changed from 'input_image' to 'image'
+      
+      // Add generation settings
+      const settings = {
+        randomize_seed: true,
+        ss_guidance_strength: 7.5,
+        ss_sampling_steps: 12,
+        slat_guidance_strength: 3.0,
+        slat_sampling_steps: 12,
+        multiimage_algo: 'stochastic',
+        mesh_simplify: 0.95,
+        texture_size: 1024
+      };
+      formData.append('settings', JSON.stringify(settings));
       
       console.log('Request payload:', {
         method: 'POST',
-        url: CADQUA_API_URL + '/run/generate_and_extract_glb',
+        url: CADQUA_API_URL + '/generate',
         headers: {
           'Accept': 'application/json',
         },
         fileSize: imageFile.size,
         fileName: imageFile.name,
-        fileType: imageFile.type
+        fileType: imageFile.type,
+        settings: settings
       });
       
       const response = await Promise.race([
-        fetch(CADQUA_API_URL + '/run/generate_and_extract_glb', {
+        fetch(CADQUA_API_URL + '/generate', {
           method: 'POST',
           headers: {
             'Accept': 'application/json',
@@ -99,28 +113,47 @@ async function callModalAPI(imageFile: File): Promise<any> {
       const result = await response.json();
       console.log('Modal API success response:', result);
       
-      // Validate response structure for new format
+      // Validate response structure for FastAPI format
       if (!result || typeof result !== 'object') {
         throw new Error('Invalid response structure from Modal API');
       }
       
-      // Check for the new response format with video, glb, and download
-      if (!result.video && !result.glb && !result.download) {
-        // Fallback to old format if new format not available
-        if (!result.data || !result.data[2]) {
-          throw new Error('Invalid response structure - no model file generated');
+      // Check for FastAPI response format with task_id
+      if (result.task_id) {
+        console.log('FastAPI format response detected');
+        
+        // Try to download the generated files and return URLs
+        try {
+          const downloads = await downloadGeneratedFiles(result.task_id);
+          return {
+            task_id: result.task_id,
+            status: result.status,
+            video: downloads.video || null,
+            glb: downloads.glb || null,
+            download: downloads.glb || null // Use GLB as the main download
+          };
+        } catch (downloadError) {
+          console.warn('File download failed, returning task info only:', downloadError);
+          return {
+            task_id: result.task_id,
+            status: result.status,
+            message: 'Generation completed but downloads failed'
+          };
         }
-        // Convert old format to new format
+      }
+      
+      // Fallback: Check for old Gradio response format
+      if (result.data && Array.isArray(result.data) && result.data[2]) {
+        console.log('Legacy Gradio format detected');
         const modelUrl = result.data[2];
-        result = {
+        return {
           video: result.data[0] || null,
           glb: modelUrl,
           download: modelUrl
         };
       }
       
-      console.log('Modal API call successful, result:', result);
-      return result;
+      throw new Error('No valid response format detected from Modal API');
       
     } catch (error) {
       console.error(`Modal API attempt ${attempt + 1} failed:`, error);
@@ -135,6 +168,43 @@ async function callModalAPI(imageFile: File): Promise<any> {
   }
 }
 
+// Download generated files from FastAPI endpoints
+async function downloadGeneratedFiles(taskId: string): Promise<any> {
+  const downloads: any = {};
+  
+  try {
+    // Try to download GLB file
+    console.log(`Downloading GLB file for task ${taskId}`);
+    const glbResponse = await fetch(`${CADQUA_API_URL}/download/glb/${taskId}`);
+    if (glbResponse.ok) {
+      const glbBlob = await glbResponse.blob();
+      downloads.glb = URL.createObjectURL(glbBlob);
+      console.log('GLB file downloaded successfully');
+    } else {
+      console.warn(`GLB download failed: ${glbResponse.status}`);
+    }
+  } catch (error) {
+    console.warn('GLB download failed:', error);
+  }
+  
+  try {
+    // Try to download video file
+    console.log(`Downloading video file for task ${taskId}`);
+    const videoResponse = await fetch(`${CADQUA_API_URL}/download/video/${taskId}`);
+    if (videoResponse.ok) {
+      const videoBlob = await videoResponse.blob();
+      downloads.video = URL.createObjectURL(videoBlob);
+      console.log('Video file downloaded successfully');
+    } else {
+      console.warn(`Video download failed: ${videoResponse.status}`);
+    }
+  } catch (error) {
+    console.warn('Video download failed:', error);
+  }
+  
+  console.log(`Downloaded ${Object.keys(downloads).length} files for task ${taskId}`);
+  return downloads;
+}
 
 serve(async (req) => {
   // Handle CORS preflight requests

@@ -1,34 +1,81 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Upload, Sparkles, ArrowRight, Zap, Download, FileImage, Cpu, Box } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { CADQUAClient, validateImageFile, triggerDownload, FileDownload } from "@/services/cadquaClient";
 
 export function ImageToCADSection() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [modelReady, setModelReady] = useState(false);
+  const [progress, setProgress] = useState({ step: '', progress: 0, message: '' });
+  const [cadquaClient, setCadquaClient] = useState<CADQUAClient | null>(null);
+  const [taskId, setTaskId] = useState<string | null>(null);
+  const [downloadedFiles, setDownloadedFiles] = useState<Record<string, FileDownload>>({});
   const { toast } = useToast();
+
+  // Initialize CADQUA client
+  useEffect(() => {
+    const client = new CADQUAClient('https://formversedude--cadqua-3d-api-fastapi-app.modal.run');
+    
+    // Set up event handlers
+    client.setEventHandlers({
+      onProgress: (event) => {
+        setProgress({
+          step: event.step,
+          progress: event.progress,
+          message: event.message
+        });
+      },
+      onError: (event) => {
+        console.error('CADQUA Error:', event.error);
+        toast({
+          title: "Generation Error",
+          description: event.error.message,
+          variant: "destructive"
+        });
+      },
+      onComplete: (event) => {
+        console.log('CADQUA Complete:', event.result);
+      }
+    });
+    
+    setCadquaClient(client);
+  }, [toast]);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      setSelectedImage(file);
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setPreviewUrl(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+      try {
+        validateImageFile(file);
+        setSelectedImage(file);
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setPreviewUrl(e.target?.result as string);
+        };
+        reader.readAsDataURL(file);
+        
+        // Reset previous results
+        setModelReady(false);
+        setTaskId(null);
+        setDownloadedFiles({});
+        
+      } catch (error) {
+        toast({
+          title: "Invalid file",
+          description: (error as Error).message,
+          variant: "destructive"
+        });
+      }
     }
   };
 
-  const [modelFileUrl, setModelFileUrl] = useState<string | null>(null);
-
   const handleConvertToCAD = async () => {
-    if (!selectedImage) {
+    if (!selectedImage || !cadquaClient) {
       toast({
         title: "No image selected",
         description: "Please upload an image first.",
@@ -38,99 +85,144 @@ export function ImageToCADSection() {
     }
 
     setIsProcessing(true);
+    setProgress({ step: 'initialization', progress: 0, message: 'Starting generation...' });
     
     try {
-      // Create FormData for the Modal API request
-      const formData = new FormData();
-      formData.append('input_image', selectedImage);
+      console.log('Starting CADQUA 3D generation...');
       
-      console.log('Sending image to Modal API...');
-      
-      // Call the Modal API
-      const response = await fetch('https://formversedude--cadqua-3d-generator-gradio-app.modal.run/generate_and_extract_glb', {
-        method: 'POST',
-        body: formData,
+      // Generate 3D model using CADQUA client
+      const result = await cadquaClient.generate3D(selectedImage, {
+        settings: {
+          randomize_seed: true,
+          ss_guidance_strength: 7.5,
+          ss_sampling_steps: 12,
+          slat_guidance_strength: 3.0,
+          slat_sampling_steps: 12,
+          multiimage_algo: 'stochastic',
+          mesh_simplify: 0.95,
+          texture_size: 1024
+        }
       });
       
-      if (!response.ok) {
-        throw new Error(`Modal API request failed: ${response.status}`);
-      }
-      
-      const result = await response.json();
-      console.log('Modal API Response:', result);
-      
-      // Handle the new response format
-      if (result) {
-        // New format: { video: videoPath, glb: glbPath, download: downloadPath }
-        if (result.glb || result.download) {
-          setModelFileUrl(result.glb || result.download);
+      if (result.task_id) {
+        setTaskId(result.task_id);
+        console.log('Generation successful, Task ID:', result.task_id);
+        
+        // Download generated files
+        try {
+          const [videoFile, glbFile] = await Promise.allSettled([
+            cadquaClient.downloadFile('video', result.task_id),
+            cadquaClient.downloadFile('glb', result.task_id)
+          ]);
+          
+          const downloads: Record<string, FileDownload> = {};
+          
+          if (videoFile.status === 'fulfilled') {
+            downloads.video = videoFile.value;
+          }
+          
+          if (glbFile.status === 'fulfilled') {
+            downloads.glb = glbFile.value;
+          }
+          
+          setDownloadedFiles(downloads);
+          setModelReady(true);
+          
+          toast({
+            title: "3D Generation Completed!",
+            description: `Generated ${Object.keys(downloads).length} files successfully.`,
+          });
+          
+        } catch (downloadError) {
+          console.warn('Some downloads failed:', downloadError);
+          setModelReady(true); // Still show as ready, downloads can be retried
+          
+          toast({
+            title: "Generation completed",
+            description: "Model generated but some downloads failed. You can try downloading again.",
+            variant: "default"
+          });
         }
-        // Fallback to old format if new format not available
-        else if (result.data && result.data[0]) {
-          setModelFileUrl(result.data[0].url || result.data[0]);
-        }
       }
-      
-      setIsProcessing(false);
-      setModelReady(true);
-      toast({
-        title: "CAD conversion completed!",
-        description: "Your 3D model has been generated successfully.",
-      });
       
     } catch (error) {
-      console.error('Error converting image to CAD:', error);
-      setIsProcessing(false);
+      console.error('Error in CADQUA generation:', error);
+      
       toast({
-        title: "Conversion failed",
-        description: "There was an error converting your image. Please try again.",
+        title: "Generation failed",
+        description: (error as Error).message || "There was an error generating your 3D model. Please try again.",
         variant: "destructive"
       });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
-  const handleDownload = async () => {
-    if (!modelFileUrl) {
+  const handleDownload = (fileType: 'video' | 'glb') => {
+    const fileData = downloadedFiles[fileType];
+    if (!fileData) {
       toast({
-        title: "No model available",
-        description: "Please generate a model first.",
+        title: "File not available",
+        description: `Please generate a model first or wait for ${fileType} to download.`,
         variant: "destructive"
       });
       return;
     }
 
     try {
-      // Download the actual generated model file
-      const response = await fetch(modelFileUrl);
-      const blob = await response.blob();
-      
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'generated-model.stl';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
+      triggerDownload(fileData);
       toast({
         title: "Download started!",
-        description: "Your generated STL file is being downloaded.",
+        description: `Your ${fileType.toUpperCase()} file is being downloaded.`,
       });
     } catch (error) {
-      console.error('Error downloading model:', error);
+      console.error('Error downloading file:', error);
       toast({
         title: "Download failed",
-        description: "There was an error downloading the model file.",
+        description: "There was an error downloading the file.",
         variant: "destructive"
       });
     }
   };
 
   const handleView3D = () => {
-    if (modelFileUrl) {
-      // Open the model file in a new tab for viewing
-      window.open(modelFileUrl, '_blank');
+    const glbFile = downloadedFiles.glb;
+    if (glbFile) {
+      // Open the GLB file in a new tab for viewing
+      window.open(glbFile.url, '_blank');
+    } else {
+      toast({
+        title: "No 3D model available",
+        description: "Please generate a model first.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const retryDownload = async (fileType: 'video' | 'glb') => {
+    if (!cadquaClient || !taskId) {
+      toast({
+        title: "Cannot retry",
+        description: "No active generation task.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const fileData = await cadquaClient.downloadFile(fileType, taskId);
+      setDownloadedFiles(prev => ({ ...prev, [fileType]: fileData }));
+      
+      toast({
+        title: "Download successful!",
+        description: `${fileType.toUpperCase()} file downloaded successfully.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Download failed",
+        description: `Failed to download ${fileType}: ${(error as Error).message}`,
+        variant: "destructive"
+      });
     }
   };
 
@@ -217,7 +309,17 @@ export function ImageToCADSection() {
                     {isProcessing ? (
                       <div className="flex items-center gap-3">
                         <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" />
-                        Generating 3D Model...
+                        <div className="flex flex-col items-center">
+                          <span>{progress.message || 'Generating 3D Model...'}</span>
+                          {progress.progress > 0 && (
+                            <div className="w-32 h-1 bg-white/30 rounded-full mt-1">
+                              <div 
+                                className="h-full bg-white rounded-full transition-all duration-300"
+                                style={{ width: `${progress.progress}%` }}
+                              />
+                            </div>
+                          )}
+                        </div>
                       </div>
                     ) : (
                       <div className="flex items-center gap-3">
@@ -237,18 +339,68 @@ export function ImageToCADSection() {
                         </div>
                         <div>
                           <h4 className="font-semibold text-primary">Model Generated!</h4>
-                          <p className="text-sm text-muted-foreground">Your 3D CAD file is ready</p>
+                          <p className="text-sm text-muted-foreground">
+                            Task ID: {taskId} • {Object.keys(downloadedFiles).length} files ready
+                          </p>
                         </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <Button onClick={handleDownload} className="h-12">
-                          <Download className="h-4 w-4 mr-2" />
-                          Download STL
-                        </Button>
-                        <Button variant="outline" className="h-12" onClick={handleView3D}>
-                          <Box className="h-4 w-4 mr-2" />
-                          View 3D
-                        </Button>
+                      
+                      <div className="space-y-3">
+                        {/* GLB Model Download */}
+                        <div className="flex items-center justify-between p-3 bg-white/50 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <Box className="h-5 w-5 text-primary" />
+                            <div>
+                              <p className="font-medium">3D Model (GLB)</p>
+                              <p className="text-xs text-muted-foreground">
+                                {downloadedFiles.glb ? `${Math.round(downloadedFiles.glb.size / 1024)} KB` : 'Ready for download'}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            {downloadedFiles.glb ? (
+                              <>
+                                <Button size="sm" onClick={() => handleDownload('glb')}>
+                                  <Download className="h-4 w-4 mr-1" />
+                                  Download
+                                </Button>
+                                <Button size="sm" variant="outline" onClick={handleView3D}>
+                                  <Box className="h-4 w-4 mr-1" />
+                                  View
+                                </Button>
+                              </>
+                            ) : (
+                              <Button size="sm" variant="outline" onClick={() => retryDownload('glb')}>
+                                Retry Download
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Video Download */}
+                        <div className="flex items-center justify-between p-3 bg-white/50 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <FileImage className="h-5 w-5 text-purple-500" />
+                            <div>
+                              <p className="font-medium">Generation Video</p>
+                              <p className="text-xs text-muted-foreground">
+                                {downloadedFiles.video ? `${Math.round(downloadedFiles.video.size / 1024)} KB` : 'Ready for download'}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            {downloadedFiles.video ? (
+                              <Button size="sm" onClick={() => handleDownload('video')}>
+                                <Download className="h-4 w-4 mr-1" />
+                                Download
+                              </Button>
+                            ) : (
+                              <Button size="sm" variant="outline" onClick={() => retryDownload('video')}>
+                                Retry Download
+                              </Button>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}
