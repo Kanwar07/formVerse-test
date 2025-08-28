@@ -65,7 +65,7 @@ async function callModalAPI(imageFile: File): Promise<any> {
       
       console.log('Request payload:', {
         method: 'POST',
-        url: CADQUA_API_URL + '/generate_and_extract_glb',
+        url: CADQUA_API_URL + '/run/generate_and_extract_glb',
         headers: {
           'Accept': 'application/json',
         },
@@ -75,7 +75,7 @@ async function callModalAPI(imageFile: File): Promise<any> {
       });
       
       const response = await Promise.race([
-        fetch(CADQUA_API_URL + '/generate_and_extract_glb', {
+        fetch(CADQUA_API_URL + '/run/generate_and_extract_glb', {
           method: 'POST',
           headers: {
             'Accept': 'application/json',
