@@ -122,57 +122,45 @@ export function ImageToCADSection() {
         
         setProgress({ step: 'download', progress: 80, message: 'Preparing downloads...' });
         
-        // Download generated files using CADQUA client
-        if (cadquaClient && result.api_base_url) {
-          // Update client base URL if needed
-          const clientWithCorrectUrl = new CADQUAClient(result.api_base_url);
+        // Download files directly from Modal API using the task_id
+        try {
+          const modalClient = new CADQUAClient(result.api_base_url || 'https://formversedude--cadqua-3d-api-fastapi-app.modal.run');
           
-          try {
-            const [videoFile, glbFile] = await Promise.allSettled([
-              clientWithCorrectUrl.downloadFile('video', result.task_id),
-              clientWithCorrectUrl.downloadFile('glb', result.task_id)
-            ]);
-            
-            const downloads: Record<string, FileDownload> = {};
-            
-            if (videoFile.status === 'fulfilled') {
-              downloads.video = videoFile.value;
-            }
-            
-            if (glbFile.status === 'fulfilled') {
-              downloads.glb = glbFile.value;
-            }
-            
-            setDownloadedFiles(downloads);
-            setModelReady(true);
-            
-            setProgress({ step: 'complete', progress: 100, message: 'Generation completed!' });
-            
-            toast({
-              title: "3D Generation Completed!",
-              description: `Generated ${Object.keys(downloads).length} files successfully.`,
-            });
-            
-          } catch (downloadError) {
-            console.warn('Some downloads failed:', downloadError);
-            setModelReady(true); // Still show as ready, downloads can be retried
-            
-            setProgress({ step: 'complete', progress: 100, message: 'Generation completed!' });
-            
-            toast({
-              title: "Generation completed",
-              description: "Model generated but some downloads failed. You can try downloading again.",
-              variant: "default"
-            });
+          const [videoFile, glbFile] = await Promise.allSettled([
+            modalClient.downloadFile('video', result.task_id),
+            modalClient.downloadFile('glb', result.task_id)
+          ]);
+          
+          const downloads: Record<string, FileDownload> = {};
+          
+          if (videoFile.status === 'fulfilled') {
+            downloads.video = videoFile.value;
           }
-        } else {
-          // Fallback: Set model ready even without client
+          
+          if (glbFile.status === 'fulfilled') {
+            downloads.glb = glbFile.value;
+          }
+          
+          setDownloadedFiles(downloads);
           setModelReady(true);
+          
           setProgress({ step: 'complete', progress: 100, message: 'Generation completed!' });
           
           toast({
             title: "3D Generation Completed!",
-            description: "Model generated successfully. Download links are available.",
+            description: `Generated ${Object.keys(downloads).length} files successfully.`,
+          });
+          
+        } catch (downloadError) {
+          console.warn('Some downloads failed:', downloadError);
+          setModelReady(true); // Still show as ready, downloads can be retried
+          
+          setProgress({ step: 'complete', progress: 100, message: 'Generation completed!' });
+          
+          toast({
+            title: "Generation completed",
+            description: "Model generated but some downloads failed. You can try downloading again.",
+            variant: "default"
           });
         }
       }
