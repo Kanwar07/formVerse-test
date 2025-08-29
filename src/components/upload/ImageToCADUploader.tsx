@@ -258,9 +258,15 @@ export const ImageToCADUploader = ({
 
       console.log('Edge function response:', data);
       
-      // Handle new response format: { video, glb, download }
+      // Handle new Edge Function response format with task_id and download URLs
       let glbUrl;
-      if (data && (data.glb || data.download)) {
+      if (data && data.task_id && data.glb_url && data.api_base_url) {
+        // New format: construct full download URL
+        glbUrl = `${data.api_base_url}${data.glb_url}`;
+        console.log('Using new response format with task_id:', data.task_id);
+      }
+      // Handle direct download URL format
+      else if (data && (data.glb || data.download)) {
         glbUrl = data.glb || data.download;
       }
       // Fallback to old format if new format not available
