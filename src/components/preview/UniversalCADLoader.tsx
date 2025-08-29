@@ -186,11 +186,13 @@ export class UniversalCADLoader {
     });
 
     // Clean up any potential property conflicts
-    delete (material as any).lov;
-    delete (material as any)._listeners;
-    
-    // Mark material for proper React Three Fiber handling
-    material.needsUpdate = true;
+    if (material && typeof material === 'object') {
+      delete (material as any).lov;
+      delete (material as any)._listeners;
+      
+      // Mark material for proper React Three Fiber handling
+      material.needsUpdate = true;
+    }
 
     return {
       geometry,
@@ -268,7 +270,7 @@ export class UniversalCADLoader {
 
     // Ensure materials are properly configured
     materials.forEach(mat => {
-      if (mat instanceof THREE.Material) {
+      if (mat && mat instanceof THREE.Material && typeof mat === 'object') {
         // Clean up any potential property conflicts
         delete (mat as any).lov;
         delete (mat as any)._listeners;
@@ -330,8 +332,8 @@ export class UniversalCADLoader {
       : [];
 
     // Apply consistent material settings and clean up potential conflicts
-    materials.forEach(material => {
-      if (material instanceof THREE.Material) {
+    materials.forEach((material, index) => {
+      if (material && material instanceof THREE.Material && typeof material === 'object') {
         // Create a clean copy of the material to avoid property conflicts
         const cleanMaterial = material.clone();
         cleanMaterial.side = THREE.DoubleSide;
@@ -348,7 +350,6 @@ export class UniversalCADLoader {
         cleanMaterial.needsUpdate = true;
         
         // Replace the original material with the clean one
-        const index = materials.indexOf(material);
         materials[index] = cleanMaterial;
       }
     });
@@ -396,11 +397,13 @@ export class UniversalCADLoader {
     });
 
     // Clean up any potential property conflicts
-    delete (material as any).lov;
-    delete (material as any)._listeners;
-    
-    // Mark for proper React Three Fiber handling
-    material.needsUpdate = true;
+    if (material && typeof material === 'object') {
+      delete (material as any).lov;
+      delete (material as any)._listeners;
+      
+      // Mark for proper React Three Fiber handling
+      material.needsUpdate = true;
+    }
 
     return {
       geometry,
@@ -438,11 +441,13 @@ export class UniversalCADLoader {
       });
 
       // Clean up any potential property conflicts
-      delete (material as any).lov;
-      delete (material as any)._listeners;
-      
-      // Mark for proper React Three Fiber handling
-      material.needsUpdate = true;
+      if (material && typeof material === 'object') {
+        delete (material as any).lov;
+        delete (material as any)._listeners;
+        
+        // Mark for proper React Three Fiber handling
+        material.needsUpdate = true;
+      }
 
       return {
         geometry,

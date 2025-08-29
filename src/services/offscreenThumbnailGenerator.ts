@@ -104,7 +104,28 @@ export class OffscreenThumbnailGenerator {
     materials: THREE.Material[];
   }> {
     return new Promise((resolve, reject) => {
-      const extension = fileType.toLowerCase() || fileUrl.split('.').pop()?.toLowerCase() || '';
+      // Enhanced file type detection
+      let extension = '';
+      
+      // First try to detect from MIME type
+      if (fileType) {
+        if (fileType.includes('stl') || fileType === 'application/sla') {
+          extension = 'stl';
+        } else if (fileType.includes('obj')) {
+          extension = 'obj';
+        } else if (fileType.includes('gltf') || fileType === 'model/gltf+json') {
+          extension = 'gltf';
+        } else if (fileType.includes('glb') || fileType === 'model/gltf-binary') {
+          extension = 'glb';
+        } else if (fileType.includes('ply')) {
+          extension = 'ply';
+        }
+      }
+      
+      // Fallback to file URL extension if MIME type detection failed
+      if (!extension) {
+        extension = fileUrl.split('.').pop()?.toLowerCase() || '';
+      }
       
       console.log('Loading model with extension:', extension);
 
