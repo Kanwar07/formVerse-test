@@ -103,6 +103,28 @@ export class OffscreenThumbnailGenerator {
     geometry: THREE.BufferGeometry;
     materials: THREE.Material[];
   }> {
+    // Check if this is a Modal URL that needs proxy
+    const isModalUrl = fileUrl.includes('formversedude--cadqua-3d-api-fastapi-app.modal.run/download/');
+    let actualUrl = fileUrl;
+    
+    if (isModalUrl) {
+      console.log('Modal URL detected, using proxy for CORS-safe loading...');
+      try {
+        // Extract task_id from Modal URL
+        const urlParts = fileUrl.split('/');
+        const taskId = urlParts[urlParts.length - 1];
+        const fileTypeFromUrl = urlParts[urlParts.length - 2]; // 'glb' or 'video'
+        
+        // Use the Edge Function proxy to get the file
+        const { getGlbBlobUrl } = await import('@/utils/cadqua');
+        actualUrl = await getGlbBlobUrl(taskId, 'https://formversedude--cadqua-3d-api-fastapi-app.modal.run');
+        console.log('Got blob URL for Modal file:', actualUrl);
+      } catch (error) {
+        console.error('Failed to get blob URL for Modal file:', error);
+        throw new Error(`Failed to load Modal file: ${error}`);
+      }
+    }
+
     return new Promise((resolve, reject) => {
       // Enhanced file type detection
       let extension = '';
@@ -122,7 +144,7 @@ export class OffscreenThumbnailGenerator {
         }
       }
       
-      // Fallback to file URL extension if MIME type detection failed
+      // Fallback to original file URL extension if MIME type detection failed
       if (!extension) {
         extension = fileUrl.split('.').pop()?.toLowerCase() || '';
       }
@@ -131,19 +153,19 @@ export class OffscreenThumbnailGenerator {
 
       switch (extension) {
         case 'stl':
-          this.loadSTL(fileUrl, resolve, reject);
+          this.loadSTL(actualUrl, resolve, reject);
           break;
         case 'obj':
-          this.loadOBJ(fileUrl, resolve, reject);
+          this.loadOBJ(actualUrl, resolve, reject);
           break;
         case 'gltf':
         case 'glb':
-          this.loadGLTF(fileUrl, resolve, reject);
+          this.loadGLTF(actualUrl, resolve, reject);
           break;
         default:
           // Default to STL for unknown formats
           console.warn('Unknown format, attempting STL loader:', extension);
-          this.loadSTL(fileUrl, resolve, reject);
+          this.loadSTL(actualUrl, resolve, reject);
       }
     });
   }

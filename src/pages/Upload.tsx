@@ -71,9 +71,20 @@ const Upload = () => {
   // Generate file URL for preview
   const getFileUrl = () => {
     if (!modelPath) return undefined;
-    const { data } = supabase.storage.from('3d-models').getPublicUrl(modelPath);
-    console.log('Generated file URL for preview:', data.publicUrl);
-    return data.publicUrl;
+    
+    // Check if modelPath is a Modal download URL
+    const isModalUrl = modelPath.includes('formversedude--cadqua-3d-api-fastapi-app.modal.run/download/');
+    
+    if (isModalUrl) {
+      // For Modal URLs, use them directly
+      console.log('Generated file URL for preview:', modelPath);
+      return modelPath;
+    } else {
+      // For regular Supabase storage paths, get the public URL
+      const { data } = supabase.storage.from('3d-models').getPublicUrl(modelPath);
+      console.log('Generated file URL for preview:', data.publicUrl);
+      return data.publicUrl;
+    }
   };
 
   const handleFileSelected = async (file: File, filePath: string, extractedFileInfo: any, sourceImage?: string) => {
@@ -100,9 +111,19 @@ const Upload = () => {
     // Reset thumbnail state
     setThumbnailUrl(null);
 
-    // Get the public URL for the uploaded file
-    const fileUrl = supabase.storage.from('3d-models').getPublicUrl(filePath).data.publicUrl;
-    console.log('Public file URL for thumbnail generation:', fileUrl);
+    // Check if filePath is a Modal download URL
+    const isModalUrl = filePath.includes('formversedude--cadqua-3d-api-fastapi-app.modal.run/download/');
+    let fileUrl: string;
+    
+    if (isModalUrl) {
+      // For Modal URLs, use them directly for thumbnail generation (proxy will handle CORS)
+      fileUrl = filePath;
+      console.log('Generated file URL for preview:', fileUrl);
+    } else {
+      // For regular Supabase storage paths, get the public URL
+      fileUrl = supabase.storage.from('3d-models').getPublicUrl(filePath).data.publicUrl;
+      console.log('Public file URL for thumbnail generation:', fileUrl);
+    }
 
     // Start thumbnail generation with increased timeout for CAD files
     if (user && fileUrl) {
