@@ -13,7 +13,7 @@ import {
   Download,
   Info
 } from 'lucide-react';
-import { UniversalModelViewer } from '../preview/UniversalModelViewer';
+import { SafeModelViewer } from '../preview/SafeModelViewer';
 import { SimpleSTLViewer } from '../preview/SimpleSTLViewer';
 
 interface ModelPreviewSelectorProps {
@@ -88,7 +88,7 @@ export const ModelPreviewSelector = ({
     switch (viewerType) {
       case 'universal':
         return (
-          <UniversalModelViewer
+          <SafeModelViewer
             {...commonProps}
             onClose={isFullscreen ? () => setIsFullscreen(false) : undefined}
             autoRotate={false}
@@ -116,7 +116,7 @@ export const ModelPreviewSelector = ({
         }
         // Fallback to universal for non-STL files
         return (
-          <UniversalModelViewer
+          <SafeModelViewer
             {...commonProps}
             onClose={isFullscreen ? () => setIsFullscreen(false) : undefined}
             background={background}
@@ -128,7 +128,7 @@ export const ModelPreviewSelector = ({
         
       default:
         return (
-          <UniversalModelViewer
+          <SafeModelViewer
             {...commonProps}
             onClose={isFullscreen ? () => setIsFullscreen(false) : undefined}
             background={background}

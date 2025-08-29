@@ -365,23 +365,32 @@ export const ImageToCADUploader = ({
           const { getGlbBlobUrl } = await import('@/utils/cadqua');
           
           try {
+            console.log('Attempting to get blob URL for task:', result.taskId);
             glbViewerUrl = await getGlbBlobUrl(result.taskId, result.apiBaseUrl);
-            console.log('Generated blob URL for preview:', glbViewerUrl);
+            
+            // Validate the blob URL
+            if (!glbViewerUrl || !glbViewerUrl.startsWith('blob:')) {
+              throw new Error(`Invalid blob URL received: ${glbViewerUrl}`);
+            }
+            
+            console.log('Generated valid blob URL for preview:', glbViewerUrl);
             
             // Store the modal URL for downloads
             setModelDownloadUrl(`${result.apiBaseUrl}/download/glb/${result.taskId}`);
           } catch (error) {
-            console.error('Failed to get blob URL for preview, this will cause CORS errors:', error);
-            // Don't fall back to Modal URL as it causes CORS issues
-            // Instead, show an error and don't proceed with the viewer
+            console.error('Failed to get blob URL for preview:', error);
+            
+            // Show error but don't break the flow
             toast({
               title: "Preview generation failed",
-              description: "Could not create preview due to CORS restrictions. Download will still work.",
+              description: "3D preview unavailable due to technical issues. Download will still work.",
               variant: "destructive"
             });
+            
             // Keep the Modal URL for downloads only
             setModelDownloadUrl(result.glbUrl);
-            // Use a placeholder or skip the viewer
+            
+            // Set to null to trigger the skip logic
             glbViewerUrl = null;
           }
         } else {
@@ -406,21 +415,27 @@ export const ImageToCADUploader = ({
         const fileInfo = extractFileInfo(dummyModelFile);
         
         // Only proceed with viewer if we have a valid blob URL
-        if (glbViewerUrl) {
+        if (glbViewerUrl && glbViewerUrl.startsWith('blob:')) {
+          console.log('Using blob URL for viewer:', glbViewerUrl);
           onModelGenerated(dummyModelFile, glbViewerUrl, fileInfo, imagePath);
           toast({
             title: "Success!",
             description: "Your 3D model has been generated successfully from the image.",
           });
         } else {
-          // If no blob URL available, show download-only interface
+          // If no blob URL available or invalid, skip the 3D viewer to prevent crashes
+          console.warn('No valid blob URL available, skipping 3D viewer to prevent crashes');
           toast({
             title: "Model generated successfully",
-            description: "Preview unavailable due to CORS restrictions, but download is ready.",
+            description: "3D preview unavailable due to technical restrictions, but download is ready.",
+            variant: "default"
           });
-          // Still call onModelGenerated but with a special flag or handle differently
-          // For now, we'll pass a placeholder URL to avoid breaking the flow
-          onModelGenerated(dummyModelFile, 'data:text/plain;base64,', fileInfo, imagePath);
+          
+          // Don't call onModelGenerated to avoid loading the problematic viewer
+          // Instead, just show the download options directly
+          setConversionProgress(100);
+          setConversionStage('complete');
+          return; // Exit early to prevent viewer loading
         }
         
         // Reset state after success
