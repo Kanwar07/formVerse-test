@@ -117,22 +117,28 @@ const Upload = () => {
     // Reset thumbnail state
     setThumbnailUrl(null);
 
-    // Check if filePath is a Modal download URL
+    // Check if filePath is a blob URL, Modal URL, or complete URL
+    const isBlobUrl = filePath.startsWith('blob:');
     const isModalUrl = filePath.includes('formversedude--cadqua-3d-api-fastapi-app.modal.run/download/');
+    const isCompleteUrl = filePath.startsWith('http://') || filePath.startsWith('https://');
     let fileUrl: string;
     
-    if (isModalUrl) {
-      // For Modal URLs, use them directly for thumbnail generation (proxy will handle CORS)
+    if (isBlobUrl) {
+      // For blob URLs, skip thumbnail generation as they can't be accessed from workers
+      console.log('Blob URL detected, skipping 3D thumbnail generation (will use fallback)');
+      fileUrl = ''; // Empty string to skip thumbnail generation
+    } else if (isModalUrl || isCompleteUrl) {
+      // For Modal URLs or complete URLs, use them directly for thumbnail generation
       fileUrl = filePath;
-      console.log('Generated file URL for preview:', fileUrl);
+      console.log('Using direct URL for thumbnail:', fileUrl);
     } else {
       // For regular Supabase storage paths, get the public URL
       fileUrl = supabase.storage.from('3d-models').getPublicUrl(filePath).data.publicUrl;
       console.log('Public file URL for thumbnail generation:', fileUrl);
     }
 
-    // Start thumbnail generation with increased timeout for CAD files
-    if (user && fileUrl) {
+    // Start thumbnail generation with increased timeout for CAD files (skip for blob URLs)
+    if (user && fileUrl && !isBlobUrl) {
       console.log('Starting enhanced thumbnail generation for CAD file...');
       try {
         // Add a small delay to ensure file is fully uploaded and accessible
