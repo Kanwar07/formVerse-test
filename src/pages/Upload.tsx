@@ -72,17 +72,23 @@ const Upload = () => {
   const getFileUrl = () => {
     if (!modelPath) return undefined;
     
+    // Check if modelPath is a blob URL (created from proxy downloads)
+    const isBlobUrl = modelPath.startsWith('blob:');
+    
     // Check if modelPath is a Modal download URL
     const isModalUrl = modelPath.includes('formversedude--cadqua-3d-api-fastapi-app.modal.run/download/');
     
-    if (isModalUrl) {
-      // For Modal URLs, use them directly
-      console.log('Generated file URL for preview:', modelPath);
+    // Check if it's already a complete URL (blob, modal, or any other external URL)
+    const isCompleteUrl = modelPath.startsWith('http://') || modelPath.startsWith('https://') || isBlobUrl;
+    
+    if (isBlobUrl || isModalUrl || isCompleteUrl) {
+      // For blob URLs, Modal URLs, or any complete URLs, use them directly
+      console.log('Using direct URL for preview:', modelPath);
       return modelPath;
     } else {
       // For regular Supabase storage paths, get the public URL
       const { data } = supabase.storage.from('3d-models').getPublicUrl(modelPath);
-      console.log('Generated file URL for preview:', data.publicUrl);
+      console.log('Generated Supabase public URL for preview:', data.publicUrl);
       return data.publicUrl;
     }
   };
