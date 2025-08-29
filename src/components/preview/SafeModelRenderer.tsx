@@ -1,25 +1,37 @@
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Center } from '@react-three/drei';
 import * as THREE from 'three';
 import { LoadedCADModel } from './UniversalCADLoader';
 
 interface SafeModelRendererProps {
   model: LoadedCADModel;
-  wireframeMode: boolean;
-  autoRotate: boolean;
+  wireframeMode?: boolean;
+  autoRotate?: boolean;
 }
 
 export const SafeModelRenderer = ({ 
   model, 
-  wireframeMode, 
-  autoRotate 
+  wireframeMode = false, 
+  autoRotate = false 
 }: SafeModelRendererProps) => {
   const meshRef = useRef<THREE.Mesh>(null);
   const [renderError, setRenderError] = useState<string | null>(null);
 
-  // Auto rotation effect
-  React.useEffect(() => {
-    if (!meshRef.current || !autoRotate) return;
+  console.log('SafeModelRenderer: Component initialized with:', {
+    model: !!model,
+    hasGeometry: !!model?.geometry,
+    hasAttributes: !!model?.geometry?.attributes,
+    hasPosition: !!model?.geometry?.attributes?.position,
+    positionCount: model?.geometry?.attributes?.position?.count,
+    materialsLength: model?.materials?.length,
+    materialsType: Array.isArray(model?.materials) ? 'array' : typeof model?.materials,
+    wireframeMode,
+    autoRotate
+  });
+
+  // Animation effect
+  useEffect(() => {
+    if (!autoRotate) return;
     
     const animate = () => {
       if (meshRef.current) {
@@ -32,63 +44,103 @@ export const SafeModelRenderer = ({
     return () => cancelAnimationFrame(animationId);
   }, [autoRotate]);
 
-  // Early validation - return error state immediately if model is invalid
+  // Comprehensive validation
   if (!model) {
     console.error('SafeModelRenderer: No model provided');
-    return (
-      <Center>
-        <mesh>
-          <boxGeometry args={[1, 1, 1]} />
-          <meshStandardMaterial color="#ff0000" />
-        </mesh>
-      </Center>
-    );
+    setRenderError('No model provided');
+    return null;
   }
 
   if (!model.geometry) {
-    console.error('SafeModelRenderer: Model has no geometry');
-    return (
-      <Center>
-        <mesh>
-          <boxGeometry args={[1, 1, 1]} />
-          <meshStandardMaterial color="#ff4444" />
-        </mesh>
-      </Center>
-    );
+    console.error('SafeModelRenderer: No geometry in model:', model);
+    setRenderError('No geometry in model');
+    return null;
   }
 
-  // Validate geometry attributes
-  if (!model.geometry.attributes || !model.geometry.attributes.position) {
-    console.error('SafeModelRenderer: Geometry missing position attributes');
-    return (
-      <Center>
-        <mesh>
-          <boxGeometry args={[1, 1, 1]} />
-          <meshStandardMaterial color="#ff8888" />
-        </mesh>
-      </Center>
-    );
+  if (!model.geometry.attributes) {
+    console.error('SafeModelRenderer: No attributes in geometry:', model.geometry);
+    setRenderError('No attributes in geometry');
+    return null;
   }
 
-  // Validate position array
-  if (!model.geometry.attributes.position.array || model.geometry.attributes.position.array.length === 0) {
-    console.error('SafeModelRenderer: Position attribute has no data');
-    return (
-      <Center>
-        <mesh>
-          <boxGeometry args={[1, 1, 1]} />
-          <meshStandardMaterial color="#ffaaaa" />
-        </mesh>
-      </Center>
-    );
+  if (!model.geometry.attributes.position) {
+    console.error('SafeModelRenderer: No position attribute in geometry:', model.geometry.attributes);
+    setRenderError('No position attribute in geometry');
+    return null;
   }
 
-  // Create safe material with comprehensive null checks
-  const createSafeMaterial = () => {
+  if (!model.materials || !Array.isArray(model.materials) || model.materials.length === 0) {
+    console.error('SafeModelRenderer: Invalid materials:', model.materials);
+    setRenderError('Invalid materials');
+    return null;
+  }
+
+  // Create safe geometry with proper validation
+  const createSafeGeometry = (): THREE.BufferGeometry => {
+    console.log('SafeModelRenderer: Creating safe geometry from:', {
+      originalGeometry: !!model.geometry,
+      hasPosition: !!model.geometry.attributes.position,
+      positionCount: model.geometry.attributes.position?.count
+    });
+
     try {
-      console.log('SafeModelRenderer: Creating material, wireframeMode:', wireframeMode);
+      // Clone the original geometry to avoid modifying the source
+      const geometry = model.geometry.clone();
       
+      // Validate position attribute
+      if (!geometry.attributes.position || geometry.attributes.position.count === 0) {
+        console.error('SafeModelRenderer: Invalid position attribute');
+        throw new Error('Invalid position attribute');
+      }
+      
+      console.log('SafeModelRenderer: Geometry validation passed, processing...');
+      
+      // Ensure we have normals for proper lighting
+      if (!geometry.attributes.normal) {
+        console.log('SafeModelRenderer: Computing normals');
+        geometry.computeVertexNormals();
+      }
+      
+      // Clean up any potentially problematic properties
+      delete (geometry as any).lov;
+      delete (geometry as any)._listeners;
+      
+      console.log('SafeModelRenderer: Safe geometry created successfully');
+      return geometry;
+      
+    } catch (error) {
+      console.error('SafeModelRenderer: Error creating geometry:', error);
+      
+      // Create minimal fallback geometry
+      const fallbackGeometry = new THREE.BoxGeometry(1, 1, 1);
+      delete (fallbackGeometry as any).lov;
+      delete (fallbackGeometry as any)._listeners;
+      
+      return fallbackGeometry;
+    }
+  };
+
+  // Create safe material with comprehensive validation
+  const createSafeMaterial = (): THREE.Material => {
+    console.log('SafeModelRenderer: Creating safe material from:', {
+      materialsArray: Array.isArray(model.materials),
+      materialsLength: model.materials?.length,
+      firstMaterial: !!model.materials?.[0],
+      wireframeMode
+    });
+
+    try {
+      // Use the first material if available and valid
+      const sourceMaterial = model.materials[0];
+      
+      console.log('SafeModelRenderer: Source material details:', {
+        sourceMaterial: !!sourceMaterial,
+        isThreeMaterial: sourceMaterial instanceof THREE.Material,
+        materialType: sourceMaterial?.constructor?.name
+      });
+
       if (wireframeMode) {
+        console.log('SafeModelRenderer: Creating wireframe material');
         const material = new THREE.MeshBasicMaterial({
           color: 0x00d4ff,
           wireframe: true,
@@ -102,6 +154,7 @@ export const SafeModelRenderer = ({
         delete (material as any)._listeners;
         material.needsUpdate = true;
         
+        console.log('SafeModelRenderer: Wireframe material created');
         return material;
       }
       
@@ -118,6 +171,7 @@ export const SafeModelRenderer = ({
       delete (material as any)._listeners;
       material.needsUpdate = true;
       
+      console.log('SafeModelRenderer: Standard material created');
       return material;
       
     } catch (error) {
@@ -133,112 +187,27 @@ export const SafeModelRenderer = ({
       delete (fallbackMaterial as any)._listeners;
       fallbackMaterial.needsUpdate = true;
       
+      console.log('SafeModelRenderer: Fallback material created');
       return fallbackMaterial;
     }
   };
 
-  // Create safe geometry with error handling
-  const createSafeGeometry = () => {
-    try {
-      // Multiple layers of validation
-      if (!model || !model.geometry) {
-        console.error('SafeModelRenderer: No geometry found in model');
-        return new THREE.BoxGeometry(1, 1, 1);
-      }
-
-      // Validate essential geometry attributes
-      const positionAttr = model.geometry.attributes?.position;
-      if (!positionAttr || !positionAttr.array || positionAttr.array.length === 0) {
-        console.error('SafeModelRenderer: Invalid position attribute');
-        return new THREE.BoxGeometry(1, 1, 1);
-      }
-
-      // Create a completely new geometry to avoid any reference issues
-      const geometry = new THREE.BufferGeometry();
-      
-      // Safely copy position attribute
-      try {
-        const positions = new Float32Array(positionAttr.array);
-        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-      } catch (error) {
-        console.error('SafeModelRenderer: Failed to copy position attribute:', error);
-        return new THREE.BoxGeometry(1, 1, 1);
-      }
-      
-      // Safely copy normal attribute if it exists and is valid
-      try {
-        if (model.geometry.attributes?.normal && 
-            model.geometry.attributes.normal.array && 
-            model.geometry.attributes.normal.array.length > 0) {
-          const normals = new Float32Array(model.geometry.attributes.normal.array);
-          geometry.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
-        } else {
-          geometry.computeVertexNormals();
-        }
-      } catch (error) {
-        console.warn('SafeModelRenderer: Failed to copy normals, computing instead:', error);
-        geometry.computeVertexNormals();
-      }
-      
-      // Safely copy UV attribute if it exists and is valid
-      try {
-        if (model.geometry.attributes?.uv && 
-            model.geometry.attributes.uv.array && 
-            model.geometry.attributes.uv.array.length > 0) {
-          const uvs = new Float32Array(model.geometry.attributes.uv.array);
-          geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
-        }
-      } catch (error) {
-        console.warn('SafeModelRenderer: Failed to copy UV coordinates:', error);
-        // UV is optional, continue without it
-      }
-      
-      // Safely copy index if it exists
-      try {
-        if (model.geometry.index && model.geometry.index.array) {
-          const indices = new Uint32Array(model.geometry.index.array);
-          geometry.setIndex(new THREE.BufferAttribute(indices, 1));
-        }
-      } catch (error) {
-        console.warn('SafeModelRenderer: Failed to copy indices:', error);
-        // Index is optional, continue without it
-      }
-      
-      // Compute bounds safely
-      try {
-        geometry.computeBoundingBox();
-        geometry.computeBoundingSphere();
-      } catch (error) {
-        console.warn('SafeModelRenderer: Failed to compute bounds:', error);
-        // Bounds computation failed, but geometry might still be usable
-      }
-      
-      // Final validation
-      if (!geometry.attributes.position) {
-        console.error('SafeModelRenderer: Geometry creation failed - no position attribute');
-        return new THREE.BoxGeometry(1, 1, 1);
-      }
-      
-      return geometry;
-    } catch (error) {
-      console.error('SafeModelRenderer: Error creating safe geometry:', error);
-      return new THREE.BoxGeometry(1, 1, 1);
-    }
-  };
-
-  // Handle render errors
+  // Show error state if we have render errors
   if (renderError) {
+    console.error('SafeModelRenderer: Render error state:', renderError);
     return (
       <Center>
         <mesh>
-          <boxGeometry args={[2, 0.5, 0.1]} />
+          <boxGeometry args={[1, 1, 1]} />
           <meshBasicMaterial color="#ff0000" />
         </mesh>
       </Center>
     );
   }
 
-  // Create geometry and material safely with primitive objects
+  console.log('SafeModelRenderer: Starting render process...');
+
+  // Create geometry and material safely
   let safeGeometry: THREE.BufferGeometry;
   let safeMaterial: THREE.Material;
 
@@ -260,30 +229,32 @@ export const SafeModelRenderer = ({
 
     console.log('SafeModelRenderer: Successfully created geometry and material, rendering mesh');
 
+    // Create the mesh outside of JSX to avoid React Three Fiber issues
+    const mesh = new THREE.Mesh(safeGeometry, safeMaterial);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    
+    // Clean up any potentially problematic properties
+    delete (mesh as any).lov;
+    delete (mesh as any)._listeners;
+    
+    console.log('SafeModelRenderer: Mesh created successfully, rendering...');
+
     return (
       <Center>
-        <primitive object={(() => {
-          const mesh = new THREE.Mesh(safeGeometry, safeMaterial);
-          mesh.castShadow = true;
-          mesh.receiveShadow = true;
-          
-          // Clean up any potentially problematic properties
-          delete (mesh as any).lov;
-          delete (mesh as any)._listeners;
-          
-          return mesh;
-        })()} ref={meshRef} />
+        <primitive object={mesh} ref={meshRef} />
       </Center>
     );
   } catch (error) {
     console.error('SafeModelRenderer render error:', error);
     setRenderError(error instanceof Error ? error.message : 'Unknown render error');
     
+    // Return fallback mesh
     return (
       <Center>
         <mesh>
-          <boxGeometry args={[1, 1, 1]} />
-          <meshBasicMaterial color="#ff0000" />
+          <boxGeometry args={[2, 2, 2]} />
+          <meshBasicMaterial color="#ffaa00" />
         </mesh>
       </Center>
     );

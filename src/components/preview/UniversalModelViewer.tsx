@@ -113,7 +113,34 @@ export const UniversalModelViewer = ({
         }
       );
 
-      console.log('UniversalModelViewer: Model loaded successfully', loadedModel);
+      console.log('UniversalModelViewer: Model loaded successfully', {
+        loadedModel: !!loadedModel,
+        hasGeometry: !!loadedModel.geometry,
+        hasAttributes: !!loadedModel.geometry?.attributes,
+        hasPosition: !!loadedModel.geometry?.attributes?.position,
+        positionCount: loadedModel.geometry?.attributes?.position?.count,
+        materialsLength: loadedModel.materials?.length,
+        geometryType: loadedModel.geometry?.constructor?.name,
+        materialTypes: loadedModel.materials?.map(m => m?.constructor?.name)
+      });
+
+      // Additional validation before setting model
+      if (!loadedModel.geometry) {
+        throw new Error('Loaded model has no geometry');
+      }
+      
+      if (!loadedModel.geometry.attributes) {
+        throw new Error('Loaded model geometry has no attributes');
+      }
+      
+      if (!loadedModel.geometry.attributes.position) {
+        throw new Error('Loaded model geometry has no position attribute');
+      }
+      
+      if (!loadedModel.materials || !Array.isArray(loadedModel.materials) || loadedModel.materials.length === 0) {
+        throw new Error('Loaded model has no valid materials');
+      }
+
       setModel(loadedModel);
       setLoading(false);
 
@@ -438,12 +465,34 @@ export const UniversalModelViewer = ({
             )}
             
             {/* 3D Model */}
-            {model && model.geometry && model.geometry.attributes && model.geometry.attributes.position && (
-              <SafeModelRenderer 
-                model={model} 
-                wireframeMode={wireframeMode}
-                autoRotate={autoRotate}
-              />
+            {model && model.geometry && model.geometry.attributes && model.geometry.attributes.position ? (
+              <>
+                {console.log('UniversalModelViewer: Rendering SafeModelRenderer with model:', {
+                  hasModel: !!model,
+                  hasGeometry: !!model.geometry,
+                  hasAttributes: !!model.geometry.attributes,
+                  hasPosition: !!model.geometry.attributes.position,
+                  positionCount: model.geometry.attributes.position?.count,
+                  materialsCount: model.materials?.length,
+                  wireframeMode,
+                  autoRotate
+                })}
+                <SafeModelRenderer 
+                  model={model} 
+                  wireframeMode={wireframeMode}
+                  autoRotate={autoRotate}
+                />
+              </>
+            ) : (
+              <>
+                {console.log('UniversalModelViewer: Model validation failed, not rendering SafeModelRenderer:', {
+                  hasModel: !!model,
+                  hasGeometry: !!model?.geometry,
+                  hasAttributes: !!model?.geometry?.attributes,
+                  hasPosition: !!model?.geometry?.attributes?.position
+                })}
+                {/* Render nothing instead of SafeModelRenderer when model is invalid */}
+              </>
             )}
             
             {/* Controls */}
