@@ -13,35 +13,29 @@ const CADQUA_API_URL = "https://formversedude--cadqua-3d-api-fastapi-app.modal.r
 // Utility function for exponential backoff delay
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-// Health check with retries
+// Health check with optional fallback
 async function performHealthCheck(): Promise<{ success: boolean; retryAfter?: number }> {
   try {
-    console.log('Performing health check...');
+    console.log('Performing optional health check...');
     
     const response = await fetch(CADQUA_API_URL + '/health', {
       method: 'GET',
       headers: { 'Accept': 'application/json' },
-      signal: AbortSignal.timeout(15000) // 15s timeout
+      signal: AbortSignal.timeout(5000) // Reduced to 5s timeout
     });
     
     if (response.ok) {
       const health = await response.json();
       console.log('Health check passed:', health);
-      
-      if (health.pipeline_loaded) {
-        return { success: true };
-      } else {
-        console.log('Pipeline not loaded, treating as unhealthy');
-        return { success: false, retryAfter: 30 };
-      }
+      return { success: true };
     }
     
-    console.log(`Health check failed with status: ${response.status}`);
-    return { success: false, retryAfter: 30 };
+    console.log(`Health check failed with status: ${response.status}, proceeding anyway`);
+    return { success: true }; // Proceed even if health check fails
     
   } catch (error) {
-    console.error('Health check failed:', error);
-    return { success: false, retryAfter: 30 };
+    console.log('Health check failed, proceeding without health check:', error);
+    return { success: true }; // Proceed even if health check fails
   }
 }
 
@@ -118,14 +112,16 @@ async function callModalAPI(imageFile: File): Promise<any> {
       if (result.task_id) {
         console.log('FastAPI format response detected');
         
-        // Return the task info with download URLs
+        // Return the task info with full download URLs
         return {
           task_id: result.task_id,
           status: result.status || 'completed',
-          video_url: `/download/video/${result.task_id}`,
-          glb_url: `/download/glb/${result.task_id}`,
-          download_url: `/download/glb/${result.task_id}`, // Use GLB as the main download
-          api_base_url: CADQUA_API_URL,
+          video: result.video_url ? `${CADQUA_API_URL}${result.video_url}` : null,
+          glb: result.glb_url ? `${CADQUA_API_URL}${result.glb_url}` : null,
+          download: result.glb_url ? `${CADQUA_API_URL}${result.glb_url}` : null,
+          video_url: result.video_url,
+          glb_url: result.glb_url,
+          gaussian_available: result.gaussian_available || false,
           message: result.message || '3D model generated successfully'
         };
       }
@@ -247,21 +243,8 @@ serve(async (req) => {
       type: imageFile.type
     });
 
-    // Step 1: Health check with retries
-    console.log('Performing health check...');
-    const healthCheck = await performHealthCheck();
-    
-    if (!healthCheck.success) {
-      return new Response(JSON.stringify({ 
-        error: 'CADQUA AI service is currently unavailable',
-        details: 'The service may be starting up or experiencing issues',
-        code: 'SERVICE_UNAVAILABLE',
-        retryAfter: healthCheck.retryAfter
-      }), {
-        status: 503,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    // Step 1: Optional health check (non-blocking)
+    await performHealthCheck();
 
     // Step 2: Call Modal API directly
     console.log('Starting model generation via Modal API...');
