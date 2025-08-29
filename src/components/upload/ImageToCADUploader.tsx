@@ -129,6 +129,7 @@ export const ImageToCADUploader = ({
           description: "Creating CORS-safe preview URL",
           progress: 75
         };
+      case 'finalizing':
         return {
           icon: CheckCircle,
           title: "Finalizing upload...",
@@ -361,11 +362,10 @@ export const ImageToCADUploader = ({
           setConversionProgress(75);
           setConversionStage('preparing_preview');
           
-          const { getGlbObjectUrl } = await import('@/utils/cadqua');
-          const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpxbnp4cGJ0aGxkZnFxYnp6amN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg5MzIxNzgsImV4cCI6MjA2NDUwODE3OH0.7YWUyL31eeOtauM4TqHjQXm8PB1Y-wVB7Cj0dSMQ0SA';
+          const { getGlbBlobUrl } = await import('@/utils/cadqua');
           
           try {
-            glbViewerUrl = await getGlbObjectUrl(result.taskId, result.apiBaseUrl, SUPABASE_ANON_KEY);
+            glbViewerUrl = await getGlbBlobUrl(result.taskId, result.apiBaseUrl);
             console.log('Generated blob URL for preview:', glbViewerUrl);
             
             // Store the modal URL for downloads
