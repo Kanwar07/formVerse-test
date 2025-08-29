@@ -124,56 +124,38 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
-  // Handle download requests
+  // Handle proxy download requests  
   const url = new URL(req.url);
-  const isDownloadRequest = req.method === 'POST' && (url.pathname.includes('/download') || url.searchParams.get('action') === 'download');
-  
-  if (isDownloadRequest) {
+  if (req.method === 'POST' && url.searchParams.get('action') === 'download') {
     try {
-      const body = await req.json();
-      const { task_id, file_type, api_base_url } = body;
-      
+      const { task_id, file_type, api_base_url } = await req.json();
       if (!task_id || !file_type) {
-        return new Response(JSON.stringify({ 
-          error: 'Missing task_id or file_type',
-          code: 'MISSING_PARAMS' 
-        }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        return new Response(JSON.stringify({ error: 'MISSING_PARAMS' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      
-      console.log(`Downloading ${file_type} for task ${task_id}...`);
-      
-      const modalUrl = api_base_url || CADQUA_API_URL;
-      const response = await fetch(`${modalUrl}/download/${file_type}/${task_id}`, {
-        method: 'GET',
-        signal: AbortSignal.timeout(60000) // 1 minute timeout
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Modal API returned ${response.status}: ${response.statusText}`);
+      const base = api_base_url || CADQUA_API_URL;
+      const upstream = `${base}/download/${file_type}/${task_id}`;
+      const r = await fetch(upstream);
+      if (!r.ok) {
+        const t = await r.text();
+        return new Response(JSON.stringify({ error: 'UPSTREAM_FAIL', details: t }), {
+          status: r.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
       }
-      
-      const fileBlob = await response.blob();
-      
-      return new Response(fileBlob, {
+      const blob = await r.blob();
+      return new Response(blob, {
         headers: {
           ...corsHeaders,
-          'Content-Type': response.headers.get('content-type') || 'application/octet-stream',
-          'Content-Disposition': response.headers.get('content-disposition') || `attachment; filename="cadqua_${file_type}_${task_id}.${file_type === 'video' ? 'mp4' : 'glb'}"`,
+          'Content-Type': r.headers.get('content-type') || 'application/octet-stream',
+          'Content-Disposition':
+            r.headers.get('content-disposition') ||
+            `attachment; filename="cadqua_${file_type}_${task_id}.${file_type === 'glb' ? 'glb' : 'mp4'}"`,
         },
       });
-      
-    } catch (error) {
-      console.error('Download error:', error);
-      return new Response(JSON.stringify({ 
-        error: 'Download failed',
-        details: (error as Error).message,
-        code: 'DOWNLOAD_FAILED'
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    } catch (e) {
+      return new Response(JSON.stringify({ error: 'DOWNLOAD_FAILED', details: String(e) }), {
+        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
   }

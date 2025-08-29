@@ -20,16 +20,23 @@ export class ThumbnailService {
       console.log('File Name:', fileName);
       console.log('File Type:', fileType);
       
-      // Verify the file is accessible first
-      try {
-        const response = await fetch(fileUrl, { method: 'HEAD' });
-        if (!response.ok) {
-          console.error('File not accessible:', response.status);
+      // Verify the file is accessible first (skip for blob URLs and Modal URLs to avoid CORS)
+      const isBlobUrl = fileUrl.startsWith('blob:');
+      const isModalUrl = fileUrl.includes('modal.run') || fileUrl.includes('formversedude');
+      
+      if (!isBlobUrl && !isModalUrl) {
+        try {
+          const response = await fetch(fileUrl, { method: 'HEAD' });
+          if (!response.ok) {
+            console.error('File not accessible:', response.status);
+            return await this.generateFallbackThumbnail(fileName, userId);
+          }
+        } catch (error) {
+          console.error('File accessibility check failed:', error);
           return await this.generateFallbackThumbnail(fileName, userId);
         }
-      } catch (error) {
-        console.error('File accessibility check failed:', error);
-        return await this.generateFallbackThumbnail(fileName, userId);
+      } else {
+        console.log('Skipping accessibility check for blob/modal URL');
       }
       
       // For STL files, try ViewSTL API

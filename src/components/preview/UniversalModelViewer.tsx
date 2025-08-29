@@ -103,6 +103,7 @@ export const UniversalModelViewer = ({
     try {
       console.log('UniversalModelViewer: Loading model', { fileUrl, fileName });
       
+      // Use the fileUrl directly - it should be either a blob URL or a clean storage URL
       const loadedModel = await UniversalCADLoader.loadModel(
         fileUrl, 
         fileName, 

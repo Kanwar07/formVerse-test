@@ -15,7 +15,7 @@ interface ImageToCADUploaderProps {
   setUploading: (uploading: boolean) => void;
 }
 
-type GenerationStage = 'idle' | 'uploading' | 'health-check' | 'warming-up' | 'generating' | 'downloading' | 'finalizing' | 'complete' | 'error' | 'retrying';
+type GenerationStage = 'idle' | 'uploading' | 'health-check' | 'warming-up' | 'generating' | 'downloading' | 'preparing_preview' | 'finalizing' | 'complete' | 'error' | 'retrying';
 
 interface ErrorInfo {
   message: string;
@@ -36,6 +36,7 @@ export const ImageToCADUploader = ({
   const [retryCount, setRetryCount] = useState(0);
   const [retryCountdown, setRetryCountdown] = useState(0);
   const [generatedModelUrl, setGeneratedModelUrl] = useState<string>("");
+  const [modelDownloadUrl, setModelDownloadUrl] = useState<string>("");
   const { toast } = useToast();
   const { user, session } = useAuth();
   const navigate = useNavigate();
@@ -121,7 +122,13 @@ export const ImageToCADUploader = ({
           description: "Retrieving your 3D model",
           progress: 85
         };
-      case 'finalizing':
+      case 'preparing_preview':
+        return {
+          icon: FileCheck,
+          title: "Preparing preview...",
+          description: "Creating CORS-safe preview URL",
+          progress: 75
+        };
         return {
           icon: CheckCircle,
           title: "Finalizing upload...",
@@ -208,6 +215,7 @@ export const ImageToCADUploader = ({
     setRetryCount(0);
     setConversionStage('idle');
     setGeneratedModelUrl("");
+    setModelDownloadUrl("");
     
     // Create preview
     const reader = new FileReader();
@@ -217,7 +225,7 @@ export const ImageToCADUploader = ({
     reader.readAsDataURL(file);
   };
 
-  const generate3DModelFromImage = async (imageFile: File): Promise<string> => {
+  const generate3DModelFromImage = async (imageFile: File): Promise<{glbUrl: string, taskId: string, apiBaseUrl: string}> => {
     console.log('Starting 3D model generation...');
     
     try {
@@ -261,19 +269,26 @@ export const ImageToCADUploader = ({
       console.log('Edge function response:', data);
       
       // Handle new Edge Function response format with task_id and download URLs
-      let glbUrl;
+      let glbUrl, taskId, apiBaseUrl;
       if (data && data.task_id && data.glb_url && data.api_base_url) {
         // New format: construct full download URL
         glbUrl = `${data.api_base_url}${data.glb_url}`;
+        taskId = data.task_id;
+        apiBaseUrl = data.api_base_url;
         console.log('Using new response format with task_id:', data.task_id);
       }
       // Handle direct download URL format
       else if (data && (data.glb || data.download)) {
         glbUrl = data.glb || data.download;
+        // For legacy format, we don't have task_id and api_base_url
+        taskId = '';
+        apiBaseUrl = '';
       }
       // Fallback to old format if new format not available
       else if (data && data.data && data.data[2]) {
         glbUrl = data.data[2];
+        taskId = '';
+        apiBaseUrl = '';
       }
       else {
         console.error('Invalid response structure:', data);
@@ -286,7 +301,7 @@ export const ImageToCADUploader = ({
       }
       
       console.log('3D model generation successful:', glbUrl);
-      return glbUrl;
+      return { glbUrl, taskId, apiBaseUrl };
     } catch (error) {
       console.error('Generation error:', error);
       
@@ -307,6 +322,7 @@ export const ImageToCADUploader = ({
     setConversionStage('uploading');
     setError(null);
     setGeneratedModelUrl("");
+    setModelDownloadUrl("");
     
     const maxRetries = 2;
     let currentAttempt = 0;
@@ -333,14 +349,39 @@ export const ImageToCADUploader = ({
         setConversionStage('generating');
 
         // Step 2: Generate 3D model
-        const glbUrl = await generate3DModelFromImage(selectedImage);
+        const result = await generate3DModelFromImage(selectedImage);
         
         setConversionProgress(70);
         setConversionStage('downloading');
         
-        // Step 3: Store the GLB URL for direct download/view (no fetch needed)
-        console.log('3D model ready for download/view:', glbUrl);
-        setGeneratedModelUrl(glbUrl);
+        // Step 3: Get blob URL for preview/thumbnail (CORS-safe) - only if we have task_id
+        let glbViewerUrl = result.glbUrl; // Default fallback
+        
+        if (result.taskId && result.apiBaseUrl) {
+          setConversionProgress(75);
+          setConversionStage('preparing_preview');
+          
+          const { getGlbObjectUrl } = await import('@/utils/cadqua');
+          const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpxbnp4cGJ0aGxkZnFxYnp6amN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg5MzIxNzgsImV4cCI6MjA2NDUwODE3OH0.7YWUyL31eeOtauM4TqHjQXm8PB1Y-wVB7Cj0dSMQ0SA';
+          
+          try {
+            glbViewerUrl = await getGlbObjectUrl(result.taskId, result.apiBaseUrl, SUPABASE_ANON_KEY);
+            console.log('Generated blob URL for preview:', glbViewerUrl);
+            
+            // Store the modal URL for downloads
+            setModelDownloadUrl(`${result.apiBaseUrl}/download/glb/${result.taskId}`);
+          } catch (error) {
+            console.warn('Failed to get blob URL, using direct URL:', error);
+            // Fall back to direct URL (may have CORS issues but better than nothing)
+            setModelDownloadUrl(result.glbUrl);
+          }
+        } else {
+          // Legacy format without task_id - use direct URL for both preview and download
+          setModelDownloadUrl(result.glbUrl);
+        }
+        
+        // Store the blob URL (or fallback) for preview
+        setGeneratedModelUrl(glbViewerUrl);
         
         setConversionProgress(85);
         setConversionStage('finalizing');
@@ -354,7 +395,7 @@ export const ImageToCADUploader = ({
         
         // Step 5: Pass to the main upload flow with the URL stored
         const fileInfo = extractFileInfo(dummyModelFile);
-        onModelGenerated(dummyModelFile, glbUrl, fileInfo, imagePath);
+        onModelGenerated(dummyModelFile, result.glbUrl, fileInfo, imagePath);
         
         toast({
           title: "Success!",
@@ -368,6 +409,7 @@ export const ImageToCADUploader = ({
           setSelectedImage(null);
           setImagePreview("");
           setRetryCount(0);
+          setModelDownloadUrl("");
         }, 2000);
 
       } catch (error) {
@@ -442,16 +484,9 @@ export const ImageToCADUploader = ({
   };
 
   const handleDownloadModel = () => {
-    if (generatedModelUrl) {
-      // Use direct navigation to bypass CORS
-      const a = document.createElement('a');
-      a.href = generatedModelUrl;
-      a.target = '_blank';
-      a.rel = 'noopener';
-      a.download = `generated-model-${Date.now()}.glb`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
+    if (modelDownloadUrl) {
+      // Use window.open for direct download from Modal API
+      window.open(modelDownloadUrl, '_blank');
       
       toast({
         title: "Download started",
@@ -461,9 +496,9 @@ export const ImageToCADUploader = ({
   };
 
   const handleViewModel = () => {
-    if (generatedModelUrl) {
-      // Use direct navigation to bypass CORS
-      window.open(generatedModelUrl, '_blank');
+    if (modelDownloadUrl) {
+      // Use window.open for direct view from Modal API
+      window.open(modelDownloadUrl, '_blank');
     }
   };
 
@@ -642,6 +677,7 @@ export const ImageToCADUploader = ({
                     setRetryCount(0);
                     setConversionStage('idle');
                     setGeneratedModelUrl("");
+                    setModelDownloadUrl("");
                   }}
                   variant="outline"
                   size="sm"

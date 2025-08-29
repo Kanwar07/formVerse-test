@@ -71,7 +71,8 @@ export class UniversalCADLoader {
       
       onProgress?.({ progress: 10, stage: `Detecting format: ${format.toUpperCase()}` });
 
-      // Load based on format with retry logic
+      // Use the fileUrl directly - it should be either a blob URL or a clean storage URL
+      // No need to rewrite or prefix it
       const maxRetries = 3;
       let lastError: Error | null = null;
       
