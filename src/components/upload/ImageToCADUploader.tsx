@@ -35,6 +35,7 @@ export const ImageToCADUploader = ({
   const [imagePreview, setImagePreview] = useState<string>("");
   const [retryCount, setRetryCount] = useState(0);
   const [retryCountdown, setRetryCountdown] = useState(0);
+  const [generatedModelUrl, setGeneratedModelUrl] = useState<string>("");
   const { toast } = useToast();
   const { user, session } = useAuth();
   const navigate = useNavigate();
@@ -206,6 +207,7 @@ export const ImageToCADUploader = ({
     setError(null);
     setRetryCount(0);
     setConversionStage('idle');
+    setGeneratedModelUrl("");
     
     // Create preview
     const reader = new FileReader();
@@ -304,6 +306,7 @@ export const ImageToCADUploader = ({
     setConversionProgress(0);
     setConversionStage('uploading');
     setError(null);
+    setGeneratedModelUrl("");
     
     const maxRetries = 2;
     let currentAttempt = 0;
@@ -335,36 +338,23 @@ export const ImageToCADUploader = ({
         setConversionProgress(70);
         setConversionStage('downloading');
         
-        // Step 3: Download the generated GLB file
-        console.log('Downloading GLB from:', glbUrl);
-        const modelResponse = await fetch(glbUrl);
-        if (!modelResponse.ok) {
-          throw new Error(`Failed to download generated model: ${modelResponse.status} ${modelResponse.statusText}`);
-        }
-        
-        const modelBlob = await modelResponse.blob();
-        const modelFile = new File([modelBlob], `generated-${timestamp}.glb`, { type: 'model/gltf-binary' });
+        // Step 3: Store the GLB URL for direct download/view (no fetch needed)
+        console.log('3D model ready for download/view:', glbUrl);
+        setGeneratedModelUrl(glbUrl);
         
         setConversionProgress(85);
         setConversionStage('finalizing');
         
-        // Step 4: Upload the generated model to storage
-        const modelPath = `${user.id}/${timestamp}-generated-model.glb`;
-        
-        const { data: modelUploadData, error: modelUploadError } = await supabase.storage
-          .from('3d-models')
-          .upload(modelPath, modelFile);
-
-        if (modelUploadError) {
-          throw new Error(`Failed to upload generated model: ${modelUploadError.message}`);
-        }
+        // Step 4: Create a dummy file for the upload flow (we don't need the actual bytes)
+        // This maintains compatibility with the existing upload flow
+        const dummyModelFile = new File([''], `generated-${timestamp}.glb`, { type: 'model/gltf-binary' });
         
         setConversionProgress(100);
         setConversionStage('complete');
         
-        // Step 5: Pass to the main upload flow
-        const fileInfo = extractFileInfo(modelFile);
-        onModelGenerated(modelFile, modelUploadData.path, fileInfo, imagePath);
+        // Step 5: Pass to the main upload flow with the URL stored
+        const fileInfo = extractFileInfo(dummyModelFile);
+        onModelGenerated(dummyModelFile, glbUrl, fileInfo, imagePath);
         
         toast({
           title: "Success!",
@@ -449,6 +439,32 @@ export const ImageToCADUploader = ({
     await attemptGeneration();
     
     setUploading(false);
+  };
+
+  const handleDownloadModel = () => {
+    if (generatedModelUrl) {
+      // Use direct navigation to bypass CORS
+      const a = document.createElement('a');
+      a.href = generatedModelUrl;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.download = `generated-model-${Date.now()}.glb`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      
+      toast({
+        title: "Download started",
+        description: "Your 3D model download should begin shortly.",
+      });
+    }
+  };
+
+  const handleViewModel = () => {
+    if (generatedModelUrl) {
+      // Use direct navigation to bypass CORS
+      window.open(generatedModelUrl, '_blank');
+    }
   };
 
   const retry = async () => {
@@ -569,6 +585,34 @@ export const ImageToCADUploader = ({
         </div>
       )}
 
+      {/* Success State with Download/View Options */}
+      {conversionStage === 'complete' && generatedModelUrl && (
+        <div className="mt-4 w-full max-w-xl animate-fade-in">
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="flex items-center mb-3">
+              <CheckCircle className="h-5 w-5 text-green-600 mr-2" />
+              <span className="font-medium text-green-800">3D Model Generated Successfully!</span>
+            </div>
+            <div className="flex gap-2">
+              <Button 
+                onClick={handleDownloadModel}
+                className="flex-1"
+                variant="default"
+              >
+                Download GLB
+              </Button>
+              <Button 
+                onClick={handleViewModel}
+                className="flex-1"
+                variant="outline"
+              >
+                View Model
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Error Display */}
       {error && conversionStage === 'error' && (
         <div className="mt-4 w-full max-w-xl animate-fade-in">
@@ -597,6 +641,7 @@ export const ImageToCADUploader = ({
                     setImagePreview("");
                     setRetryCount(0);
                     setConversionStage('idle');
+                    setGeneratedModelUrl("");
                   }}
                   variant="outline"
                   size="sm"
