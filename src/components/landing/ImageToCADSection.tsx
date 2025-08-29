@@ -144,38 +144,43 @@ export function ImageToCADSection() {
           
           setProgress({ step: 'download', progress: 85, message: 'Preparing downloads...' });
           
-          // Download files directly from Modal API using the task_id
+          // Create download links instead of downloading files directly (avoids CORS)
           try {
-            console.log('Starting file downloads for task:', result.task_id);
+            console.log('Preparing download links for task:', result.task_id);
             
-            // Add a small delay to ensure files are ready
-            setProgress({ step: 'download', progress: 85, message: 'Waiting for files to be ready...' });
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            setProgress({ step: 'download', progress: 85, message: 'Preparing download links...' });
             
-            const modalClient = new CADQUAClient(result.api_base_url || 'https://formversedude--cadqua-3d-api-fastapi-app.modal.run');
-            
-            console.log('Downloading video file...');
-            const [videoFile, glbFile] = await Promise.allSettled([
-              modalClient.downloadFile('video', result.task_id),
-              modalClient.downloadFile('glb', result.task_id)
-            ]);
-            
-            console.log('Download results:', {
-              video: videoFile.status,
-              glb: glbFile.status,
-              videoValue: videoFile.status === 'fulfilled' ? 'success' : videoFile.reason,
-              glbValue: glbFile.status === 'fulfilled' ? 'success' : glbFile.reason
-            });
-            
+            // Create direct download links to avoid CORS issues
+            const modalUrl = result.api_base_url || 'https://formversedude--cadqua-3d-api-fastapi-app.modal.run';
             const downloads: Record<string, FileDownload> = {};
             
-            if (videoFile.status === 'fulfilled') {
-              downloads.video = videoFile.value;
-            }
+            // Create download links for both files
+            const videoUrl = `${modalUrl}/download/video/${result.task_id}`;
+            const glbUrl = `${modalUrl}/download/glb/${result.task_id}`;
             
-            if (glbFile.status === 'fulfilled') {
-              downloads.glb = glbFile.value;
-            }
+            // Create FileDownload objects with direct URLs
+            downloads.video = {
+              blob: new Blob(), // Empty blob, we'll use URL directly
+              filename: `cadqua_video_${result.task_id}.mp4`,
+              url: videoUrl,
+              size: 0, // We don't know the size yet
+              type: 'video/mp4'
+            };
+            
+            downloads.glb = {
+              blob: new Blob(), // Empty blob, we'll use URL directly
+              filename: `cadqua_glb_${result.task_id}.glb`,
+              url: glbUrl,
+              size: 0, // We don't know the size yet
+              type: 'model/gltf-binary'
+            };
+            
+            console.log('Download links created:', {
+              video: videoUrl,
+              glb: glbUrl
+            });
+            
+
             
             setDownloadedFiles(downloads);
             setModelReady(true);
@@ -293,16 +298,17 @@ export function ImageToCADSection() {
     }
 
     try {
-      triggerDownload(fileData);
+      // Open direct download URL in new tab
+      window.open(fileData.url, '_blank');
       toast({
         title: "Download started!",
-        description: `Your ${fileType.toUpperCase()} file is being downloaded.`,
+        description: `Your ${fileType.toUpperCase()} file download opened in new tab.`,
       });
     } catch (error) {
       console.error('Error downloading file:', error);
       toast({
         title: "Download failed",
-        description: "There was an error downloading the file.",
+        description: "There was an error opening the download.",
         variant: "destructive"
       });
     }
@@ -333,20 +339,21 @@ export function ImageToCADSection() {
     }
 
     try {
-      // Create a client pointing to the Modal API directly for retries
-      const modalClient = new CADQUAClient('https://formversedude--cadqua-3d-api-fastapi-app.modal.run');
+      // Create direct download link
+      const modalUrl = 'https://formversedude--cadqua-3d-api-fastapi-app.modal.run';
+      const downloadUrl = `${modalUrl}/download/${fileType}/${taskId}`;
       
-      const fileData = await modalClient.downloadFile(fileType, taskId);
-      setDownloadedFiles(prev => ({ ...prev, [fileType]: fileData }));
+      // Open download in new tab/window
+      window.open(downloadUrl, '_blank');
       
       toast({
-        title: "Download successful!",
-        description: `${fileType.toUpperCase()} file downloaded successfully.`,
+        title: "Download started!",
+        description: `${fileType.toUpperCase()} download opened in new tab.`,
       });
     } catch (error) {
       toast({
         title: "Download failed",
-        description: `Failed to download ${fileType}: ${(error as Error).message}`,
+        description: `Failed to open download: ${(error as Error).message}`,
         variant: "destructive"
       });
     }

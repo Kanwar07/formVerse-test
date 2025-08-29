@@ -124,6 +124,60 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
+  // Handle download requests
+  const url = new URL(req.url);
+  const isDownloadRequest = req.method === 'POST' && (url.pathname.includes('/download') || url.searchParams.get('action') === 'download');
+  
+  if (isDownloadRequest) {
+    try {
+      const body = await req.json();
+      const { task_id, file_type, api_base_url } = body;
+      
+      if (!task_id || !file_type) {
+        return new Response(JSON.stringify({ 
+          error: 'Missing task_id or file_type',
+          code: 'MISSING_PARAMS' 
+        }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      
+      console.log(`Downloading ${file_type} for task ${task_id}...`);
+      
+      const modalUrl = api_base_url || CADQUA_API_URL;
+      const response = await fetch(`${modalUrl}/download/${file_type}/${task_id}`, {
+        method: 'GET',
+        signal: AbortSignal.timeout(60000) // 1 minute timeout
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Modal API returned ${response.status}: ${response.statusText}`);
+      }
+      
+      const fileBlob = await response.blob();
+      
+      return new Response(fileBlob, {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': response.headers.get('content-type') || 'application/octet-stream',
+          'Content-Disposition': response.headers.get('content-disposition') || `attachment; filename="cadqua_${file_type}_${task_id}.${file_type === 'video' ? 'mp4' : 'glb'}"`,
+        },
+      });
+      
+    } catch (error) {
+      console.error('Download error:', error);
+      return new Response(JSON.stringify({ 
+        error: 'Download failed',
+        details: (error as Error).message,
+        code: 'DOWNLOAD_FAILED'
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+  }
+
   try {
     console.log('Modal Image to CAD conversion request received');
     
