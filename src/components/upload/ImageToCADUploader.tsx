@@ -371,9 +371,18 @@ export const ImageToCADUploader = ({
             // Store the modal URL for downloads
             setModelDownloadUrl(`${result.apiBaseUrl}/download/glb/${result.taskId}`);
           } catch (error) {
-            console.warn('Failed to get blob URL, using direct URL:', error);
-            // Fall back to direct URL (may have CORS issues but better than nothing)
+            console.error('Failed to get blob URL for preview, this will cause CORS errors:', error);
+            // Don't fall back to Modal URL as it causes CORS issues
+            // Instead, show an error and don't proceed with the viewer
+            toast({
+              title: "Preview generation failed",
+              description: "Could not create preview due to CORS restrictions. Download will still work.",
+              variant: "destructive"
+            });
+            // Keep the Modal URL for downloads only
             setModelDownloadUrl(result.glbUrl);
+            // Use a placeholder or skip the viewer
+            glbViewerUrl = null;
           }
         } else {
           // Legacy format without task_id - use direct URL for both preview and download
@@ -393,14 +402,26 @@ export const ImageToCADUploader = ({
         setConversionProgress(100);
         setConversionStage('complete');
         
-        // Step 5: Pass to the main upload flow with the URL stored
+        // Step 5: Pass to the main upload flow with the blob URL for preview
         const fileInfo = extractFileInfo(dummyModelFile);
-        onModelGenerated(dummyModelFile, result.glbUrl, fileInfo, imagePath);
         
-        toast({
-          title: "Success!",
-          description: "Your 3D model has been generated successfully from the image.",
-        });
+        // Only proceed with viewer if we have a valid blob URL
+        if (glbViewerUrl) {
+          onModelGenerated(dummyModelFile, glbViewerUrl, fileInfo, imagePath);
+          toast({
+            title: "Success!",
+            description: "Your 3D model has been generated successfully from the image.",
+          });
+        } else {
+          // If no blob URL available, show download-only interface
+          toast({
+            title: "Model generated successfully",
+            description: "Preview unavailable due to CORS restrictions, but download is ready.",
+          });
+          // Still call onModelGenerated but with a special flag or handle differently
+          // For now, we'll pass a placeholder URL to avoid breaking the flow
+          onModelGenerated(dummyModelFile, 'data:text/plain;base64,', fileInfo, imagePath);
+        }
         
         // Reset state after success
         setTimeout(() => {
