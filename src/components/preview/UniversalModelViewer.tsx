@@ -511,9 +511,7 @@ export const UniversalModelViewer = ({
             {/* Gizmo */}
             {showGizmo && (
               <GizmoHelper alignment="bottom-right" margin={[80, 80]}>
-                <GizmoViewport 
-                  axisColors={['#ff0000', '#00ff00', '#0000ff']} 
-                />
+                <GizmoViewport />
               </GizmoHelper>
             )}
           </Suspense>
