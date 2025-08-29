@@ -146,12 +146,26 @@ export function ImageToCADSection() {
           
           // Download files directly from Modal API using the task_id
           try {
+            console.log('Starting file downloads for task:', result.task_id);
+            
+            // Add a small delay to ensure files are ready
+            setProgress({ step: 'download', progress: 85, message: 'Waiting for files to be ready...' });
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
             const modalClient = new CADQUAClient(result.api_base_url || 'https://formversedude--cadqua-3d-api-fastapi-app.modal.run');
             
+            console.log('Downloading video file...');
             const [videoFile, glbFile] = await Promise.allSettled([
               modalClient.downloadFile('video', result.task_id),
               modalClient.downloadFile('glb', result.task_id)
             ]);
+            
+            console.log('Download results:', {
+              video: videoFile.status,
+              glb: glbFile.status,
+              videoValue: videoFile.status === 'fulfilled' ? 'success' : videoFile.reason,
+              glbValue: glbFile.status === 'fulfilled' ? 'success' : glbFile.reason
+            });
             
             const downloads: Record<string, FileDownload> = {};
             
@@ -178,15 +192,30 @@ export function ImageToCADSection() {
             
           } catch (downloadError) {
             console.warn('Some downloads failed:', downloadError);
-            setModelReady(true); // Still show as ready, downloads can be retried
             
-            setProgress({ step: 'complete', progress: 100, message: 'Generation completed!' });
+            // Check if we have any successful downloads
+            const successfulDownloads = Object.keys(downloadedFiles).length;
             
-            toast({
-              title: "Generation completed",
-              description: "Model generated but some downloads failed. You can try downloading again.",
-              variant: "default"
-            });
+            if (successfulDownloads > 0) {
+              setModelReady(true); // Show as ready if we have some files
+              setProgress({ step: 'complete', progress: 100, message: 'Generation completed!' });
+              
+              toast({
+                title: "Generation completed",
+                description: `Model generated! ${successfulDownloads} file(s) downloaded successfully. Some downloads failed but you can retry them.`,
+                variant: "default"
+              });
+            } else {
+              // No downloads succeeded, but generation did - show as ready for manual retry
+              setModelReady(true);
+              setProgress({ step: 'complete', progress: 100, message: 'Generation completed!' });
+              
+              toast({
+                title: "Generation completed",
+                description: "Model generated successfully! Downloads failed but you can retry them using the buttons below.",
+                variant: "default"
+              });
+            }
             
             // Break out of retry loop - generation succeeded
             break;
@@ -229,8 +258,14 @@ export function ImageToCADSection() {
           // Non-timeout error - don't retry
           let errorMessage = "There was an error generating your 3D model. Please try again.";
           
-          if ((error as Error).message.includes('Invalid response')) {
+          // Check for specific error types
+          const errorMsg = (error as Error).message;
+          if (errorMsg.includes('Invalid response from CADQUA AI')) {
             errorMessage = "The AI service is still processing your image. Please wait a moment and try again.";
+          } else if (errorMsg.includes('Download failed')) {
+            errorMessage = "Model generated successfully but download failed. You can try downloading again.";
+          } else if (errorMsg.includes('No task_id')) {
+            errorMessage = "The AI service didn't return a valid response. Please try again.";
           }
           
           toast({
