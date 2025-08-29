@@ -32,9 +32,9 @@ export const SafeModelRenderer = ({
     return () => cancelAnimationFrame(animationId);
   }, [autoRotate]);
 
-  // Validate model data
-  if (!model || !model.geometry) {
-    console.error('SafeModelRenderer: Invalid model data');
+  // Early validation - return error state immediately if model is invalid
+  if (!model) {
+    console.error('SafeModelRenderer: No model provided');
     return (
       <Center>
         <mesh>
@@ -45,9 +45,8 @@ export const SafeModelRenderer = ({
     );
   }
 
-  // Validate geometry
-  if (!model.geometry.attributes || !model.geometry.attributes.position) {
-    console.error('SafeModelRenderer: Invalid geometry attributes');
+  if (!model.geometry) {
+    console.error('SafeModelRenderer: Model has no geometry');
     return (
       <Center>
         <mesh>
@@ -58,42 +57,83 @@ export const SafeModelRenderer = ({
     );
   }
 
+  // Validate geometry attributes
+  if (!model.geometry.attributes || !model.geometry.attributes.position) {
+    console.error('SafeModelRenderer: Geometry missing position attributes');
+    return (
+      <Center>
+        <mesh>
+          <boxGeometry args={[1, 1, 1]} />
+          <meshStandardMaterial color="#ff8888" />
+        </mesh>
+      </Center>
+    );
+  }
+
+  // Validate position array
+  if (!model.geometry.attributes.position.array || model.geometry.attributes.position.array.length === 0) {
+    console.error('SafeModelRenderer: Position attribute has no data');
+    return (
+      <Center>
+        <mesh>
+          <boxGeometry args={[1, 1, 1]} />
+          <meshStandardMaterial color="#ffaaaa" />
+        </mesh>
+      </Center>
+    );
+  }
+
   // Create safe material with comprehensive null checks
   const createSafeMaterial = () => {
     try {
+      console.log('SafeModelRenderer: Creating material, wireframeMode:', wireframeMode);
+      
       if (wireframeMode) {
-        return (
-          <meshBasicMaterial 
-            color="#00d4ff" 
-            wireframe={true}
-            transparent={true}
-            opacity={0.8}
-            side={THREE.DoubleSide}
-          />
-        );
+        const material = new THREE.MeshBasicMaterial({
+          color: 0x00d4ff,
+          wireframe: true,
+          transparent: true,
+          opacity: 0.8,
+          side: THREE.DoubleSide
+        });
+        
+        // Clean up any potentially problematic properties
+        delete (material as any).lov;
+        delete (material as any)._listeners;
+        material.needsUpdate = true;
+        
+        return material;
       }
       
-      // Always create fresh materials to avoid serialization issues
-      // Don't try to reuse the original materials as they may have lost their methods
-      // after being passed through React state/props
+      // Create a standard material for solid rendering
+      const material = new THREE.MeshStandardMaterial({
+        color: 0x888888,
+        metalness: 0.1,
+        roughness: 0.3,
+        side: THREE.DoubleSide
+      });
       
-      // Use a default material appropriate for CAD models
-      return (
-        <meshStandardMaterial 
-          color="#888888"
-          metalness={0.1}
-          roughness={0.3}
-          side={THREE.DoubleSide}
-        />
-      );
+      // Clean up any potentially problematic properties
+      delete (material as any).lov;
+      delete (material as any)._listeners;
+      material.needsUpdate = true;
+      
+      return material;
+      
     } catch (error) {
-      console.error('Error creating material:', error);
-      return (
-        <meshBasicMaterial 
-          color="#ff6666"
-          side={THREE.DoubleSide}
-        />
-      );
+      console.error('SafeModelRenderer: Error creating material:', error);
+      
+      // Ultimate fallback material
+      const fallbackMaterial = new THREE.MeshBasicMaterial({
+        color: 0xff6666,
+        side: THREE.DoubleSide
+      });
+      
+      delete (fallbackMaterial as any).lov;
+      delete (fallbackMaterial as any)._listeners;
+      fallbackMaterial.needsUpdate = true;
+      
+      return fallbackMaterial;
     }
   };
 
@@ -198,11 +238,12 @@ export const SafeModelRenderer = ({
     );
   }
 
-  // Create geometry and material safely
+  // Create geometry and material safely with primitive objects
   let safeGeometry: THREE.BufferGeometry;
-  let safeMaterial: React.ReactElement;
+  let safeMaterial: THREE.Material;
 
   try {
+    console.log('SafeModelRenderer: Creating geometry and material...');
     safeGeometry = createSafeGeometry();
     safeMaterial = createSafeMaterial();
 
@@ -212,11 +253,26 @@ export const SafeModelRenderer = ({
       throw new Error('Invalid geometry');
     }
 
+    if (!safeMaterial) {
+      console.error('SafeModelRenderer: Invalid material after creation');
+      throw new Error('Invalid material');
+    }
+
+    console.log('SafeModelRenderer: Successfully created geometry and material, rendering mesh');
+
     return (
       <Center>
-        <mesh ref={meshRef} geometry={safeGeometry}>
-          {safeMaterial}
-        </mesh>
+        <primitive object={(() => {
+          const mesh = new THREE.Mesh(safeGeometry, safeMaterial);
+          mesh.castShadow = true;
+          mesh.receiveShadow = true;
+          
+          // Clean up any potentially problematic properties
+          delete (mesh as any).lov;
+          delete (mesh as any)._listeners;
+          
+          return mesh;
+        })()} ref={meshRef} />
       </Center>
     );
   } catch (error) {

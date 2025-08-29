@@ -437,7 +437,7 @@ export const UniversalModelViewer = ({
             )}
             
             {/* 3D Model */}
-            {model && (
+            {model && model.geometry && model.geometry.attributes && model.geometry.attributes.position && (
               <SafeModelRenderer 
                 model={model} 
                 wireframeMode={wireframeMode}
