@@ -80,9 +80,9 @@ export class CADQUAClient {
   constructor(baseUrl: string, options: ClientOptions = {}) {
     this.baseUrl = baseUrl.replace(/\/$/, ''); // Remove trailing slash
     this.options = {
-      timeout: 600000, // 10 minutes default timeout
+      timeout: 300000, // 5 minutes timeout to match Edge Function
       retryAttempts: 3,
-      retryDelay: 1000,
+      retryDelay: 2000,
       ...options
     };
   }

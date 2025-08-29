@@ -87,95 +87,163 @@ export function ImageToCADSection() {
     setIsProcessing(true);
     setProgress({ step: 'initialization', progress: 0, message: 'Starting generation...' });
     
-    try {
-      console.log('Starting CADQUA 3D generation via Edge Function...');
-      
-      // Create FormData for the Edge Function
-      const formData = new FormData();
-      formData.append('image', selectedImage);
-      
-      setProgress({ step: 'upload', progress: 20, message: 'Uploading image...' });
-      
-      // Call the Supabase Edge Function
-      const response = await fetch('https://zqnzxpbthldfqqbzzjct.supabase.co/functions/v1/modal-image-to-cad', {
-        method: 'POST',
-        body: formData,
-        headers: {
-          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpxbnp4cGJ0aGxkZnFxYnp6amN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg5MzIxNzgsImV4cCI6MjA2NDUwODE3OH0.7YWUyL31eeOtauM4TqHjQXm8PB1Y-wVB7Cj0dSMQ0SA`,
-          // Let the browser set Content-Type automatically for FormData
-        },
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
-      }
-      
-      setProgress({ step: 'processing', progress: 60, message: 'Processing 3D model...' });
-      
-      const result = await response.json();
-      console.log('Generation result:', result);
-      
-      if (result.task_id) {
-        setTaskId(result.task_id);
-        console.log('Generation successful, Task ID:', result.task_id);
+    let retryCount = 0;
+    const maxRetries = 2;
+    
+    while (retryCount <= maxRetries) {
+      try {
+        console.log('Starting CADQUA 3D generation via Edge Function...');
         
-        setProgress({ step: 'download', progress: 80, message: 'Preparing downloads...' });
+        // Create FormData for the Edge Function
+        const formData = new FormData();
+        formData.append('image', selectedImage);
         
-        // Download files directly from Modal API using the task_id
-        try {
-          const modalClient = new CADQUAClient(result.api_base_url || 'https://formversedude--cadqua-3d-api-fastapi-app.modal.run');
+        setProgress({ step: 'upload', progress: 20, message: 'Uploading image...' });
+        
+        // Set up progress messages for longer processing time
+        const progressTimer = setTimeout(() => {
+          setProgress({ step: 'processing', progress: 40, message: 'Processing 3D model (this may take 1-2 minutes)...' });
+        }, 5000);
+        
+        const progressTimer2 = setTimeout(() => {
+          setProgress({ step: 'processing', progress: 60, message: 'Still processing... Modal AI is working on your 3D model' });
+        }, 30000);
+        
+        const progressTimer3 = setTimeout(() => {
+          setProgress({ step: 'processing', progress: 80, message: 'Almost done... Finalizing your 3D model' });
+        }, 60000);
+        
+        // Call the Supabase Edge Function with 5-minute timeout
+        const response = await fetch('https://zqnzxpbthldfqqbzzjct.supabase.co/functions/v1/modal-image-to-cad', {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpxbnp4cGJ0aGxkZnFxYnp6amN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg5MzIxNzgsImV4cCI6MjA2NDUwODE3OH0.7YWUyL31eeOtauM4TqHjQXm8PB1Y-wVB7Cj0dSMQ0SA`,
+          },
+          signal: AbortSignal.timeout(300000) // 5 minutes timeout
+        });
+        
+        // Clear progress timers
+        clearTimeout(progressTimer);
+        clearTimeout(progressTimer2);
+        clearTimeout(progressTimer3);
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+          throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        setProgress({ step: 'processing', progress: 90, message: 'Generation completed, preparing download...' });
+        
+        const result = await response.json();
+        console.log('Generation result:', result);
+      
+        if (result.task_id) {
+          setTaskId(result.task_id);
+          console.log('Generation successful, Task ID:', result.task_id);
           
-          const [videoFile, glbFile] = await Promise.allSettled([
-            modalClient.downloadFile('video', result.task_id),
-            modalClient.downloadFile('glb', result.task_id)
-          ]);
+          setProgress({ step: 'download', progress: 85, message: 'Preparing downloads...' });
           
-          const downloads: Record<string, FileDownload> = {};
+          // Download files directly from Modal API using the task_id
+          try {
+            const modalClient = new CADQUAClient(result.api_base_url || 'https://formversedude--cadqua-3d-api-fastapi-app.modal.run');
+            
+            const [videoFile, glbFile] = await Promise.allSettled([
+              modalClient.downloadFile('video', result.task_id),
+              modalClient.downloadFile('glb', result.task_id)
+            ]);
+            
+            const downloads: Record<string, FileDownload> = {};
+            
+            if (videoFile.status === 'fulfilled') {
+              downloads.video = videoFile.value;
+            }
+            
+            if (glbFile.status === 'fulfilled') {
+              downloads.glb = glbFile.value;
+            }
+            
+            setDownloadedFiles(downloads);
+            setModelReady(true);
+            
+            setProgress({ step: 'complete', progress: 100, message: 'Generation completed!' });
+            
+            toast({
+              title: "3D Generation Completed!",
+              description: `Generated ${Object.keys(downloads).length} files successfully.`,
+            });
+            
+            // Break out of retry loop on success
+            break;
+            
+          } catch (downloadError) {
+            console.warn('Some downloads failed:', downloadError);
+            setModelReady(true); // Still show as ready, downloads can be retried
+            
+            setProgress({ step: 'complete', progress: 100, message: 'Generation completed!' });
+            
+            toast({
+              title: "Generation completed",
+              description: "Model generated but some downloads failed. You can try downloading again.",
+              variant: "default"
+            });
+            
+            // Break out of retry loop - generation succeeded
+            break;
+          }
+        } else {
+          throw new Error('No task_id in response from Modal API');
+        }
+        
+      } catch (error) {
+        retryCount++;
+        console.error(`Generation attempt ${retryCount} failed:`, error);
+        
+        // Handle timeout errors with retry logic
+        if ((error as Error).name === 'AbortError' || (error as Error).message.includes('timeout')) {
+          if (retryCount <= maxRetries) {
+            toast({
+              title: "Request timed out",
+              description: `Retrying... (${retryCount}/${maxRetries}) - Generation takes 1-2 minutes`,
+              variant: "default"
+            });
+            
+            setProgress({ 
+              step: 'retry', 
+              progress: 10, 
+              message: `Retry ${retryCount}/${maxRetries} - The AI service might be busy, trying again...` 
+            });
+            
+            // Wait 3 seconds before retry
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            continue;
+          } else {
+            toast({
+              title: "Generation timed out",
+              description: "The 3D generation is taking longer than expected. Please try again - the Modal AI service might be busy.",
+              variant: "destructive"
+            });
+            break;
+          }
+        } else {
+          // Non-timeout error - don't retry
+          let errorMessage = "There was an error generating your 3D model. Please try again.";
           
-          if (videoFile.status === 'fulfilled') {
-            downloads.video = videoFile.value;
+          if ((error as Error).message.includes('Invalid response')) {
+            errorMessage = "The AI service is still processing your image. Please wait a moment and try again.";
           }
           
-          if (glbFile.status === 'fulfilled') {
-            downloads.glb = glbFile.value;
-          }
-          
-          setDownloadedFiles(downloads);
-          setModelReady(true);
-          
-          setProgress({ step: 'complete', progress: 100, message: 'Generation completed!' });
-          
           toast({
-            title: "3D Generation Completed!",
-            description: `Generated ${Object.keys(downloads).length} files successfully.`,
+            title: "Generation failed",
+            description: errorMessage,
+            variant: "destructive"
           });
-          
-        } catch (downloadError) {
-          console.warn('Some downloads failed:', downloadError);
-          setModelReady(true); // Still show as ready, downloads can be retried
-          
-          setProgress({ step: 'complete', progress: 100, message: 'Generation completed!' });
-          
-          toast({
-            title: "Generation completed",
-            description: "Model generated but some downloads failed. You can try downloading again.",
-            variant: "default"
-          });
+          break;
         }
       }
-      
-    } catch (error) {
-      console.error('Error in CADQUA generation:', error);
-      
-      toast({
-        title: "Generation failed",
-        description: (error as Error).message || "There was an error generating your 3D model. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsProcessing(false);
     }
+    
+    setIsProcessing(false);
   };
 
   const handleDownload = (fileType: 'video' | 'glb') => {
