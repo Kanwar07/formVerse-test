@@ -566,54 +566,100 @@ export class UniversalCADLoader {
     };
   }
 
-  // Process geometry for consistent rendering
+  // Process geometry for consistent rendering with enhanced error handling
   private static processGeometry(geometry: THREE.BufferGeometry): void {
     try {
-      // Ensure geometry has valid attributes
-      if (!geometry.attributes || !geometry.attributes.position) {
-        console.error('Geometry missing position attribute');
+      // Validate geometry exists and has essential attributes
+      if (!geometry) {
+        console.error('UniversalCADLoader: Null geometry passed to processGeometry');
         return;
       }
 
-      // Safely compute normals if missing
-      if (!geometry.attributes.normal) {
-        geometry.computeVertexNormals();
+      if (!geometry.attributes) {
+        console.error('UniversalCADLoader: Geometry missing attributes');
+        geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array([
+          -1, -1, 0,  1, -1, 0,  1, 1, 0,  -1, 1, 0,  // Simple quad fallback
+          -1, -1, 0,  1, 1, 0,  -1, 1, 0
+        ]), 3));
+      }
+
+      // Essential position attribute check
+      if (!geometry.attributes.position || !geometry.attributes.position.array || geometry.attributes.position.array.length === 0) {
+        console.error('UniversalCADLoader: Geometry missing or invalid position attribute');
+        geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array([
+          -1, -1, 0,  1, -1, 0,  1, 1, 0,  -1, 1, 0,  // Simple quad fallback
+          -1, -1, 0,  1, 1, 0,  -1, 1, 0
+        ]), 3));
+      }
+
+      // Safely compute normals if missing or invalid
+      try {
+        if (!geometry.attributes.normal || !geometry.attributes.normal.array || geometry.attributes.normal.array.length === 0) {
+          geometry.computeVertexNormals();
+        }
+      } catch (error) {
+        console.warn('UniversalCADLoader: Failed to compute vertex normals:', error);
+        // Continue without normals if computation fails
       }
       
       // Safely compute bounding data
-      if (!geometry.boundingBox) {
+      try {
+        if (!geometry.boundingBox) {
+          geometry.computeBoundingBox();
+        }
+      } catch (error) {
+        console.warn('UniversalCADLoader: Failed to compute bounding box:', error);
+      }
+      
+      try {
+        if (!geometry.boundingSphere) {
+          geometry.computeBoundingSphere();
+        }
+      } catch (error) {
+        console.warn('UniversalCADLoader: Failed to compute bounding sphere:', error);
+      }
+      
+      // Ensure the geometry is properly centered and scaled (with safety checks)
+      try {
+        const box = geometry.boundingBox;
+        if (box && box.min && box.max && 
+            !isNaN(box.min.x) && !isNaN(box.min.y) && !isNaN(box.min.z) &&
+            !isNaN(box.max.x) && !isNaN(box.max.y) && !isNaN(box.max.z)) {
+          
+          const center = box.getCenter(new THREE.Vector3());
+          const size = box.getSize(new THREE.Vector3());
+          
+          // Only translate if center values are valid numbers
+          if (!isNaN(center.x) && !isNaN(center.y) && !isNaN(center.z)) {
+            geometry.translate(-center.x, -center.y, -center.z);
+          }
+          
+          // Scale to reasonable size if too large
+          const maxDim = Math.max(size.x || 1, size.y || 1, size.z || 1);
+          if (maxDim > 10 && !isNaN(maxDim) && maxDim !== Infinity) {
+            const scale = 5 / maxDim;
+            geometry.scale(scale, scale, scale);
+          }
+        }
+      } catch (error) {
+        console.warn('UniversalCADLoader: Failed to center/scale geometry:', error);
+      }
+      
+      // Final validation and cleanup
+      try {
         geometry.computeBoundingBox();
-      }
-      
-      if (!geometry.boundingSphere) {
         geometry.computeBoundingSphere();
-      }
-      
-      // Ensure the geometry is properly centered and scaled
-      const box = geometry.boundingBox;
-      if (box && box.min && box.max) {
-        const center = box.getCenter(new THREE.Vector3());
-        const size = box.getSize(new THREE.Vector3());
         
-        // Only translate if center values are valid numbers
-        if (!isNaN(center.x) && !isNaN(center.y) && !isNaN(center.z)) {
-          geometry.translate(-center.x, -center.y, -center.z);
-        }
+        // Remove any potentially problematic properties
+        delete (geometry as any).lov;
+        delete (geometry as any)._listeners;
         
-        // Scale to reasonable size if too large
-        const maxDim = Math.max(size.x || 1, size.y || 1, size.z || 1);
-        if (maxDim > 10 && !isNaN(maxDim)) {
-          const scale = 5 / maxDim;
-          geometry.scale(scale, scale, scale);
-        }
+      } catch (error) {
+        console.warn('UniversalCADLoader: Failed final geometry cleanup:', error);
       }
-      
-      // Mark geometry as needing update
-      geometry.computeBoundingBox();
-      geometry.computeBoundingSphere();
       
     } catch (error) {
-      console.error('Error processing geometry:', error);
+      console.error('UniversalCADLoader: Critical error processing geometry:', error);
     }
   }
 

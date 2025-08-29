@@ -100,42 +100,88 @@ export const SafeModelRenderer = ({
   // Create safe geometry with error handling
   const createSafeGeometry = () => {
     try {
-      // Validate essential geometry attributes
-      const positionAttr = model.geometry.attributes.position;
-      if (!positionAttr || !positionAttr.array || positionAttr.array.length === 0) {
-        throw new Error('Invalid position attribute');
+      // Multiple layers of validation
+      if (!model || !model.geometry) {
+        console.error('SafeModelRenderer: No geometry found in model');
+        return new THREE.BoxGeometry(1, 1, 1);
       }
 
-      // Create a clean geometry clone
+      // Validate essential geometry attributes
+      const positionAttr = model.geometry.attributes?.position;
+      if (!positionAttr || !positionAttr.array || positionAttr.array.length === 0) {
+        console.error('SafeModelRenderer: Invalid position attribute');
+        return new THREE.BoxGeometry(1, 1, 1);
+      }
+
+      // Create a completely new geometry to avoid any reference issues
       const geometry = new THREE.BufferGeometry();
       
-      // Copy position attribute
-      geometry.setAttribute('position', positionAttr.clone());
+      // Safely copy position attribute
+      try {
+        const positions = new Float32Array(positionAttr.array);
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      } catch (error) {
+        console.error('SafeModelRenderer: Failed to copy position attribute:', error);
+        return new THREE.BoxGeometry(1, 1, 1);
+      }
       
-      // Copy normal attribute if it exists and is valid
-      if (model.geometry.attributes.normal && model.geometry.attributes.normal.array.length > 0) {
-        geometry.setAttribute('normal', model.geometry.attributes.normal.clone());
-      } else {
+      // Safely copy normal attribute if it exists and is valid
+      try {
+        if (model.geometry.attributes?.normal && 
+            model.geometry.attributes.normal.array && 
+            model.geometry.attributes.normal.array.length > 0) {
+          const normals = new Float32Array(model.geometry.attributes.normal.array);
+          geometry.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
+        } else {
+          geometry.computeVertexNormals();
+        }
+      } catch (error) {
+        console.warn('SafeModelRenderer: Failed to copy normals, computing instead:', error);
         geometry.computeVertexNormals();
       }
       
-      // Copy UV attribute if it exists and is valid
-      if (model.geometry.attributes.uv && model.geometry.attributes.uv.array.length > 0) {
-        geometry.setAttribute('uv', model.geometry.attributes.uv.clone());
+      // Safely copy UV attribute if it exists and is valid
+      try {
+        if (model.geometry.attributes?.uv && 
+            model.geometry.attributes.uv.array && 
+            model.geometry.attributes.uv.array.length > 0) {
+          const uvs = new Float32Array(model.geometry.attributes.uv.array);
+          geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+        }
+      } catch (error) {
+        console.warn('SafeModelRenderer: Failed to copy UV coordinates:', error);
+        // UV is optional, continue without it
       }
       
-      // Copy index if it exists
-      if (model.geometry.index) {
-        geometry.setIndex(model.geometry.index.clone());
+      // Safely copy index if it exists
+      try {
+        if (model.geometry.index && model.geometry.index.array) {
+          const indices = new Uint32Array(model.geometry.index.array);
+          geometry.setIndex(new THREE.BufferAttribute(indices, 1));
+        }
+      } catch (error) {
+        console.warn('SafeModelRenderer: Failed to copy indices:', error);
+        // Index is optional, continue without it
       }
       
-      // Compute bounds
-      geometry.computeBoundingBox();
-      geometry.computeBoundingSphere();
+      // Compute bounds safely
+      try {
+        geometry.computeBoundingBox();
+        geometry.computeBoundingSphere();
+      } catch (error) {
+        console.warn('SafeModelRenderer: Failed to compute bounds:', error);
+        // Bounds computation failed, but geometry might still be usable
+      }
+      
+      // Final validation
+      if (!geometry.attributes.position) {
+        console.error('SafeModelRenderer: Geometry creation failed - no position attribute');
+        return new THREE.BoxGeometry(1, 1, 1);
+      }
       
       return geometry;
     } catch (error) {
-      console.error('Error creating safe geometry:', error);
+      console.error('SafeModelRenderer: Error creating safe geometry:', error);
       return new THREE.BoxGeometry(1, 1, 1);
     }
   };
@@ -152,9 +198,19 @@ export const SafeModelRenderer = ({
     );
   }
 
+  // Create geometry and material safely
+  let safeGeometry: THREE.BufferGeometry;
+  let safeMaterial: React.ReactElement;
+
   try {
-    const safeMaterial = createSafeMaterial();
-    const safeGeometry = createSafeGeometry();
+    safeGeometry = createSafeGeometry();
+    safeMaterial = createSafeMaterial();
+
+    // Final validation before rendering
+    if (!safeGeometry || !safeGeometry.attributes?.position) {
+      console.error('SafeModelRenderer: Invalid geometry after creation');
+      throw new Error('Invalid geometry');
+    }
 
     return (
       <Center>
