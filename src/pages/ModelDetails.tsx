@@ -17,6 +17,7 @@ import { UnifiedCADViewer } from "@/components/preview/UnifiedCADViewer";
 import { EngagementGate } from "@/components/buyer/EngagementGate";
 import { PreviewSelector } from "@/components/preview/PreviewSelector";
 import { ModelAnalysisReport } from "@/components/analysis/ModelAnalysisReport";
+import { EditModelModal } from "@/components/dashboard/EditModelModal";
 import { useAuth } from "@/context/AuthContext";
 import { 
   Download, 
@@ -45,6 +46,7 @@ const ModelDetails = () => {
   const [model, setModel] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isOwner, setIsOwner] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const { toast } = useToast();
   const { user } = useAuth();
@@ -327,6 +329,15 @@ const ModelDetails = () => {
     setCurrentStep('pricing');
   };
 
+  const handleModelUpdated = (updatedModel: any) => {
+    setModel(prev => ({
+      ...prev,
+      name: updatedModel.name,
+      description: updatedModel.description,
+      tags: updatedModel.tags
+    }));
+  };
+
   if (loading) {
     return (
     <div className="min-h-screen flex flex-col bg-muted/30 pt-24">
@@ -491,7 +502,7 @@ const ModelDetails = () => {
                       <Button 
                         className="w-full" 
                         size="lg" 
-                        onClick={() => navigate(`/upload?edit=${model.id}`)}
+                        onClick={() => setIsEditModalOpen(true)}
                         variant="default"
                       >
                         <Edit className="h-4 w-4 mr-2" />
@@ -785,6 +796,20 @@ const ModelDetails = () => {
       <div className="mt-auto">
         <Footer />
       </div>
+      
+      {/* Edit Model Modal */}
+      <EditModelModal
+        model={model ? {
+          id: model.id,
+          name: model.name,
+          description: model.description,
+          category: null,
+          tags: model.tags || []
+        } : null}
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onModelUpdated={handleModelUpdated}
+      />
     </div>
   );
 };
