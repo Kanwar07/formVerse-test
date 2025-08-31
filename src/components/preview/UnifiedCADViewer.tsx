@@ -242,7 +242,17 @@ export const UnifiedCADViewer: React.FC<UnifiedCADViewerProps> = ({
 
     } catch (err) {
       console.error('UnifiedCADViewer: Failed to load model', err);
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      let errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      
+      // Provide more user-friendly error messages
+      if (errorMessage.includes('format is not supported')) {
+        errorMessage = `Unable to determine file format for "${fileName}". The model may be in an unsupported format or missing a file extension.`;
+      } else if (errorMessage.includes('Failed to fetch')) {
+        errorMessage = `Unable to load the 3D model file. Please check if the file is accessible.`;
+      } else if (errorMessage.includes('Invalid file URL')) {
+        errorMessage = `The model file URL is invalid or inaccessible.`;
+      }
+      
       setError(errorMessage);
       setLoading(false);
 
@@ -423,6 +433,33 @@ export const UnifiedCADViewer: React.FC<UnifiedCADViewerProps> = ({
               <div className="flex flex-col items-center space-y-2">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 <p className="text-sm text-muted-foreground">Loading {detectedFileType.toUpperCase()} model...</p>
+              </div>
+            </div>
+          )}
+
+          {/* Error Fallback */}
+          {error && !loading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-sm">
+              <div className="flex flex-col items-center space-y-3 p-4 text-center">
+                <AlertCircle className="h-12 w-12 text-destructive" />
+                <div className="space-y-1">
+                  <p className="font-medium text-destructive">3D Preview Unavailable</p>
+                  <p className="text-sm text-muted-foreground max-w-xs">
+                    {error.includes('format') 
+                      ? 'This model format is not supported for 3D preview.'
+                      : 'Unable to load 3D preview. The model file may be inaccessible or corrupted.'
+                    }
+                  </p>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={loadModel}
+                  className="mt-2"
+                >
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  Retry
+                </Button>
               </div>
             </div>
           )}

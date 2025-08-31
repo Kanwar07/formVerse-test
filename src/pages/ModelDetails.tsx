@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { APIService } from "@/services/api";
 import { FileUploadService } from "@/services/fileUpload";
@@ -17,6 +17,7 @@ import { UnifiedCADViewer } from "@/components/preview/UnifiedCADViewer";
 import { EngagementGate } from "@/components/buyer/EngagementGate";
 import { PreviewSelector } from "@/components/preview/PreviewSelector";
 import { ModelAnalysisReport } from "@/components/analysis/ModelAnalysisReport";
+import { useAuth } from "@/context/AuthContext";
 import { 
   Download, 
   Eye, 
@@ -28,7 +29,8 @@ import {
   Package,
   CheckCircle,
   CreditCard,
-  ArrowLeft
+  ArrowLeft,
+  Edit
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -42,8 +44,11 @@ const ModelDetails = () => {
   const [secureModelUrl, setSecureModelUrl] = useState<string | null>(null);
   const [model, setModel] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isOwner, setIsOwner] = useState(false);
 
   const { toast } = useToast();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   
   const paymentManager = new PaymentManager();
 
@@ -92,9 +97,14 @@ const ModelDetails = () => {
           throw new Error('Model not found');
         }
 
+        // Check if current user is the model owner
+        const isModelOwner = user && modelData.user_id === user.id;
+        setIsOwner(isModelOwner);
+
         // Check if model is available for viewing
-        if (modelData.status !== 'published' || !modelData.is_published) {
-          // If model is not published, redirect to dashboard with message
+        // Allow owners to view their own models regardless of publish status
+        if (!isModelOwner && (modelData.status !== 'published' || !modelData.is_published)) {
+          // If model is not published and user is not owner, redirect to dashboard with message
           toast({
             title: "Model not available",
             description: "This model is no longer published.",
@@ -476,27 +486,55 @@ const ModelDetails = () => {
               
               <Card>
                 <CardContent className="pt-6 space-y-4">
-                  <Button 
-                    className="w-full" 
-                    size="lg" 
-                    onClick={handleProceedToPricing}
-                    variant="default"
-                  >
-                    <CreditCard className="h-4 w-4 mr-2" />
-                    Proceed to Purchase
-                  </Button>
-                  <Button 
-                    className="w-full" 
-                    size="lg" 
-                    onClick={handleAnalyzeModel}
-                    variant="outline"
-                  >
-                    <FileText className="h-4 w-4 mr-2" />
-                    View Analysis
-                  </Button>
-                  <p className="text-xs text-muted-foreground text-center">
-                    View technical analysis or proceed to purchase options
-                  </p>
+                  {isOwner ? (
+                    <>
+                      <Button 
+                        className="w-full" 
+                        size="lg" 
+                        onClick={() => navigate(`/upload?edit=${model.id}`)}
+                        variant="default"
+                      >
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edit Model
+                      </Button>
+                      <Button 
+                        className="w-full" 
+                        size="lg" 
+                        onClick={handleAnalyzeModel}
+                        variant="outline"
+                      >
+                        <FileText className="h-4 w-4 mr-2" />
+                        View Analysis
+                      </Button>
+                      <p className="text-xs text-muted-foreground text-center">
+                        Edit your model or view technical analysis
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <Button 
+                        className="w-full" 
+                        size="lg" 
+                        onClick={handleProceedToPricing}
+                        variant="default"
+                      >
+                        <CreditCard className="h-4 w-4 mr-2" />
+                        Proceed to Purchase
+                      </Button>
+                      <Button 
+                        className="w-full" 
+                        size="lg" 
+                        onClick={handleAnalyzeModel}
+                        variant="outline"
+                      >
+                        <FileText className="h-4 w-4 mr-2" />
+                        View Analysis
+                      </Button>
+                      <p className="text-xs text-muted-foreground text-center">
+                        View technical analysis or proceed to purchase options
+                      </p>
+                    </>
+                  )}
                 </CardContent>
               </Card>
               

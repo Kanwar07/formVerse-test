@@ -57,7 +57,15 @@ export class EnhancedCADLoader {
       case 'ige':
       case 'igs': return 'iges';
       default:
-        throw new Error(`Unsupported file format: ${extension}. Supported formats: STL, OBJ, GLTF, GLB, PLY, STEP, IGES`);
+        // For files without extensions, try to infer from URL or filename
+        if (fileName.toLowerCase().includes('stl') || fileName.toLowerCase().includes('stereolithography')) return 'stl';
+        if (fileName.toLowerCase().includes('obj') || fileName.toLowerCase().includes('wavefront')) return 'obj';
+        if (fileName.toLowerCase().includes('gltf') || fileName.toLowerCase().includes('glb')) return 'glb';
+        if (fileName.toLowerCase().includes('ply') || fileName.toLowerCase().includes('polygon')) return 'ply';
+        
+        // Default to STL for unknown formats (most common in CAD)
+        console.warn(`Unknown file format for "${fileName}", defaulting to STL`);
+        return 'stl';
     }
   }
 
@@ -73,9 +81,15 @@ export class EnhancedCADLoader {
     console.log('EnhancedCADLoader: Starting load', { fileUrl, fileName });
     
     try {
-      // Detect format
-      const format = this.detectFormat(fileName);
-      console.log('Detected format:', format);
+      // Detect format with fallback
+      let format: string;
+      try {
+        format = this.detectFormat(fileName);
+        console.log('Detected format:', format);
+      } catch (error) {
+        console.warn('Format detection failed, defaulting to STL:', error);
+        format = 'stl';
+      }
       
       onProgress?.({ progress: 10, stage: `Detecting format: ${format.toUpperCase()}` });
 
@@ -84,40 +98,47 @@ export class EnhancedCADLoader {
         throw new Error('Invalid file URL provided');
       }
 
-      // Load with retry mechanism
+      // Load with retry mechanism and format fallback
       const maxRetries = 3;
+      const fallbackFormats = ['stl', 'obj', 'glb', 'ply']; // Common formats to try
       let lastError: Error | null = null;
       
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        try {
-          onProgress?.({ progress: 10 + (attempt * 10), stage: `Loading ${format.toUpperCase()} (attempt ${attempt})` });
-          
-          const model = await this.loadByFormat(fileUrl, format, onProgress);
-          
-          // Add metadata
-          const metadata = {
-            format: format.toUpperCase(),
-            vertices: this.countVertices(model.geometry),
-            faces: this.countFaces(model.geometry),
-            boundingBox: this.computeSafeBoundingBox(model.geometry)
-          };
-          
-          onProgress?.({ progress: 100, stage: 'Loading complete' });
-          
-          return {
-            ...model,
-            metadata
-          };
-          
-        } catch (error) {
-          lastError = error as Error;
-          console.warn(`Attempt ${attempt} failed:`, error);
-          
-          if (attempt === maxRetries) {
-            throw lastError;
+        // Try different formats on retry attempts
+        const formatsToTry = attempt === 1 ? [format] : fallbackFormats;
+        
+        for (const tryFormat of formatsToTry) {
+          try {
+            onProgress?.({ progress: 10 + (attempt * 10), stage: `Loading ${tryFormat.toUpperCase()} (attempt ${attempt})` });
+            
+            const model = await this.loadByFormat(fileUrl, tryFormat, onProgress);
+            
+            // Add metadata
+            const metadata = {
+              format: tryFormat.toUpperCase(),
+              vertices: this.countVertices(model.geometry),
+              faces: this.countFaces(model.geometry),
+              boundingBox: this.computeSafeBoundingBox(model.geometry)
+            };
+            
+            onProgress?.({ progress: 100, stage: 'Loading complete' });
+            
+            return {
+              ...model,
+              metadata
+            };
+            
+          } catch (error) {
+            lastError = error as Error;
+            console.warn(`Attempt ${attempt} with format ${tryFormat} failed:`, error);
+            
+            // Continue to next format if this one failed
+            continue;
           }
-          
-          // Wait before retry with exponential backoff
+        }
+        
+        // If all formats failed in this attempt, wait before retry
+        if (attempt < maxRetries) {
           await this.delay(Math.pow(2, attempt) * 1000);
         }
       }
