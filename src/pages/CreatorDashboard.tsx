@@ -8,7 +8,7 @@ import { Footer } from "@/components/footer";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { OptimizedModelCard } from "@/components/dashboard/OptimizedModelCard";
+import { UnifiedModelCard } from "@/components/dashboard/UnifiedModelCard";
 import { 
   Upload, 
   FileText,
@@ -31,6 +31,8 @@ interface Model {
   created_at: string;
   printability_score: number;
   tags: string[];
+  file_path?: string;
+  file_type?: string;
 }
 
 const CreatorDashboard = () => {
@@ -40,6 +42,7 @@ const CreatorDashboard = () => {
   const { toast } = useToast();
   const [models, setModels] = useState<Model[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [stats, setStats] = useState({
     totalModels: 0,
     totalDownloads: 0,
@@ -79,7 +82,9 @@ const CreatorDashboard = () => {
           is_published,
           created_at,
           printability_score,
-          tags
+          tags,
+          file_path,
+          file_type
         `)
         .eq('user_id', id)
         .order('created_at', { ascending: false });
@@ -123,6 +128,7 @@ const CreatorDashboard = () => {
 
   const handleModelStatusChange = async (modelId: string, newStatus: 'draft' | 'published' | 'archived') => {
     try {
+      setIsUpdating(true);
       const { error } = await supabase
         .from('models')
         .update({ 
@@ -153,6 +159,8 @@ const CreatorDashboard = () => {
         description: "Failed to update model status",
         variant: "destructive"
       });
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -304,14 +312,17 @@ const CreatorDashboard = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {models.map((model) => (
-                  <OptimizedModelCard
+                  <UnifiedModelCard
                     key={model.id}
                     model={model}
+                    canEdit={canEdit}
                     onEdit={canEdit ? (modelId) => navigate(`/edit-model/${modelId}`) : undefined}
                     onDelete={canEdit ? handleDeleteModel : undefined}
                     onTogglePublish={canEdit ? (modelId, isPublished) => 
                       handleModelStatusChange(modelId, isPublished ? 'published' : 'draft') : undefined
                     }
+                    onClick={(modelId) => navigate(`/model/${modelId}`)}
+                    isUpdating={isUpdating}
                   />
                 ))}
               </div>
@@ -325,14 +336,17 @@ const CreatorDashboard = () => {
                 {models
                   .filter((model) => model.status === status)
                   .map((model) => (
-                    <OptimizedModelCard
+                    <UnifiedModelCard
                       key={model.id}
                       model={model}
+                      canEdit={canEdit}
                       onEdit={canEdit ? (modelId) => navigate(`/edit-model/${modelId}`) : undefined}
                       onDelete={canEdit ? handleDeleteModel : undefined}
                       onTogglePublish={canEdit ? (modelId, isPublished) => 
                         handleModelStatusChange(modelId, isPublished ? 'published' : 'draft') : undefined
                       }
+                      onClick={(modelId) => navigate(`/model/${modelId}`)}
+                      isUpdating={isUpdating}
                     />
                   ))}
               </div>

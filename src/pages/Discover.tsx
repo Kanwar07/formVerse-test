@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Model3DThumbnail } from "@/components/dashboard/Model3DThumbnail";
+import { UnifiedCADViewer } from "@/components/preview/UnifiedCADViewer";
 import { Search, Download, Eye, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -248,11 +249,17 @@ const Discover = () => {
               <Card key={model.id} className="group overflow-hidden hover:shadow-lg transition-all duration-200 cursor-pointer" onClick={() => handleModelClick(model.id)}>
                 <CardContent className="p-0">
                   <div className="aspect-square relative">
-                    <Model3DThumbnail
-                      modelId={model.id}
-                      filePath={model.file_path}
-                      className="w-full h-full"
-                    />
+                    <div className="w-full h-full">
+                      <UnifiedCADViewer
+                        fileUrl={getFileUrl(model.file_path)}
+                        fileName={model.name || 'model.stl'}
+                        fileType={model.file_type}
+                        width={300}
+                        height={300}
+                        showControls={false}
+                        autoRotate={true}
+                      />
+                    </div>
                     
                     {/* Price Badge */}
                     {model.price && (

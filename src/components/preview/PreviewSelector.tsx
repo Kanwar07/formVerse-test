@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
-import { Lock, Box } from 'lucide-react';
+import { Lock, Box, Play } from 'lucide-react';
 import { UnifiedCADViewer } from './UnifiedCADViewer';
 
 interface PreviewSelectorProps {
@@ -16,6 +16,7 @@ interface PreviewSelectorProps {
   price?: number;
   onPurchase?: () => void;
   className?: string;
+  videoUrl?: string; // For AI-generated models
 }
 
 export const PreviewSelector = ({ 
@@ -28,7 +29,8 @@ export const PreviewSelector = ({
   isPurchased = false,
   price,
   onPurchase,
-  className = ""
+  className = "",
+  videoUrl
 }: PreviewSelectorProps) => {
   const canView3D = isOwner || isPurchased;
   const hasFileAccess = fileUrl && fileName && fileType;
@@ -51,7 +53,12 @@ export const PreviewSelector = ({
         {!isOwner && !isPurchased && <Badge variant="destructive">Preview Mode</Badge>}
         {canView3D && <Badge variant="default" className="bg-primary">3D Viewer Active</Badge>}
         {fileType && <Badge variant="outline">{fileType.toUpperCase()}</Badge>}
+        {videoUrl && <Badge variant="secondary" className="flex items-center gap-1">
+          <Play className="h-3 w-3" />
+          AI Generated
+        </Badge>}
       </div>
+      
       {/* 3D Viewer Content */}
       {hasFileAccess && canView3D ? (
         <div className="space-y-4">
@@ -59,11 +66,12 @@ export const PreviewSelector = ({
             <UnifiedCADViewer 
               fileUrl={fileUrl!} 
               fileName={fileName!}
-              width={600}
-              height={400}
+              fileType={fileType}
+              width={800}
+              height={600}
               showControls={true}
               autoRotate={false}
-              onClose={() => {}} // No close action needed in preview
+              videoUrl={videoUrl}
             />
           </div>
           
@@ -82,6 +90,17 @@ export const PreviewSelector = ({
             <p className="text-sm text-muted-foreground">
               {!canView3D ? 'Purchase required for 3D preview' : 'Model file not available'}
             </p>
+            
+            {/* Show thumbnail when locked */}
+            {thumbnail && (
+              <div className="mt-4">
+                <img 
+                  src={thumbnail} 
+                  alt={modelName}
+                  className="w-32 h-32 object-cover rounded-lg mx-auto opacity-60"
+                />
+              </div>
+            )}
           </div>
         </div>
       )}

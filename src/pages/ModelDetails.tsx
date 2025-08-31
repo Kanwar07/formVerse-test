@@ -398,31 +398,18 @@ const ModelDetails = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Enhanced Model Preview */}
             <div className="space-y-4">
-              {purchased ? (
-                <div className="border rounded-lg overflow-hidden">
-                  <UnifiedCADViewer 
-                    fileUrl={secureModelUrl || model.fileUrl}
-                    fileName={model.name || 'model.stl'}
-                    width={600}
-                    height={400}
-                    showControls={true}
-                    autoRotate={false}
-                    onClose={() => {}}
-                  />
-                </div>
-              ) : (
-                <div className="border rounded-lg overflow-hidden">
-                  <UnifiedCADViewer 
-                    fileUrl={model.fileUrl}
-                    fileName={model.name || 'model.stl'}
-                    width={600}
-                    height={400}
-                    showControls={true}
-                    autoRotate={false}
-                    onClose={() => {}}
-                  />
-                </div>
-              )}
+              <div className="border rounded-lg overflow-hidden">
+                <UnifiedCADViewer 
+                  fileUrl={purchased ? (secureModelUrl || model.fileUrl) : model.fileUrl}
+                  fileName={model.name || 'model.stl'}
+                  fileType={model.fileFormat}
+                  width={800}
+                  height={600}
+                  showControls={true}
+                  autoRotate={false}
+                  videoUrl={model.videoUrl} // For AI-generated models
+                />
+              </div>
               
               <Card>
                 <CardHeader>
