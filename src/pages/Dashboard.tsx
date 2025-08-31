@@ -282,13 +282,14 @@ const Dashboard = () => {
                           </Badge>
                         </div>
                         <div className="absolute top-2 right-2 flex items-center gap-2 z-20">
-                          <div className="flex items-center gap-1 bg-background/90 rounded-md px-2 py-1">
+                          <div className="flex items-center gap-1 bg-background/90 rounded-md px-2 py-1" onClick={(e) => e.stopPropagation()}>
                             <span className="text-xs font-medium">
                               {model.is_published ? "Published" : "Unpublished"}
                             </span>
                             <Switch
                               checked={model.is_published}
                               onCheckedChange={(checked) => handleTogglePublish(model.id, checked)}
+                              onClick={(e) => e.stopPropagation()}
                               disabled={isUpdating}
                               className="scale-75"
                             />
