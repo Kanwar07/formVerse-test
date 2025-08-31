@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button';
 import { Progress } from '../components/ui/progress';
 import { Badge } from '../components/ui/badge';
-import { Enhanced3DViewer } from '../components/three/Enhanced3DViewer';
+import { UnifiedCADViewer } from '../components/preview/UnifiedCADViewer';
 import { useToast } from '../hooks/use-toast';
 
 interface FileData {
@@ -302,10 +302,14 @@ export default function FormVerseUpload() {
               <CardContent className="h-[calc(100%-80px)]">
                 {uploadedFile && uploadedFile.status === 'complete' ? (
                   <div className="h-full rounded-xl overflow-hidden elegant-glass">
-                    <Enhanced3DViewer
-                      modelFile={uploadedFile.file}
+                    <UnifiedCADViewer
+                      fileUrl={URL.createObjectURL(uploadedFile.file)}
                       fileName={uploadedFile.file.name}
-                      className="w-full h-full"
+                      width={800}
+                      height={600}
+                      showControls={true}
+                      autoRotate={false}
+                      onClose={() => {}}
                     />
                   </div>
                 ) : (

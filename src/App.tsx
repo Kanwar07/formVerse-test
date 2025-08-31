@@ -22,6 +22,7 @@ import BuyerInterface from "./pages/BuyerInterface";
 import ModelDetails from "./pages/ModelDetails";
 import TestDownload from "./pages/TestDownload";
 import TestImageToCAD from "./pages/TestImageToCAD";
+import Test3DViewer from "./pages/Test3DViewer";
 import Auth from "./pages/Auth";
 import Services from "./pages/Services";
 import Pricing from "./pages/Pricing";
@@ -87,6 +88,7 @@ function App() {
                 <Route path="/signup" element={<SignUp />} />
                 <Route path="/test-download" element={<TestDownload />} />
                 <Route path="/test-image-to-cad" element={<TestImageToCAD />} />
+                <Route path="/test-3d-viewer" element={<Test3DViewer />} />
                 <Route path="/terms-of-service" element={<TermsOfService />} />
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 <Route path="*" element={<NotFound />} />

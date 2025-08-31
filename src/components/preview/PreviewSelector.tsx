@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { Lock, Box } from 'lucide-react';
-import { SimpleSTLViewer } from './SimpleSTLViewer';
+import { UnifiedCADViewer } from './UnifiedCADViewer';
 
 interface PreviewSelectorProps {
   modelName: string;
@@ -32,12 +32,6 @@ export const PreviewSelector = ({
 }: PreviewSelectorProps) => {
   const canView3D = isOwner || isPurchased;
   const hasFileAccess = fileUrl && fileName && fileType;
-  const [background, setBackground] = useState<'white' | 'grey' | 'black' | 'custom'>('white');
-  const [backgroundImage, setBackgroundImage] = useState<string>();
-
-  const handleBackgroundImageUpload = (imageUrl: string) => {
-    setBackgroundImage(imageUrl);
-  };
 
   return (
     <div className={`space-y-4 ${className}`}>
@@ -62,12 +56,14 @@ export const PreviewSelector = ({
       {hasFileAccess && canView3D ? (
         <div className="space-y-4">
           <div className="border rounded-lg overflow-hidden">
-            <SimpleSTLViewer 
+            <UnifiedCADViewer 
               fileUrl={fileUrl!} 
-              background={background}
-              backgroundImage={backgroundImage}
-              onBackgroundChange={setBackground}
-              onBackgroundImageUpload={handleBackgroundImageUpload}
+              fileName={fileName!}
+              width={600}
+              height={400}
+              showControls={true}
+              autoRotate={false}
+              onClose={() => {}} // No close action needed in preview
             />
           </div>
           

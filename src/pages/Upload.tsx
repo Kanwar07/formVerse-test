@@ -21,7 +21,7 @@ import { MetadataForm, ModelMetadata } from "@/components/upload/MetadataForm";
 import { PricingForm } from "@/components/upload/PricingForm";
 import { ReviewForm } from "@/components/upload/ReviewForm";
 import { ModelPreview } from "@/components/preview/ModelPreview";
-import { UniversalModelViewer } from "@/components/preview/UniversalModelViewer";
+import { UnifiedCADViewer } from "@/components/preview/UnifiedCADViewer";
 import { useThumbnailGenerator } from "@/hooks/useThumbnailGenerator";
 
 const Upload = () => {
@@ -397,14 +397,14 @@ const Upload = () => {
                   </div>
                 )}
                 
-                <UniversalModelViewer
+                <UnifiedCADViewer
                   fileUrl={getFileUrl() || ''}
                   fileName={modelFile.name}
-                  className="h-[400px]"
-                  background={background}
-                  backgroundImage={backgroundImage}
-                  onBackgroundChange={setBackground}
-                  onBackgroundImageUpload={setBackgroundImage}
+                  width={800}
+                  height={400}
+                  showControls={true}
+                  autoRotate={false}
+                  onClose={() => {}}
                 />
                 
                 {thumbnailUrl && (

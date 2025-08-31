@@ -13,7 +13,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CadQuaPricing } from "@/components/printing/CadQuaPricing";
 import { ModelPreview } from "@/components/preview/ModelPreview";
-import { SimpleSTLViewer } from "@/components/preview/SimpleSTLViewer";
+import { UnifiedCADViewer } from "@/components/preview/UnifiedCADViewer";
 import { EngagementGate } from "@/components/buyer/EngagementGate";
 import { PreviewSelector } from "@/components/preview/PreviewSelector";
 import { ModelAnalysisReport } from "@/components/analysis/ModelAnalysisReport";
@@ -42,8 +42,7 @@ const ModelDetails = () => {
   const [secureModelUrl, setSecureModelUrl] = useState<string | null>(null);
   const [model, setModel] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [background, setBackground] = useState<'white' | 'grey' | 'black' | 'custom'>('white');
-  const [backgroundImage, setBackgroundImage] = useState<string>();
+
   const { toast } = useToast();
   
   const paymentManager = new PaymentManager();
@@ -392,24 +391,26 @@ const ModelDetails = () => {
             <div className="space-y-4">
               {purchased ? (
                 <div className="border rounded-lg overflow-hidden">
-                  <SimpleSTLViewer 
+                  <UnifiedCADViewer 
                     fileUrl={secureModelUrl || model.fileUrl}
-                    background={background}
-                    backgroundImage={backgroundImage}
-                    onBackgroundChange={setBackground}
-                    onBackgroundImageUpload={setBackgroundImage}
-                    className="w-full h-[400px]"
+                    fileName={model.name || 'model.stl'}
+                    width={600}
+                    height={400}
+                    showControls={true}
+                    autoRotate={false}
+                    onClose={() => {}}
                   />
                 </div>
               ) : (
                 <div className="border rounded-lg overflow-hidden">
-                  <SimpleSTLViewer 
+                  <UnifiedCADViewer 
                     fileUrl={model.fileUrl}
-                    background={background}
-                    backgroundImage={backgroundImage}
-                    onBackgroundChange={setBackground}
-                    onBackgroundImageUpload={setBackgroundImage}
-                    className="w-full h-[400px]"
+                    fileName={model.name || 'model.stl'}
+                    width={600}
+                    height={400}
+                    showControls={true}
+                    autoRotate={false}
+                    onClose={() => {}}
                   />
                 </div>
               )}
