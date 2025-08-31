@@ -10,7 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 
 interface ImageToCADUploaderProps {
-  onModelGenerated: (file: File, filePath: string, fileInfo: any, sourceImage?: string) => void;
+  onModelGenerated: (file: File, filePath: string, fileInfo: any, sourceImage?: string, videoUrl?: string) => void;
   uploading: boolean;
   setUploading: (uploading: boolean) => void;
 }
@@ -226,7 +226,7 @@ export const ImageToCADUploader = ({
     reader.readAsDataURL(file);
   };
 
-  const generate3DModelFromImage = async (imageFile: File): Promise<{glbUrl: string, taskId: string, apiBaseUrl: string}> => {
+  const generate3DModelFromImage = async (imageFile: File): Promise<{glbUrl: string, taskId: string, apiBaseUrl: string, videoUrl?: string}> => {
     console.log('Starting 3D model generation...');
     
     try {
@@ -270,13 +270,14 @@ export const ImageToCADUploader = ({
       console.log('Edge function response:', data);
       
       // Handle new Edge Function response format with task_id and download URLs
-      let glbUrl, taskId, apiBaseUrl;
+      let glbUrl, taskId, apiBaseUrl, videoUrl;
       if (data && data.task_id && data.glb_url && data.api_base_url) {
         // New format: construct full download URL
         glbUrl = `${data.api_base_url}${data.glb_url}`;
         taskId = data.task_id;
         apiBaseUrl = data.api_base_url;
-        console.log('Using new response format with task_id:', data.task_id);
+        videoUrl = data.video_url ? `${data.api_base_url}${data.video_url}` : null;
+        console.log('Using new response format with task_id:', data.task_id, 'video_url:', videoUrl);
       }
       // Handle direct download URL format
       else if (data && (data.glb || data.download)) {
@@ -301,8 +302,8 @@ export const ImageToCADUploader = ({
         throw new Error("Invalid 3D model file received from AI service. Please try again.");
       }
       
-      console.log('3D model generation successful:', glbUrl);
-      return { glbUrl, taskId, apiBaseUrl };
+      console.log('3D model generation successful:', glbUrl, 'video_url:', videoUrl);
+      return { glbUrl, taskId, apiBaseUrl, videoUrl };
     } catch (error) {
       console.error('Generation error:', error);
       
@@ -416,8 +417,8 @@ export const ImageToCADUploader = ({
         
         // Only proceed with viewer if we have a valid blob URL
         if (glbViewerUrl && glbViewerUrl.startsWith('blob:')) {
-          console.log('Using blob URL for viewer:', glbViewerUrl);
-          onModelGenerated(dummyModelFile, glbViewerUrl, fileInfo, imagePath);
+          console.log('Using blob URL for viewer:', glbViewerUrl, 'video URL:', result.videoUrl);
+          onModelGenerated(dummyModelFile, glbViewerUrl, fileInfo, imagePath, result.videoUrl);
           toast({
             title: "Success!",
             description: "Your 3D model has been generated successfully from the image.",

@@ -53,6 +53,7 @@ const Upload = () => {
   const [uploadMethod, setUploadMethod] = useState<'file' | 'image'>('file');
   const [sourceImagePath, setSourceImagePath] = useState<string>("");
   const [imageUploading, setImageUploading] = useState(false);
+  const [videoUrl, setVideoUrl] = useState<string | undefined>(undefined);
   
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -93,7 +94,7 @@ const Upload = () => {
     }
   };
 
-  const handleFileSelected = async (file: File, filePath: string, extractedFileInfo: any, sourceImage?: string) => {
+  const handleFileSelected = async (file: File, filePath: string, extractedFileInfo: any, sourceImage?: string, videoUrl?: string) => {
     console.log('=== FILE SELECTED ===');
     console.log('File:', file.name);
     console.log('File Path:', filePath);
@@ -112,6 +113,11 @@ const Upload = () => {
       setUploadMethod('image');
     } else {
       setUploadMethod('file');
+    }
+    
+    // Store video URL if provided (for AI-generated models)
+    if (videoUrl) {
+      setVideoUrl(videoUrl);
     }
 
     // Reset thumbnail state
@@ -405,6 +411,7 @@ const Upload = () => {
                   showControls={true}
                   autoRotate={false}
                   onClose={() => {}}
+                  videoUrl={videoUrl}
                 />
                 
                 {thumbnailUrl && (
