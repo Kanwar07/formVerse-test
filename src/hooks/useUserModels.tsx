@@ -167,11 +167,19 @@ export const useUserModels = (page = 1, limit = 12, filters: FilterOptions = {},
           : model
       ));
 
+      // Show appropriate success message
       toast.success(
         isPublished 
-          ? 'Model published to marketplace' 
-          : 'Model hidden from marketplace'
+          ? 'Model published successfully' 
+          : 'Model unpublished successfully'
       );
+
+      // If unpublishing and user is on model details page, redirect to dashboard
+      if (!isPublished && window.location.pathname.includes(`/model/${modelId}`)) {
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 1500); // Short delay to allow user to see the success message
+      }
 
     } catch (err) {
       console.error('Error updating model status:', err);

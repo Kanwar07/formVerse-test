@@ -7,6 +7,7 @@ interface Props {
   children: ReactNode;
   modelDownloadUrl?: string;
   onRetry?: () => void;
+  fallback?: ReactNode;
 }
 
 interface State {
@@ -36,6 +37,11 @@ export class ModelViewerErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
+      // If a custom fallback is provided, use it
+      if (this.props.fallback) {
+        return this.props.fallback;
+      }
+      
       return (
         <div className="p-6 border rounded-lg bg-muted/20">
           <Alert variant="destructive" className="mb-4">

@@ -94,7 +94,16 @@ const ModelDetails = () => {
 
         // Check if model is available for viewing
         if (modelData.status !== 'published' || !modelData.is_published) {
-          throw new Error('Model is not available for viewing');
+          // If model is not published, redirect to dashboard with message
+          toast({
+            title: "Model not available",
+            description: "This model is no longer published.",
+            variant: "destructive"
+          });
+          setTimeout(() => {
+            window.location.href = '/dashboard';
+          }, 2000);
+          return;
         }
 
         // Fetch creator profile
