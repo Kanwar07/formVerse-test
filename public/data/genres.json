@@ -1,0 +1,146 @@
+{
+  "genres": [
+    {
+      "id": "product",
+      "title": "Product Design",
+      "tag": "Consumer Goods",
+      "description": "Rapid concept to 3D prototype with photorealistic rendering",
+      "thumbnail": "/lovable-uploads/02a4ca94-e61c-4f7c-9ef0-942b8abb8bb3.png",
+      "animationSrc": null,
+      "modelSrc": null,
+      "altText": "Product design visualization showcasing consumer electronics"
+    },
+    {
+      "id": "architecture",
+      "title": "Architecture",
+      "tag": "Building Design",
+      "description": "From concept to presentation with photorealistic results",
+      "thumbnail": "/lovable-uploads/1afacf1b-1bf6-4915-91fd-d70280b94f0a.png",
+      "animationSrc": null,
+      "modelSrc": null,
+      "altText": "Architectural visualization of modern building design"
+    },
+    {
+      "id": "automotive",
+      "title": "Automotive",
+      "tag": "Vehicle Design",
+      "description": "High-quality vehicle renderings and prototyping",
+      "thumbnail": "/lovable-uploads/7ba397cf-e713-44e7-8854-a7fdf2ac3f49.png",
+      "animationSrc": null,
+      "modelSrc": null,
+      "altText": "Automotive design rendering of modern vehicle"
+    },
+    {
+      "id": "industrial",
+      "title": "Industrial",
+      "tag": "Manufacturing",
+      "description": "Technical precision meets visual excellence",
+      "thumbnail": "/lovable-uploads/8ce7b101-e889-47f8-a4e1-dc69243fe78a.png",
+      "animationSrc": null,
+      "modelSrc": null,
+      "altText": "Industrial equipment and machinery visualization"
+    },
+    {
+      "id": "furniture",
+      "title": "Furniture",
+      "tag": "Interior Design",
+      "description": "Elegant furniture visualization and space planning",
+      "thumbnail": "/lovable-uploads/9ce09c17-cfd4-43bc-a961-0bd805bee565.png",
+      "animationSrc": null,
+      "modelSrc": null,
+      "altText": "Modern furniture design rendering"
+    },
+    {
+      "id": "jewelry",
+      "title": "Jewelry",
+      "tag": "Luxury Goods",
+      "description": "Precision craftsmanship in digital form",
+      "thumbnail": "/lovable-uploads/02a4ca94-e61c-4f7c-9ef0-942b8abb8bb3.png",
+      "animationSrc": null,
+      "modelSrc": null,
+      "altText": "High-end jewelry design with precious metals and stones"
+    },
+    {
+      "id": "apparel",
+      "title": "Apparel",
+      "tag": "Fashion Design",
+      "description": "Fashion visualization and virtual prototyping",
+      "thumbnail": "/lovable-uploads/1afacf1b-1bf6-4915-91fd-d70280b94f0a.png",
+      "animationSrc": null,
+      "modelSrc": null,
+      "altText": "Fashion design and apparel visualization"
+    },
+    {
+      "id": "medical",
+      "title": "Medical",
+      "tag": "Healthcare",
+      "description": "Precision medical device visualization",
+      "thumbnail": "/lovable-uploads/7ba397cf-e713-44e7-8854-a7fdf2ac3f49.png",
+      "animationSrc": null,
+      "modelSrc": null,
+      "altText": "Medical device and healthcare equipment rendering"
+    },
+    {
+      "id": "aerospace",
+      "title": "Aerospace",
+      "tag": "Aviation",
+      "description": "Advanced aerospace component visualization",
+      "thumbnail": "/lovable-uploads/8ce7b101-e889-47f8-a4e1-dc69243fe78a.png",
+      "animationSrc": null,
+      "modelSrc": null,
+      "altText": "Aerospace engineering and aircraft component design"
+    },
+    {
+      "id": "electronics",
+      "title": "Consumer Electronics",
+      "tag": "Technology",
+      "description": "Cutting-edge electronics design and visualization",
+      "thumbnail": "/lovable-uploads/9ce09c17-cfd4-43bc-a961-0bd805bee565.png",
+      "animationSrc": null,
+      "modelSrc": null,
+      "altText": "Consumer electronics and technology product design"
+    }
+  ],
+  "featuredGallery": [
+    {
+      "id": "gallery-1",
+      "title": "Modern Chair Design",
+      "genre": "furniture",
+      "badge": "Furniture",
+      "videoSrc": null,
+      "thumbnail": "/lovable-uploads/02a4ca94-e61c-4f7c-9ef0-942b8abb8bb3.png",
+      "description": "Ergonomic office chair with sustainable materials",
+      "duration": "6s"
+    },
+    {
+      "id": "gallery-2", 
+      "title": "Sports Car Rendering",
+      "genre": "automotive",
+      "badge": "Automotive",
+      "videoSrc": null,
+      "thumbnail": "/lovable-uploads/1afacf1b-1bf6-4915-91fd-d70280b94f0a.png",
+      "description": "High-performance vehicle with aerodynamic design",
+      "duration": "8s"
+    },
+    {
+      "id": "gallery-3",
+      "title": "Smart Watch Prototype",
+      "genre": "electronics",
+      "badge": "Electronics",
+      "videoSrc": null,
+      "thumbnail": "/lovable-uploads/7ba397cf-e713-44e7-8854-a7fdf2ac3f49.png",
+      "description": "Next-generation wearable technology",
+      "duration": "5s"
+    },
+    {
+      "id": "gallery-4",
+      "title": "Modern Architecture",
+      "genre": "architecture",
+      "badge": "ArchViz",
+      "videoSrc": null,
+      "thumbnail": "/lovable-uploads/8ce7b101-e889-47f8-a4e1-dc69243fe78a.png",
+      "description": "Sustainable building design with natural lighting",
+      "duration": "7s"
+    }
+  ]
+}
