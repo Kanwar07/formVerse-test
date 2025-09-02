@@ -7,116 +7,33 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { BadgeCheck, Brain, Check } from "lucide-react";
+import { BadgeCheck, Brain, Check, Zap, Users, Building2, Globe, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
+import pricingData from "@/data/pricing.json";
 
 const Pricing = () => {
-  const [annualBilling, setAnnualBilling] = useState(false);
-  const [userType, setUserType] = useState<"creator" | "buyer">("creator");
+  const [isIndiaRegion, setIsIndiaRegion] = useState(true);
+  const [activeTab, setActiveTab] = useState("image-to-cad");
 
-  const creatorPlans = [
-    {
-      name: "Free",
-      price: annualBilling ? "₹0" : "₹0",
-      description: "Basic plan for new creators to get started",
-      features: [
-        "Upload up to 5 models",
-        "Basic FormIQ analysis",
-        "Community support",
-        "Standard marketplace visibility"
-      ],
-      buttonText: "Get Started",
-      buttonVariant: "outline" as const,
-      highlight: false
-    },
-    {
-      name: "Pro",
-      price: annualBilling ? "₹499/mo" : "₹699/mo",
-      description: "Perfect for growing creators",
-      features: [
-        "Upload up to 50 models",
-        "Full FormIQ analysis & recommendations",
-        "Priority customer support",
-        "Enhanced marketplace visibility", 
-        "Early access to new features",
-        "Custom profile branding"
-      ],
-      buttonText: "Upgrade to Pro",
-      buttonVariant: "default" as const,
-      highlight: true,
-      saveText: annualBilling ? "Save ₹2,400/year" : null
-    },
-    {
-      name: "Enterprise",
-      price: annualBilling ? "₹1,999/mo" : "₹2,999/mo",
-      description: "For professional CAD designers & studios",
-      features: [
-        "Unlimited model uploads",
-        "Advanced FormIQ analysis with custom AI training",
-        "Dedicated account manager",
-        "Featured marketplace placement",
-        "White-label options",
-        "API access",
-        "Team collaboration tools"
-      ],
-      buttonText: "Contact Sales",
-      buttonVariant: "outline" as const,
-      highlight: false
-    }
-  ];
+  const { image_to_cad, marketplace } = pricingData.pricing;
 
-  const buyerPlans = [
-    {
-      name: "Basic",
-      price: "₹0",
-      description: "Free access to the marketplace",
-      features: [
-        "Browse all models",
-        "Download up to 3 free models per month",
-        "Community support",
-        "Basic search functionality"
-      ],
-      buttonText: "Get Started",
-      buttonVariant: "outline" as const,
-      highlight: false
-    },
-    {
-      name: "Premium",
-      price: annualBilling ? "₹299/mo" : "₹399/mo",
-      description: "For enthusiasts and small businesses",
-      features: [
-        "Unlimited model downloads",
-        "Access to premium models",
-        "Request custom modifications",
-        "Priority customer support",
-        "Advanced search filters",
-        "Early access to new models"
-      ],
-      buttonText: "Get Premium",
-      buttonVariant: "default" as const,
-      highlight: true,
-      saveText: annualBilling ? "Save ₹1,200/year" : null
-    },
-    {
-      name: "Business",
-      price: annualBilling ? "₹999/mo" : "₹1,299/mo",
-      description: "For manufacturing and industrial use",
-      features: [
-        "Everything in Premium",
-        "Commercial license for all downloads",
-        "Bulk download options",
-        "IP protection guarantee",
-        "Custom model requests",
-        "Dedicated account manager",
-        "API access"
-      ],
-      buttonText: "Contact Sales",
-      buttonVariant: "outline" as const,
-      highlight: false
-    }
-  ];
+  const formatPrice = (inrPrice: number | string, usdPrice: number | string) => {
+    if (typeof inrPrice === 'string') return inrPrice;
+    return isIndiaRegion 
+      ? `₹${inrPrice.toLocaleString()}` 
+      : `$${usdPrice}`;
+  };
 
-  const currentPlans = userType === "creator" ? creatorPlans : buyerPlans;
+  const formatCreditsPerDollar = (credits: number | string, price: number | string) => {
+    if (typeof credits === 'string' || typeof price === 'string') return 'Custom';
+    const numPrice = isIndiaRegion ? (price as number) : (price as number);
+    const creditsPerUnit = (credits as number) / (numPrice as number);
+    return isIndiaRegion 
+      ? `${creditsPerUnit.toFixed(1)} credits/₹`
+      : `${creditsPerUnit.toFixed(1)} credits/$`;
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -127,108 +44,234 @@ const Pricing = () => {
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 mb-4">
               <span className="text-sm bg-primary/10 text-primary px-3 py-1 rounded-full font-medium">
-                Indian Pricing
+                {isIndiaRegion ? 'India Pricing' : 'Global Pricing'}
               </span>
             </div>
-            <h1 className="text-4xl font-bold mb-4">Choose the Right Plan</h1>
+            <h1 className="text-4xl font-bold mb-4">Flexible Pricing for Every Creator</h1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Affordable plans designed specifically for the Indian market, 
-              enabling creators and users to make the most of <span className="font-space-grotesk font-bold bg-gradient-to-r from-purple-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">FormVerse</span>.
+              Credit-based pricing for Image-to-CAD generation and fair marketplace fees. 
+              Choose what works best for your <span className="font-space-grotesk font-bold bg-gradient-to-r from-purple-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">FormVerse</span> journey.
             </p>
           </div>
           
-          {/* Toggle between user types */}
+          {/* Region Toggle */}
           <div className="flex justify-center mb-8">
             <div className="inline-flex p-1 bg-muted rounded-lg">
               <Button 
-                onClick={() => setUserType("creator")} 
-                variant={userType === "creator" ? "default" : "ghost"}
-                className="rounded-md"
+                onClick={() => setIsIndiaRegion(true)} 
+                variant={isIndiaRegion ? "default" : "ghost"}
+                className="rounded-md flex items-center gap-2"
               >
-                For Creators
+                🇮🇳 India
               </Button>
               <Button 
-                onClick={() => setUserType("buyer")} 
-                variant={userType === "buyer" ? "default" : "ghost"}
-                className="rounded-md"
+                onClick={() => setIsIndiaRegion(false)} 
+                variant={!isIndiaRegion ? "default" : "ghost"}
+                className="rounded-md flex items-center gap-2"
               >
-                For Buyers
+                <Globe className="h-4 w-4" />
+                Global
               </Button>
             </div>
           </div>
           
-          {/* Billing toggle */}
-          <div className="flex justify-center mb-12">
-            <div className="flex items-center gap-3">
-              <span className={`text-sm font-medium ${!annualBilling ? "text-primary" : "text-muted-foreground"}`}>
-                Monthly
-              </span>
-              <Switch
-                checked={annualBilling}
-                onCheckedChange={setAnnualBilling}
-              />
-              <span className={`text-sm font-medium ${annualBilling ? "text-primary" : "text-muted-foreground"}`}>
-                Annual (Save up to 30%)
-              </span>
-            </div>
-          </div>
+          {/* Service Tabs */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-12">
+            <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto">
+              <TabsTrigger value="image-to-cad" className="flex items-center gap-2">
+                <Zap className="h-4 w-4" />
+                Image-to-CAD
+              </TabsTrigger>
+              <TabsTrigger value="marketplace" className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Marketplace
+              </TabsTrigger>
+            </TabsList>
           
-          {/* Plan cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {currentPlans.map((plan) => (
-              <Card 
-                key={plan.name} 
-                className={`relative overflow-hidden ${
-                  plan.highlight 
-                    ? "border-primary shadow-lg shadow-primary/10" 
-                    : ""
-                }`}
-              >
-                {plan.highlight && (
-                  <div className="absolute top-0 right-0 -mt-2 -mr-2">
-                    <Badge className="bg-gradient-to-r from-[hsl(var(--formiq-blue))] to-[hsl(var(--formiq-purple))] text-white">
-                      Popular
-                    </Badge>
-                  </div>
-                )}
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    {plan.name}
-                    {plan.highlight && <BadgeCheck className="h-5 w-5 text-primary" />}
-                  </CardTitle>
-                  <div>
-                    <span className="text-3xl font-bold">{plan.price}</span>
-                    {plan.name !== "Free" && plan.name !== "Basic" && (
-                      <span className="text-muted-foreground ml-1 text-sm">
-                        {annualBilling ? "billed annually" : "billed monthly"}
-                      </span>
-                    )}
-                  </div>
-                  <CardDescription>{plan.description}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {plan.saveText && (
-                    <div className="mb-4 p-2 bg-primary/10 text-primary text-sm rounded-md text-center">
-                      {plan.saveText}
+            <TabsContent value="image-to-cad" className="space-y-8">
+              {/* Credit Costs */}
+              <div className="bg-muted/30 rounded-lg p-6 mb-8">
+                <h3 className="text-lg font-semibold mb-4 flex items-center">
+                  <Sparkles className="h-5 w-5 text-primary mr-2" />
+                  Credit Usage & Costs
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {Object.entries(image_to_cad.credit_costs).map(([type, cost]) => (
+                    <div key={type} className="text-center p-4 bg-background rounded-md">
+                      <div className="text-2xl font-bold text-primary">{cost}</div>
+                      <div className="text-sm text-muted-foreground capitalize">
+                        {type.replace('_', ' ')}
+                      </div>
                     </div>
-                  )}
-                  <ul className="space-y-2 mb-6">
-                    {plan.features.map((feature, i) => (
-                      <li key={i} className="flex">
-                        <Check className="h-5 w-5 text-green-500 mr-2 shrink-0" />
-                        <span className="text-sm">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-                <CardFooter>
-                  <Button variant={plan.buttonVariant} className="w-full">
-                    {plan.buttonText}
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Plans */}
+              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                {image_to_cad.plans.map((plan, index) => (
+                  <Card 
+                    key={plan.name}
+                    className={`relative ${index === 2 ? 'border-primary shadow-lg' : ''}`}
+                  >
+                    {index === 2 && (
+                      <div className="absolute top-0 right-0 -mt-2 -mr-2">
+                        <Badge className="bg-primary text-primary-foreground">Most Popular</Badge>
+                      </div>
+                    )}
+                    <CardHeader className="pb-4">
+                      <CardTitle className="text-lg">{plan.name}</CardTitle>
+                      <div className="text-2xl font-bold">
+                        {formatPrice(plan.india_price_inr, plan.global_price_usd)}
+                      </div>
+                      <div className="text-sm text-muted-foreground">{plan.target}</div>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Credits</span>
+                        <Badge variant="secondary">{plan.credits}</Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Value</span>
+                        <span className="text-xs text-muted-foreground">
+                          {formatCreditsPerDollar(plan.credits, isIndiaRegion ? plan.india_price_inr : plan.global_price_usd)}
+                        </span>
+                      </div>
+                      {typeof plan.overage !== 'string' && (
+                        <div className="text-xs text-muted-foreground">
+                          Overage: {isIndiaRegion 
+                            ? `₹${plan.overage.inr_per_credit}/credit` 
+                            : `$${plan.overage.usd_per_credit}/credit`
+                          }
+                        </div>
+                      )}
+                    </CardContent>
+                    <CardFooter>
+                      <Button 
+                        variant={index === 2 ? "default" : "outline"} 
+                        className="w-full"
+                      >
+                        {plan.name === 'Enterprise' ? 'Contact Sales' : 'Get Started'}
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Policies */}
+              <div className="bg-blue-50/30 border border-blue-200 rounded-lg p-6">
+                <div className="grid md:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium">Rollover Policy:</span> {image_to_cad.rollover_policy}
+                  </div>
+                  <div>
+                    <span className="font-medium">API Access:</span> {image_to_cad.api_access}
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="marketplace" className="space-y-8">
+              <div className="grid md:grid-cols-2 gap-8">
+                {/* Designers/Creators */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Building2 className="h-5 w-5" />
+                      For Designers & Creators
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <div className="text-3xl font-bold text-green-600">
+                        {marketplace.designers.base_share_percent}%
+                      </div>
+                      <div className="text-sm text-muted-foreground">Base revenue share</div>
+                    </div>
+                    
+                    <Separator />
+                    
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-sm">Exclusive content</span>
+                        <Badge variant="secondary">{marketplace.designers.exclusive_share_percent}%</Badge>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">Top performers</span>
+                        <Badge variant="secondary">{marketplace.designers.max_share_percent}%</Badge>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">Payout schedule</span>
+                        <span className="text-sm text-muted-foreground">{marketplace.designers.payout_schedule}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">Listing fee</span>
+                        <span className="text-sm text-green-600">₹{marketplace.designers.listing_fee}</span>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    <div>
+                      <h4 className="font-medium mb-2">Minimum Pricing</h4>
+                      <div className="space-y-1 text-sm">
+                        {Object.entries(marketplace.designers.price_floors).map(([type, price]) => (
+                          <div key={type} className="flex justify-between">
+                            <span className="capitalize">{type.replace('_', ' ')}</span>
+                            <span>{isIndiaRegion ? `₹${price.india_inr}` : `$${price.global_usd}`}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Buyers/Users */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Users className="h-5 w-5" />
+                      For Buyers & Users
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <div className="text-3xl font-bold text-blue-600">
+                        {isIndiaRegion 
+                          ? `${marketplace.users.buyer_fees.india}%` 
+                          : `${marketplace.users.buyer_fees.global}%`
+                        }
+                      </div>
+                      <div className="text-sm text-muted-foreground">Buyer fees</div>
+                    </div>
+
+                    <Separator />
+
+                    <div className="space-y-3">
+                      {marketplace.users.subscriptions.map((sub) => (
+                        <Card key={sub.name} className="p-4">
+                          <div className="flex justify-between items-start mb-2">
+                            <h4 className="font-medium">{sub.name}</h4>
+                            <div className="text-lg font-bold">
+                              {formatPrice(sub.india_price_inr, sub.global_price_usd)}/mo
+                            </div>
+                          </div>
+                          <ul className="text-sm text-muted-foreground space-y-1">
+                            {sub.perks.map((perk, i) => (
+                              <li key={i} className="flex items-start">
+                                <Check className="h-3 w-3 text-green-500 mr-2 mt-0.5 shrink-0" />
+                                {perk}
+                              </li>
+                            ))}
+                          </ul>
+                        </Card>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+          </Tabs>
           
           {/* FormIQ highlight */}
           <div className="mt-16 bg-gradient-to-r from-[hsl(var(--formiq-blue)/10)] to-[hsl(var(--formiq-purple)/10)] rounded-2xl p-8">
