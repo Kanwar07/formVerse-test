@@ -9,7 +9,7 @@ export function TabsSection() {
   const [activeTab, setActiveTab] = useState("creator");
 
   return (
-    <section className="py-20 bg-gradient-to-br from-muted/30 via-background to-muted/20">
+    <section id="tabs" className="py-20 bg-gradient-to-br from-muted/30 via-background to-muted/20">
       <div className="container">
         <div className="text-center max-w-2xl mx-auto mb-16">
           <h2 className="text-3xl font-bold mb-4">Made for Creators and OEMs</h2>

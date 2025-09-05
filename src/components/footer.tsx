@@ -48,19 +48,19 @@ export function Footer() {
           <h5 className="font-medium mb-4">Company</h5>
           <ul className="space-y-2">
             <li>
-              <Link to="/#about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 About
               </Link>
             </li>
             <li>
-              <Link to="/#pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <Link to="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 Pricing
               </Link>
             </li>
             <li>
-              <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <Link to="/#tabs" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 Careers
-              </a>
+              </Link>
             </li>
           </ul>
         </div>
