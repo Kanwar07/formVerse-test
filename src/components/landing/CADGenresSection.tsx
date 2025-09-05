@@ -146,12 +146,6 @@ export const CADGenresSection = () => {
           })}
         </div>
 
-        {/* Bottom CTA */}
-        <div className="text-center mt-16">
-          <button className="elegant-button">
-            Start Creating Models
-          </button>
-        </div>
       </div>
     </section>
   );
