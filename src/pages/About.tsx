@@ -1,5 +1,6 @@
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
+import { Link } from "react-router-dom";
 
 export default function About() {
   return (
@@ -119,12 +120,18 @@ export default function About() {
               Whether you're a creator looking to monetize your skills or a business seeking CAD solutions, we're here to help you succeed.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="bg-primary text-primary-foreground px-8 py-3 rounded-full font-medium hover:bg-primary/90 transition-colors">
+              <Link 
+                to="/image-to-cad" 
+                className="bg-primary text-primary-foreground px-8 py-3 rounded-full font-medium hover:bg-primary/90 transition-colors text-center"
+              >
                 Start Creating
-              </button>
-              <button className="border border-primary text-primary px-8 py-3 rounded-full font-medium hover:bg-primary hover:text-primary-foreground transition-colors">
+              </Link>
+              <Link 
+                to="/discover" 
+                className="border border-primary text-primary px-8 py-3 rounded-full font-medium hover:bg-primary hover:text-primary-foreground transition-colors text-center"
+              >
                 Find Models
-              </button>
+              </Link>
             </div>
           </div>
         </section>
