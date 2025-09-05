@@ -5,7 +5,7 @@ import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { useToast } from "@/components/ui/use-toast";
 import { Brain, Upload as UploadIcon, Sparkles } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { FormIQAnalysisResult } from "@/services/formiq";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
@@ -57,7 +57,11 @@ const Upload = () => {
   
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
+  
+  // Determine default tab based on route
+  const defaultTab = location.pathname === '/image-to-cad' ? 'generate' : 'upload';
 
   // FormIQ Analysis Results
   const [printabilityScore, setPrintabilityScore] = useState(0);
@@ -431,7 +435,7 @@ const Upload = () => {
         {currentStep === 1 && (
           <Card>
             <CardContent className="pt-6">
-              <Tabs defaultValue="upload" className="w-full">
+              <Tabs defaultValue={defaultTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-6">
                   <TabsTrigger value="upload">
                     <div className="flex items-center gap-2">
