@@ -52,7 +52,7 @@ export function Navbar() {
     { path: '/creators', label: 'Creators' },
     { path: '/image-to-cad', label: 'Image to CAD' },
     { path: '/formiq-landing', label: 'FormIQ' },
-    { path: '/pricing', label: 'View All Plans' }
+    { path: '/pricing', label: 'Pricing' }
   ];
 
   return (
