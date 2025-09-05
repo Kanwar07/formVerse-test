@@ -5,43 +5,43 @@ const CADGenres = [
   {
     name: "Film Production",
     icon: Film,
-    color: "from-slate-400 to-slate-600",
+    color: "from-slate-600 to-slate-800",
     model: "🎬"
   },
   {
     name: "Product Design", 
     icon: Cpu,
-    color: "from-blue-400 to-blue-600",
+    color: "from-blue-600/80 to-blue-800/80",
     model: "🔧"
   },
   {
     name: "Education",
     icon: Heart,
-    color: "from-amber-400 to-orange-500",
+    color: "from-amber-600/80 to-amber-800/80",
     model: "🎓"
   },
   {
     name: "Game Development",
     icon: Gamepad2,
-    color: "from-teal-400 to-cyan-500",
+    color: "from-teal-600/80 to-teal-800/80",
     model: "⚔️"
   },
   {
     name: "3D Printing",
     icon: Printer,
-    color: "from-green-400 to-emerald-500",
+    color: "from-emerald-600/80 to-emerald-800/80",
     model: "🏺"
   },
   {
     name: "VR/AR",
     icon: Headphones,
-    color: "from-purple-400 to-pink-500",
+    color: "from-purple-600/80 to-purple-800/80",
     model: "🥽"
   },
   {
     name: "Interior Design",
     icon: Building,
-    color: "from-pink-300 to-rose-400",
+    color: "from-rose-600/80 to-rose-800/80",
     model: "💡"
   }
 ];
@@ -81,13 +81,13 @@ export const CADGenresSection = () => {
                   `} />
                   
                   {/* 3D Model Floating Above */}
-                  <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 z-10">
+                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
                     <div className={`
-                      w-24 h-24 rounded-2xl bg-white/20 backdrop-blur-sm
-                      flex items-center justify-center text-4xl
+                      w-20 h-20 rounded-2xl bg-white/15 backdrop-blur-sm border border-white/20
+                      flex items-center justify-center text-3xl
                       transition-all duration-500 ease-out
                       ${isHovered 
-                        ? 'animate-bounce scale-110 shadow-2xl' 
+                        ? 'animate-bounce scale-110 shadow-2xl bg-white/25' 
                         : 'animate-float shadow-lg'
                       }
                     `}>
