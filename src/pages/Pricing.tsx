@@ -150,8 +150,13 @@ const Pricing = () => {
                       <Button 
                         variant={index === 2 ? "default" : "outline"} 
                         className="w-full"
+                        asChild
                       >
-                        {plan.name === 'Enterprise' ? 'Contact Sales' : 'Get Started'}
+                        {plan.name === 'Enterprise' ? (
+                          <a href="mailto:formversedude@gmail.com?subject=Enterprise Plan Inquiry">Contact Sales</a>
+                        ) : (
+                          <span>Get Started</span>
+                        )}
                       </Button>
                     </CardFooter>
                   </Card>
@@ -336,8 +341,12 @@ const Pricing = () => {
               Our team is ready to help you find the perfect solution for your needs.
             </p>
             <div className="flex justify-center gap-4">
-              <Button variant="outline">Contact Sales</Button>
-              <Button>Schedule Demo</Button>
+              <Button variant="outline" asChild>
+                <a href="mailto:formversedude@gmail.com?subject=Sales Inquiry">Contact Sales</a>
+              </Button>
+              <Button asChild>
+                <a href="mailto:formversedude@gmail.com?subject=Demo Request">Schedule Demo</a>
+              </Button>
             </div>
           </div>
         </div>

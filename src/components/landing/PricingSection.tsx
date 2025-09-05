@@ -110,24 +110,17 @@ export function PricingSection() {
                 <Button 
                   variant={index === 1 ? "default" : "outline"} 
                   className="w-full"
+                  asChild
                 >
-                  {plan.name === 'Enterprise' ? 'Contact Sales' : 'Get Started'}
+                  {plan.name === 'Enterprise' ? (
+                    <a href="mailto:formversedude@gmail.com?subject=Enterprise Plan Inquiry">Contact Sales</a>
+                  ) : (
+                    <span>Get Started</span>
+                  )}
                 </Button>
               </CardContent>
             </Card>
           ))}
-        </div>
-
-        <div className="text-center mt-12">
-          <p className="text-sm text-muted-foreground mb-4">
-            Need more credits or custom solutions?
-          </p>
-          <Button variant="outline" className="mr-4">
-            View All Plans
-          </Button>
-          <Button>
-            Contact Sales
-          </Button>
         </div>
       </div>
     </section>
