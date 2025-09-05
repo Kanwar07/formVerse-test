@@ -406,7 +406,12 @@ export const UniversalModelViewer = ({
 
         {/* 3D Canvas */}
         <Canvas
-          camera={{ position: [5, 5, 5], fov: 50 }}
+          camera={{ 
+            position: [4, 4, 4], 
+            fov: 50,
+            near: 0.1,
+            far: 100
+          }}
           onCreated={({ gl }) => {
             // Set background color based on selection
             const bgColor = background === 'white' 

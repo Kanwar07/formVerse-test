@@ -44,13 +44,15 @@ interface ModelInfo {
   fileSize?: string;
 }
 
-// Safe Model Renderer Component - prevents React Three Fiber prop application errors
+// Safe Model Renderer Component with consistent scaling
 const SafeModelRenderer = ({ 
   model, 
-  wireframeMode = false 
+  wireframeMode = false,
+  onBoundsCalculated 
 }: { 
   model: LoadedCADModel; 
   wireframeMode?: boolean;
+  onBoundsCalculated?: (bounds: any) => void;
 }) => {
   // Comprehensive validation to prevent "lov" property errors
   const validatedModel = useMemo(() => {
@@ -107,7 +109,39 @@ const SafeModelRenderer = ({
     };
   }, [model]);
 
-  if (!validatedModel) {
+  // Calculate model bounds and apply consistent scaling
+  const scaledModel = useMemo(() => {
+    if (!validatedModel) return null;
+
+    // Create a temporary mesh to calculate bounds
+    const tempMesh = new THREE.Mesh(validatedModel.geometry, validatedModel.materials[0]);
+    const box = new THREE.Box3().setFromObject(tempMesh);
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+    const maxDimension = Math.max(size.x, size.y, size.z);
+
+    // Normalize to consistent size (target: 2 units max dimension)
+    const targetSize = 2;
+    const scaleFactor = maxDimension > 0 ? targetSize / maxDimension : 1;
+
+    // Report bounds for camera positioning
+    if (onBoundsCalculated) {
+      onBoundsCalculated({
+        center,
+        size,
+        maxDimension: targetSize, // Use normalized size
+        scaleFactor
+      });
+    }
+
+    return {
+      ...validatedModel,
+      scaleFactor,
+      center: center.clone().negate().multiplyScalar(scaleFactor)
+    };
+  }, [validatedModel, onBoundsCalculated]);
+
+  if (!scaledModel) {
     // Fallback geometry when model is invalid
     return (
       <Center>
@@ -119,11 +153,14 @@ const SafeModelRenderer = ({
     );
   }
 
-  // Use React Three Fiber's declarative approach instead of primitive objects
+  // Use React Three Fiber's declarative approach with consistent scaling
   return (
-    <Center>
+    <group
+      scale={[scaledModel.scaleFactor, scaledModel.scaleFactor, scaledModel.scaleFactor]}
+      position={[scaledModel.center.x, scaledModel.center.y, scaledModel.center.z]}
+    >
       <mesh 
-        geometry={validatedModel.geometry}
+        geometry={scaledModel.geometry}
         material={wireframeMode 
           ? new THREE.MeshBasicMaterial({ 
               color: 0x00d4ff, 
@@ -132,12 +169,12 @@ const SafeModelRenderer = ({
               opacity: 0.8,
               side: THREE.DoubleSide
             })
-          : validatedModel.materials[0]
+          : scaledModel.materials[0]
         }
         castShadow
         receiveShadow
       />
-    </Center>
+    </group>
   );
 };
 
@@ -191,6 +228,8 @@ export const UnifiedCADViewer: React.FC<UnifiedCADViewerProps> = ({
   const [modelInfo, setModelInfo] = useState<ModelInfo | null>(null);
   const [wireframeMode, setWireframeMode] = useState(false);
   const [showGrid, setShowGrid] = useState(false);
+  const [cameraPosition, setCameraPosition] = useState<[number, number, number]>([4, 4, 4]);
+  const [cameraTarget, setCameraTarget] = useState<[number, number, number]>([0, 0, 0]);
   
   const { toast } = useToast();
   const orbitControlsRef = useRef<any>(null);
@@ -271,16 +310,46 @@ export const UnifiedCADViewer: React.FC<UnifiedCADViewerProps> = ({
     }
   }, [loadModel]);
 
+  // Handle model bounds calculation for optimal camera positioning
+  const handleBoundsCalculated = useCallback((bounds: any) => {
+    const { center, maxDimension } = bounds;
+    
+    // Calculate optimal camera distance for consistent framing
+    const distance = Math.max(maxDimension * 1.8, 3); // Minimum distance of 3 units
+    
+    // Set isometric view position for professional CAD visualization
+    const offset = distance * 0.7071; // 45-degree angles
+    const newCameraPos: [number, number, number] = [
+      center.x + offset,
+      center.y + offset, 
+      center.z + offset
+    ];
+    
+    const newTarget: [number, number, number] = [center.x, center.y, center.z];
+    
+    setCameraPosition(newCameraPos);
+    setCameraTarget(newTarget);
+    
+    // Update orbit controls if available
+    if (orbitControlsRef.current) {
+      orbitControlsRef.current.target.set(...newTarget);
+      orbitControlsRef.current.update();
+    }
+  }, []);
+
   // Reset view handler
   const handleResetView = useCallback(() => {
     if (orbitControlsRef.current) {
       orbitControlsRef.current.reset();
+      // Reset to calculated optimal position
+      orbitControlsRef.current.target.set(...cameraTarget);
+      orbitControlsRef.current.update();
       toast({
         title: "View Reset",
         description: "Camera position has been reset",
       });
     }
-  }, [toast]);
+  }, [toast, cameraTarget]);
 
   // Download handler
   const handleDownload = useCallback(() => {
@@ -360,7 +429,12 @@ export const UnifiedCADViewer: React.FC<UnifiedCADViewerProps> = ({
             }
           >
             <Canvas
-              camera={{ position: [5, 5, 5], fov: 50 }}
+              camera={{ 
+                position: cameraPosition, 
+                fov: 50,
+                near: 0.1,
+                far: 100
+              }}
               onCreated={({ gl }) => {
                 gl.setClearColor('#f8f9fa');
                 gl.shadowMap.enabled = true;
@@ -391,17 +465,22 @@ export const UnifiedCADViewer: React.FC<UnifiedCADViewerProps> = ({
                 {loading && <LoadingFallback />}
                 {error && <ErrorFallback error={error} onRetry={loadModel} />}
                 {model && !loading && !error && (
-                  <SafeModelRenderer model={model} wireframeMode={wireframeMode} />
+                  <SafeModelRenderer 
+                    model={model} 
+                    wireframeMode={wireframeMode}
+                    onBoundsCalculated={handleBoundsCalculated}
+                  />
                 )}
 
                 {/* Controls */}
                 <OrbitControls
                   ref={orbitControlsRef}
+                  target={cameraTarget}
                   enablePan={true}
                   enableZoom={true}
                   enableRotate={true}
-                  minDistance={0.1}
-                  maxDistance={100}
+                  minDistance={1}
+                  maxDistance={20}
                   enableDamping={true}
                   dampingFactor={0.05}
                   autoRotate={autoRotate}

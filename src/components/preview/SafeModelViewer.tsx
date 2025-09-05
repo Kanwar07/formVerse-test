@@ -53,7 +53,13 @@ export const SafeModelViewer: React.FC<SafeModelViewerProps> = ({
       modelDownloadUrl={modelDownloadUrl}
       onRetry={() => window.location.reload()}
     >
-      <UniversalModelViewer {...props} />
+      <UniversalModelViewer 
+        {...props}
+        // Override settings for consistent framing
+        autoRotate={props.autoRotate ?? false}
+        showGrid={props.showGrid ?? true}
+        showGizmo={props.showGizmo ?? true}
+      />
     </ModelViewerErrorBoundary>
   );
 };

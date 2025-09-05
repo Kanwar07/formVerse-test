@@ -90,14 +90,14 @@ export const Enhanced3DViewer: React.FC<Enhanced3DViewerProps> = ({
     scene.background = new THREE.Color(0x0f0f23);
     sceneRef.current = scene;
 
-    // Create camera with 45° FOV as specified
+    // Create camera with optimized FOV for consistent framing
     const camera = new THREE.PerspectiveCamera(
-      45,
+      50, // Consistent FOV with other viewers
       width / height,
-      0.01,
-      1000
+      0.1, // Adjusted near plane
+      100  // Adjusted far plane
     );
-    camera.position.set(5, 5, 5);
+    camera.position.set(4, 4, 4); // Consistent initial position
     camera.lookAt(0, 0, 0);
     cameraRef.current = camera;
 
@@ -184,10 +184,10 @@ export const Enhanced3DViewer: React.FC<Enhanced3DViewerProps> = ({
     controls.enableZoom = true;
     controls.enableRotate = true;
     controls.autoRotate = autoRotate;
-    controls.autoRotateSpeed = 2.0;
+    controls.autoRotateSpeed = 0.5; // Consistent with other viewers
     controls.maxPolarAngle = Math.PI;
-    controls.minDistance = 0.5;
-    controls.maxDistance = 100;
+    controls.minDistance = 1; // Consistent minimum distance
+    controls.maxDistance = 20; // Consistent maximum distance
     controlsRef.current = controls;
 
     // Append renderer to container
@@ -440,12 +440,21 @@ export const Enhanced3DViewer: React.FC<Enhanced3DViewerProps> = ({
           const center = box.getCenter(new THREE.Vector3());
           const size = box.getSize(new THREE.Vector3());
           
-          // Scale models to fit viewport while preserving proportions
+          // Scale models to fit viewport consistently across all viewers
           if (!preserveScale) {
             const maxDim = Math.max(size.x, size.y, size.z);
-            const scale = 4 / maxDim; // Normalize to unit size
+            const targetSize = 2; // Consistent target size across all viewers
+            const scale = maxDim > 0 ? targetSize / maxDim : 1;
             model.scale.setScalar(scale);
             model.position.sub(center.multiplyScalar(scale));
+            
+            // Update camera position based on normalized model size
+            if (cameraRef.current) {
+              const distance = Math.max(targetSize * 1.8, 3);
+              const offset = distance * 0.7071; // Isometric view
+              cameraRef.current.position.set(offset, offset, offset);
+              cameraRef.current.lookAt(0, 0, 0);
+            }
           } else {
             // Preserve original scale - just center the model
             model.position.sub(center);
