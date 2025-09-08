@@ -33,6 +33,7 @@ import SignUp from "./pages/SignUp";
 import ImageToCAD from "./pages/ImageToCAD";
 import FormVerseUpload from "./pages/FormVerseUpload";
 import FormIQLanding from "./pages/FormIQLanding";
+import FormverseStudio from "./pages/FormverseStudio";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import About from "./pages/About";
@@ -73,6 +74,7 @@ function App() {
                 <Route path="/formiq" element={<FormIQ />} />
                 <Route path="/formiq/features" element={<FormIQFeatures />} />
                 <Route path="/formiq-landing" element={<FormIQLanding />} />
+                <Route path="/studio" element={<FormverseStudio />} />
                 <Route path="/creators" element={<Creators />} />
                 <Route path="/creator/:id" element={<CreatorDashboard />} />
                 <Route path="/creator-profile/:id" element={<CreatorProfile />} />

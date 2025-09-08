@@ -50,6 +50,7 @@ export function Navbar() {
   const navLinks = [
     { path: '/discover', label: 'Discover' },
     { path: '/creators', label: 'Creators' },
+    { path: '/studio', label: 'Studio' },
     { path: '/image-to-cad', label: 'Image to CAD' },
     { path: '/formiq-landing', label: 'FormIQ' },
     { path: '/pricing', label: 'Pricing' }
