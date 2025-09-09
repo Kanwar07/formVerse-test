@@ -31,12 +31,15 @@ import { GenerationWorkspace } from "@/components/studio/GenerationWorkspace";
 import { TexturingWorkspace } from "@/components/studio/TexturingWorkspace";
 import { RemeshingWorkspace } from "@/components/studio/RemeshingWorkspace";
 import { StylingWorkspace } from "@/components/studio/StylingWorkspace";
+import { ArtStyleSelector } from "@/components/studio/ArtStyleSelector";
+import { artStyles } from "@/constants/artStyles";
 
 const FormverseStudio = () => {
   const [activeTab, setActiveTab] = useState("generation");
   const [inputMode, setInputMode] = useState<'text' | 'image'>('text');
   const [textPrompt, setTextPrompt] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedArtStyle, setSelectedArtStyle] = useState<string>("realistic");
 
   const workflowStages = [
     { id: "generation", label: "Generation", icon: Wand2, description: "Create 3D models from text or images" },
@@ -141,6 +144,14 @@ const FormverseStudio = () => {
                           </div>
                         </div>
 
+                        {/* Art Style Selection */}
+                        <div className="mb-4">
+                          <ArtStyleSelector
+                            selectedStyle={selectedArtStyle}
+                            onStyleChange={setSelectedArtStyle}
+                          />
+                        </div>
+
                         {inputMode === 'text' ? (
                           <div className="space-y-4">
                             <Textarea
@@ -156,7 +167,7 @@ const FormverseStudio = () => {
                               </div>
                               <Button disabled={!textPrompt.trim()}>
                                 <Wand2 className="w-4 h-4 mr-2" />
-                                Generate
+                                Generate {selectedArtStyle && `(${artStyles.find(s => s.id === selectedArtStyle)?.name})`}
                               </Button>
                             </div>
                           </div>
@@ -199,7 +210,7 @@ const FormverseStudio = () => {
                               </div>
                               <Button disabled={!selectedFile}>
                                 <Wand2 className="w-4 h-4 mr-2" />
-                                Convert to 3D
+                                Convert to 3D {selectedArtStyle && `(${artStyles.find(s => s.id === selectedArtStyle)?.name})`}
                               </Button>
                             </div>
                           </div>
