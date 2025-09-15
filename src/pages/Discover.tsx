@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { Card, CardContent } from "@/components/ui/card";
@@ -40,6 +40,7 @@ const Discover = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
+  const [failedModels, setFailedModels] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -151,6 +152,11 @@ const Discover = () => {
     return data.publicUrl;
   };
 
+  const handleModelLoadError = useCallback((modelId: string, error: string) => {
+    console.log(`Model ${modelId} failed to load:`, error);
+    setFailedModels(prev => new Set([...prev, modelId]));
+  }, []);
+
   const filteredModels = models.filter(model => {
     const matchesSearch = model.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          model.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -159,7 +165,9 @@ const Discover = () => {
     const matchesCategory = selectedCategory === 'all' || 
                            model.tags?.includes(selectedCategory);
     
-    return matchesSearch && matchesCategory;
+    const hasNotFailed = !failedModels.has(model.id);
+    
+    return matchesSearch && matchesCategory && hasNotFailed;
   });
 
   if (loading) {
@@ -258,6 +266,7 @@ const Discover = () => {
                         height={300}
                         showControls={false}
                         autoRotate={true}
+                        onLoadError={(error) => handleModelLoadError(model.id, error)}
                       />
                     </div>
                     

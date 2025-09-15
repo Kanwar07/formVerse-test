@@ -34,6 +34,8 @@ interface UnifiedCADViewerProps {
   showControls?: boolean;
   autoRotate?: boolean;
   videoUrl?: string; // Add video URL for AI-generated models
+  onLoadError?: (error: string) => void;
+  onLoadSuccess?: () => void;
 }
 
 interface ModelInfo {
@@ -220,7 +222,9 @@ export const UnifiedCADViewer: React.FC<UnifiedCADViewerProps> = ({
   height = 600,
   showControls = true,
   autoRotate = false,
-  videoUrl
+  videoUrl,
+  onLoadError,
+  onLoadSuccess
 }) => {
   const [model, setModel] = useState<LoadedCADModel | null>(null);
   const [loading, setLoading] = useState(true);
@@ -274,6 +278,8 @@ export const UnifiedCADViewer: React.FC<UnifiedCADViewerProps> = ({
       setModelInfo(info);
       setLoading(false);
 
+      onLoadSuccess?.();
+
       toast({
         title: "3D Model Loaded",
         description: `${info.format} file with ${info.vertices.toLocaleString()} vertices`,
@@ -294,6 +300,8 @@ export const UnifiedCADViewer: React.FC<UnifiedCADViewerProps> = ({
       
       setError(errorMessage);
       setLoading(false);
+
+      onLoadError?.(errorMessage);
 
       toast({
         variant: "destructive",
