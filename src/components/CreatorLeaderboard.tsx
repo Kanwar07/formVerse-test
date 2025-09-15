@@ -50,7 +50,13 @@ export const CreatorLeaderboard = ({
           <h3 className="text-2xl font-semibold">Top Creators</h3>
         </div>
         <div className="bg-card rounded-xl border shadow-sm p-8 text-center">
-          <p className="text-muted-foreground">No creators found. Upload the first model to get started!</p>
+          <div className="mb-4">
+            <Award className="h-12 w-12 mx-auto text-muted-foreground/50" />
+          </div>
+          <h4 className="text-lg font-medium mb-2">No Creators Yet</h4>
+          <p className="text-muted-foreground">
+            Be the first creator to upload and publish a CAD model on FormVerse!
+          </p>
         </div>
       </div>
     );
@@ -135,7 +141,13 @@ export const CreatorLeaderboard = ({
                 </div>
                 <div>
                   <div className="flex items-center font-medium">
-                    {creator.rating} <Star className="h-3 w-3 ml-0.5 fill-amber-500 text-amber-500" />
+                    {creator.rating > 0 ? (
+                      <>
+                        {creator.rating} <Star className="h-3 w-3 ml-0.5 fill-amber-500 text-amber-500" />
+                      </>
+                    ) : (
+                      <span className="text-muted-foreground">No rating</span>
+                    )}
                   </div>
                   <div className="text-xs text-muted-foreground">Rating</div>
                 </div>

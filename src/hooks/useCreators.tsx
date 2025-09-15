@@ -25,68 +25,93 @@ export const useCreators = () => {
       try {
         setLoading(true);
         
-        // Fetch creators with their model counts and total downloads
-        const { data: creatorsData, error: creatorsError } = await supabase
+        // Fetch published models with their creators
+        const { data: modelsData, error: modelsError } = await supabase
           .from('models')
-          .select(`
-            user_id,
-            downloads
-          `);
+          .select('user_id, downloads, rating')
+          .eq('status', 'published')
+          .eq('is_published', true)
+          .eq('admin_status', 'approved')
+          .eq('quality_status', 'approved');
 
-        if (creatorsError) {
-          throw creatorsError;
+        if (modelsError) {
+          throw modelsError;
+        }
+
+        if (!modelsData || modelsData.length === 0) {
+          setCreators([]);
+          return;
         }
 
         // Group by user_id and calculate stats
-        const creatorStats = creatorsData?.reduce((acc: any, model: any) => {
+        const creatorStats = modelsData.reduce((acc: any, model: any) => {
           const userId = model.user_id;
           if (!acc[userId]) {
             acc[userId] = {
               models: 0,
-              totalDownloads: 0
+              totalDownloads: 0,
+              totalRating: 0,
+              ratingCount: 0
             };
           }
           acc[userId].models += 1;
           acc[userId].totalDownloads += model.downloads || 0;
+          if (model.rating) {
+            acc[userId].totalRating += model.rating;
+            acc[userId].ratingCount += 1;
+          }
           return acc;
         }, {});
 
         // Get user profiles for the creators
-        const userIds = Object.keys(creatorStats || {});
+        const userIds = Object.keys(creatorStats);
         
         if (userIds.length === 0) {
           setCreators([]);
           return;
         }
 
-        // For now, we'll create mock profile data since we don't have a profiles table
-        // In a real app, you'd fetch this from a profiles table
-        const mockCreators: Creator[] = userIds.map((userId, index) => {
+        // Fetch real profile data from profiles table
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, username, email, avatar_url, bio')
+          .in('id', userIds);
+
+        if (profilesError) {
+          console.error('Error fetching profiles:', profilesError);
+        }
+
+        // Create creators array with real profile data
+        const realCreators: Creator[] = userIds.map((userId) => {
           const stats = creatorStats[userId];
-          const mockNames = ['Alex Johnson', 'Sarah Chen', 'Mike Rodriguez', 'Emily Davis', 'David Kim'];
-          const mockUsernames = ['alexj', 'sarahc', 'miker', 'emilyd', 'davidk'];
-          const mockAvatars = [
-            'https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=256&h=256&fit=crop&auto=format',
-            'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=256&h=256&fit=crop&auto=format',
-            'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=256&h=256&fit=crop&auto=format',
-            'https://images.unsplash.com/photo-1664575602554-2087b04935a5?q=80&w=256&h=256&fit=crop&auto=format',
-            'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=256&h=256&fit=crop&auto=format'
-          ];
+          const profile = profilesData?.find(p => p.id === userId);
+          
+          // Generate display name from profile data
+          const displayName = profile?.username || 
+                             profile?.email?.split('@')[0] || 
+                             `Creator_${userId.slice(0, 8)}`;
+          
+          const avgRating = stats.ratingCount > 0 
+            ? Number((stats.totalRating / stats.ratingCount).toFixed(1))
+            : 0;
 
           return {
             id: userId,
-            name: mockNames[index % mockNames.length] || `Creator ${index + 1}`,
-            username: mockUsernames[index % mockUsernames.length] || `creator${index + 1}`,
-            avatar: mockAvatars[index % mockAvatars.length],
-            bio: 'CAD designer specializing in 3D modeling and product design',
-            premium: Math.random() > 0.5,
-            rating: Number((4.0 + Math.random() * 1.0).toFixed(1)),
+            name: displayName,
+            username: profile?.username || displayName.toLowerCase().replace(/\s+/g, '_'),
+            avatar: profile?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=6366f1&color=fff`,
+            bio: profile?.bio || 'CAD designer and 3D modeling enthusiast',
+            premium: false, // Could be determined by subscription status if available
+            rating: avgRating,
             models: stats.models,
             downloads: stats.totalDownloads
           };
         });
 
-        setCreators(mockCreators);
+        // Sort by total downloads by default
+        realCreators.sort((a, b) => b.downloads - a.downloads);
+        
+        setCreators(realCreators);
       } catch (err) {
         console.error('Error fetching creators:', err);
         setError(err instanceof Error ? err.message : 'Failed to fetch creators');
