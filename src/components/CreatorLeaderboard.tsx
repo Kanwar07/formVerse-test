@@ -24,6 +24,16 @@ export const CreatorLeaderboard = ({
   const [sortBy, setSortBy] = useState<"downloads" | "rating" | "models">("downloads");
   const { creators, loading, error, hasMore, loadMore } = useCreators(limit);
   
+  // Sort creators based on selected criteria and add rank - MUST be before early returns
+  const sortedCreators = useMemo(() => {
+    return [...creators].sort((a, b) => {
+      return b[sortBy] - a[sortBy];
+    }).map((creator, index) => ({
+      ...creator,
+      rank: index + 1
+    }));
+  }, [creators, sortBy]);
+  
   if (loading) {
     return (
       <div className={cn("w-full", className)}>
@@ -64,16 +74,6 @@ export const CreatorLeaderboard = ({
     );
   }
   
-  // Sort creators based on selected criteria and add rank
-  const sortedCreators = useMemo(() => {
-    return [...creators].sort((a, b) => {
-      return b[sortBy] - a[sortBy];
-    }).map((creator, index) => ({
-      ...creator,
-      rank: index + 1
-    }));
-  }, [creators, sortBy]);
-
   return (
     <div className={cn("w-full", className)}>
       <div className="flex items-center justify-between mb-6">
