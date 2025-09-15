@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Creator {
@@ -19,17 +19,17 @@ export const useCreators = (limit?: number) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
-  const [offset, setOffset] = useState(0);
+  const offsetRef = useRef(0);
+  const fetchLimit = limit || 4;
 
-  const fetchCreators = async (isLoadMore = false) => {
+  const fetchCreators = useCallback(async (isLoadMore = false) => {
     try {
       if (!isLoadMore) {
         setLoading(true);
-        setOffset(0);
+        offsetRef.current = 0;
       }
 
-      const currentOffset = isLoadMore ? offset : 0;
-      const fetchLimit = limit || 4;
+      const currentOffset = offsetRef.current;
       
       // Get users who have published models
       const { data: publishedModelUsers, error: modelsError } = await supabase
@@ -47,6 +47,7 @@ export const useCreators = (limit?: number) => {
           setCreators([]);
         }
         setHasMore(false);
+        setLoading(false);
         return;
       }
 
@@ -58,6 +59,7 @@ export const useCreators = (limit?: number) => {
       
       if (paginatedUserIds.length === 0) {
         setHasMore(false);
+        setLoading(false);
         return;
       }
 
@@ -131,26 +133,26 @@ export const useCreators = (limit?: number) => {
         setCreators(validCreators);
       }
       
-      setOffset(currentOffset + fetchLimit);
+      offsetRef.current = currentOffset + fetchLimit;
       setHasMore(paginatedUserIds.length === fetchLimit);
+      setLoading(false);
 
     } catch (err) {
       console.error('Error fetching creators:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch creators');
-    } finally {
       setLoading(false);
     }
-  };
+  }, [fetchLimit]);
 
-  const loadMore = () => {
+  const loadMore = useCallback(() => {
     if (!loading && hasMore) {
       fetchCreators(true);
     }
-  };
+  }, [loading, hasMore, fetchCreators]);
 
   useEffect(() => {
-    fetchCreators();
-  }, []);
+    fetchCreators(false);
+  }, [fetchCreators]);
 
   return { creators, loading, error, hasMore, loadMore };
 };
