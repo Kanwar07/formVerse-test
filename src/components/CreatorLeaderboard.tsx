@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -12,15 +12,17 @@ interface CreatorLeaderboardProps {
   className?: string;
   limit?: number;
   showViewAll?: boolean;
+  showLoadMore?: boolean;
 }
 
 export const CreatorLeaderboard = ({ 
   className, 
   limit = 5,
-  showViewAll = true 
+  showViewAll = true,
+  showLoadMore = false
 }: CreatorLeaderboardProps) => {
   const [sortBy, setSortBy] = useState<"downloads" | "rating" | "models">("downloads");
-  const { creators, loading, error } = useCreators();
+  const { creators, loading, error, hasMore, loadMore } = useCreators(limit);
   
   if (loading) {
     return (
@@ -62,13 +64,15 @@ export const CreatorLeaderboard = ({
     );
   }
   
-  // Sort creators based on selected criteria
-  const sortedCreators = [...creators].sort((a, b) => {
-    return b[sortBy] - a[sortBy];
-  }).slice(0, limit).map((creator, index) => ({
-    ...creator,
-    rank: index + 1
-  }));
+  // Sort creators based on selected criteria and add rank
+  const sortedCreators = useMemo(() => {
+    return [...creators].sort((a, b) => {
+      return b[sortBy] - a[sortBy];
+    }).map((creator, index) => ({
+      ...creator,
+      rank: index + 1
+    }));
+  }, [creators, sortBy]);
 
   return (
     <div className={cn("w-full", className)}>
@@ -163,6 +167,22 @@ export const CreatorLeaderboard = ({
             <Button variant="ghost" size="sm" asChild>
               <Link to="/creators">View All Creators</Link>
             </Button>
+          </div>
+        )}
+        
+        {showLoadMore && hasMore && (
+          <div className="bg-muted/20 p-3 flex justify-center border-t">
+            <Button variant="ghost" size="sm" onClick={loadMore} disabled={loading}>
+              {loading ? "Loading..." : "Load More Creators"}
+            </Button>
+          </div>
+        )}
+        
+        {showLoadMore && !hasMore && creators.length > 0 && (
+          <div className="bg-muted/20 p-3 flex justify-center border-t">
+            <p className="text-sm text-muted-foreground">
+              All creators loaded
+            </p>
           </div>
         )}
       </div>

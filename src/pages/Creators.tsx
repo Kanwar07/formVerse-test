@@ -50,14 +50,7 @@ const Creators = () => {
             </Tabs>
           </div>
           
-          <CreatorLeaderboard limit={10} showViewAll={false} />
-          
-          <div className="mt-8 text-center">
-            <p className="text-muted-foreground mb-4">
-              Don't see what you're looking for? Try refining your search.
-            </p>
-            <Button variant="outline">Load More Creators</Button>
-          </div>
+          <CreatorLeaderboard limit={4} showViewAll={false} showLoadMore={true} />
         </div>
       </main>
       
