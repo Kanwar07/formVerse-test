@@ -46,8 +46,10 @@ export const CADGenresSection = () => {
     <section className="py-20 relative overflow-hidden bg-[#000000]">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
-          <h2 className="text-6xl font-bold mb-6">Smarter 3D Analysis</h2>
-          <p className="text-xl text-muted-foreground">
+          <h2 className="text-[50px] font-bold mb-6 headingfont">
+            Smarter 3D Analysis
+          </h2>
+          <p className="text-[18px] text-muted-foreground subheadingfont">
             Instantly analyze models, get print-ready quotations, and order a
             professional print delivered to your <br /> door without leaving the
             platform
@@ -66,8 +68,8 @@ export const CADGenresSection = () => {
             }}
           ></div>
 
-          <div className="relative w-full h-[500px] md:h-[700px] mt-10">
-            <div className="absolute inset-0 mx-auto w-full max-w-7xl">
+          <div className="relative w-full h-[400px] md:h-[600px] mt-10">
+            <div className="absolute inset-0 mx-auto w-full max-w-5xl">
               <div className="relative w-full h-full">
                 <div className="absolute inset-0 bg-gradient-to-r from-white/5 via-transparent to-cyber-blue/5 rounded-3xl blur-3xl animate-glow-pulse"></div>
                 <div className="relative w-full h-full elegant-glass rounded-3xl border-2 border-white/20 shadow-2xl overflow-hidden elegant-glow">
@@ -75,7 +77,7 @@ export const CADGenresSection = () => {
                     {/* Video Background with better error handling */}
                     <iframe
                       ref={iframeRef}
-                      //src={`https://www.youtube.com/embed/wI-bfQNbKrI?autoplay=1&mute=1&loop=1&playlist=wI-bfQNbKrI&controls=0&showinfo=0&rel=0&modestbranding=1&enablejsapi=1&iv_load_policy=3&disablekb=1&fs=0`}
+                      src={`https://www.youtube.com/embed/wI-bfQNbKrI?autoplay=1&mute=1&loop=1&playlist=wI-bfQNbKrI&controls=0&showinfo=0&rel=0&modestbranding=1&enablejsapi=1&iv_load_policy=3&disablekb=1&fs=0`}
                       className="absolute inset-0 w-full h-full"
                       frameBorder="0"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"

@@ -19,8 +19,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["Inter", "sans-serif"],
-        "space-grotesk": ["Space Grotesk", "sans-serif"],
+        phonk: ["Phonk Regular", "sans-serif"],
+        phonkContrast: ["Phonk Contrast", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",

@@ -97,7 +97,7 @@ export function HeroSection() {
       </div>
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
         <span
-          className="mb-4 rounded-full bg-transparent px-4 py-1 text-sm text-white mt-8"
+          className="mb-4 subheadingfont rounded-full bg-transparent px-4 py-1 text-sm text-white mt-8"
           style={{
             border: "2px solid",
             borderImage:
@@ -108,7 +108,7 @@ export function HeroSection() {
         </span>
 
         <h1
-          className="text-[72px] font-extrabold leading-tight bg-clip-text text-transparent mb-4"
+          className="text-[68px] headingfont font-extrabold leading-tight bg-clip-text text-transparent mb-4"
           style={{
             backgroundImage:
               "linear-gradient(to right, #004fb6, #ffffff, #010056)",
@@ -117,7 +117,7 @@ export function HeroSection() {
           Your AI Powered Hub <br /> For Everything 3D
         </h1>
 
-        <p className="max-w-2xl mb-4 text-lg text-slate-300">
+        <p className="max-w-2xl mb-4 text-[18px] subheadingfont text-slate-300">
           Discover, customize, and even print 3D models all in one place.
         </p>
 

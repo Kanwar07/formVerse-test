@@ -50,7 +50,7 @@ const Landing = () => {
         </div>
       </div>
 
-      <div className="py-10 bg-[#000000] flex flex-row justify-center gap-20">
+      <div className="py-10 bg-[#000000] flex flex-row justify-center gap-20 subheadingfont">
         {[0, 1, 2, 3, 4].map((_, index) => (
           <div className="flex flex-row gap-1">
             <Calendar />

@@ -1,0 +1,19 @@
+@font-face {
+  font-family: "Phonk Contrast";
+  src: url("/fonts/Phonk_Contrast_DEMO.woff2") format("woff2"),
+    url("/fonts/Phonk_Contrast_DEMO.woff") format("woff"),
+    url("/fonts/Phonk_Contrast_DEMO.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Phonk Regular";
+  src: url("/fonts/Phonk_Regular_DEMO.woff2") format("woff2"),
+    url("/fonts/Phonk_Regular_DEMO.woff") format("woff"),
+    url("/fonts/Phonk_Regular_DEMO.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}

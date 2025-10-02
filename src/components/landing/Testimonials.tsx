@@ -63,12 +63,12 @@ export default function Testimonials() {
     <div className="text-white flex py-20">
       {/* Left Side - Header Content */}
       <div className="flex-1 flex flex-col justify-center pl-16 pr-8">
-        <h1 className="text-6xl font-bold mb-8 leading-tight">
+        <h1 className="text-[50px] font-bold mb-8 leading-tight headingfont">
           See What Others
           <br />
           Are Saying
         </h1>
-        <p className="text-gray-400 text-lg mb-12 max-w-md leading-relaxed">
+        <p className="text-gray-400 text-[18px] mb-8 leading-relaxed subheadingfont">
           We truly listen to our users and continuously improve to meet their
           needs.
         </p>
@@ -77,7 +77,7 @@ export default function Testimonials() {
 
       {/* Right Side - Testimonials */}
       <div
-        className="flex-1 flex gap-6 items-center justify-center pr-16 overflow-hidden relative"
+        className="flex-1 flex gap-6 items-center justify-center pr-16 overflow-hidden relative subheadingfont"
         style={{
           WebkitMaskImage:
             "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 10%, rgba(0,0,0,1) 90%, rgba(0,0,0,0) 100%)",
