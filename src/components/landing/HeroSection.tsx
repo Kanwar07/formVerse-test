@@ -1,178 +1,158 @@
-
-import { useState, useRef, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Volume2, VolumeX, Play, Pause } from "lucide-react";
+import { useState, useMemo } from "react";
+import heroBackground from "@/assets/landing/heroSection/heroBackground.webp";
+import carousel1 from "@/assets/landing/heroSection/carousel1.webp";
+import carousel2 from "@/assets/landing/heroSection/carousel2.webp";
+import carousel3 from "@/assets/landing/heroSection/carousel3.webp";
+import carousel4 from "@/assets/landing/heroSection/carousel4.webp";
+import carousel5 from "@/assets/landing/heroSection/carousel5.webp";
+import carousel6 from "@/assets/landing/heroSection/carousel6.webp";
+import carousel7 from "@/assets/landing/heroSection/carousel7.webp";
+import { title } from "process";
+import Button from "../common/Button";
 
 export function HeroSection() {
-  console.log('HeroSection component loaded');
-  const [isMuted, setIsMuted] = useState(true);
-  const [videoLoaded, setVideoLoaded] = useState(false);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const images = [
+    "https://images.unsplash.com/photo-1638959684318-68dd903ef878?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    "https://images.unsplash.com/photo-1638959684318-68dd903ef878?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    "https://images.unsplash.com/photo-1638959684318-68dd903ef878?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    "https://images.unsplash.com/photo-1638959684318-68dd903ef878?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    "https://images.unsplash.com/photo-1638959684318-68dd903ef878?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  ];
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setVideoLoaded(true);
-    }, 3000);
+  const imageCarousel = [
+    {
+      image: carousel1,
+      title: "IMAGE TO 3D CONVERSION",
+      description: "Concept to fully ready model.",
+    },
+    {
+      image: carousel2,
+      title: "TEXT TO 3D CONVERSION",
+      description: "Ideas to fully ready model.",
+    },
+    {
+      image: carousel3,
+      title: "3D MARKETPLACE",
+      description: "All you need in one place",
+    },
+    {
+      image: carousel4,
+      title: "FORM IQ",
+      description: "Most intelligent form of IQ",
+    },
+    {
+      image: carousel5,
+      title: "HIRE A CREATOR",
+      description: "Coming soon",
+    },
+    {
+      image: carousel6,
+      title: "AUTOPILOT CAD EDITOR",
+      description: "Coming soon",
+    },
+    {
+      image: carousel7,
+      title: "ON DEMAND 3D PRINT",
+      description: "Coming soon",
+    },
+  ];
 
-    return () => clearTimeout(timer);
-  }, []);
+  const [centerIndex, setCenterIndex] = useState(
+    Math.floor(imageCarousel.length / 2)
+  );
 
-  const toggleMute = () => {
-    if (iframeRef.current) {
-      const newMutedState = !isMuted;
-      setIsMuted(newMutedState);
-      
-      // Update iframe src with new mute parameter
-      const currentSrc = iframeRef.current.src;
-      const newSrc = currentSrc.replace(/mute=[01]/, `mute=${newMutedState ? 1 : 0}`);
-      iframeRef.current.src = newSrc;
-    }
+  const maxAngle = 60;
+  const maxTranslateZ = 120;
+  const overlap = 10;
+
+  const getTransform = (index: number) => {
+    const offset = index - centerIndex;
+    const totalImages = imageCarousel.length;
+
+    if (offset === 0) return `rotateY(0deg) translateZ(${maxTranslateZ}px)`;
+
+    const maxOffset = Math.max(centerIndex, totalImages - 1 - centerIndex);
+    const factor = offset / maxOffset;
+
+    const rotateY = -factor * maxAngle;
+    const translateZ = maxTranslateZ - Math.abs(factor) * 30;
+    const translateX = -factor * overlap;
+
+    return `rotateY(${rotateY}deg) translateZ(${translateZ}px) translateX(${translateX}px)`;
   };
 
-  const reloadVideo = () => {
-    if (iframeRef.current) {
-      const currentSrc = iframeRef.current.src;
-      iframeRef.current.src = '';
-      setTimeout(() => {
-        if (iframeRef.current) {
-          iframeRef.current.src = currentSrc;
-        }
-      }, 100);
-    }
-  };
+  const transforms = useMemo(() => {
+    return imageCarousel.map((_, index) => getTransform(index));
+  }, [centerIndex, imageCarousel]);
 
   return (
-    <section className="relative py-24 md:py-40 overflow-hidden bg-gradient-to-br from-cyber-dark via-black to-cyber-darker">
-      <div className="absolute inset-0 elegant-grid opacity-30"></div>
-      <div className="absolute inset-0 elegant-particles"></div>
-      
-      <div className="absolute inset-0 -z-10">
-        <div className="absolute top-0 left-0 right-0 h-[600px] bg-gradient-to-b from-white/5 to-transparent rounded-full blur-3xl transform -translate-y-1/2 animate-glow-pulse"></div>
-        <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-gradient-to-t from-cyber-purple/5 to-transparent rounded-full blur-3xl animate-float"></div>
-        <div className="absolute top-1/2 left-1/4 w-[400px] h-[400px] bg-gradient-to-br from-cyber-blue/3 to-transparent rounded-full blur-2xl animate-float" style={{animationDelay: '2s'}}></div>
+    <section className="relative">
+      <div className="h-screen w-screen">
+        <img
+          src={heroBackground}
+          alt="heroBackground"
+          className="h-full w-full object-cover rounded-b-[80px]"
+        />
+
+        <div
+          className="absolute top-0 left-0 h-full w-full"
+          style={{
+            backgroundImage: `
+        radial-gradient(circle at 50% -300px, #002d6e, #002d6e, #000000, #000000, #000000, #000000)
+      `,
+            opacity: 0.8,
+          }}
+        ></div>
       </div>
-      
-      <div className="container flex flex-col items-center text-center space-y-12 relative z-10">
-        <div className="inline-flex items-center rounded-full elegant-glass border border-white/20 px-8 py-4 text-sm backdrop-blur-xl elegant-scan-line">
-          <span className="matrix-text font-medium text-white/90">Your cad files just got a brain</span>
-        </div>
-        
-        <h1 className="text-5xl md:text-8xl font-bold tracking-tight max-w-6xl leading-[0.9]">
-          Turn your{" "}
-          <span className="matrix-text bg-gradient-to-r from-white via-cyber-blue/80 to-white bg-clip-text text-transparent elegant-text-glow">
-            CAD
-          </span>{" "}
-          into{" "}
-          <span className="matrix-text bg-gradient-to-r from-white via-cyber-purple/80 to-white bg-clip-text text-transparent elegant-text-glow">
-            capital
-          </span>
+      <div className="absolute inset-0 flex flex-col gap-4 items-center justify-center text-center px-4">
+        <span
+          className="mb-4 rounded-full bg-transparent px-4 py-1 text-sm text-white mt-8"
+          style={{
+            border: "2px solid",
+            borderImage:
+              "linear-gradient(to right, #0a8dd1, #0086e4, #107cf3, #556cfb, #8853fa) 1",
+          }}
+        >
+          Made with ❤️ by creators for creators.
+        </span>
+
+        <h1
+          className="text-[80px] font-extrabold leading-tight bg-clip-text text-transparent"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, #004fb6, #ffffff, #010056)",
+          }}
+        >
+          Your AI Powered Hub <br /> For Everything 3D
         </h1>
-        
-        <p className="text-xl text-white/70 max-w-4xl leading-relaxed font-light">
-          Upload, auto-tag, price, license, and validate printability of your 3D models using our proprietary AI system{" "}
-          <span className="text-white/90 font-medium elegant-text-glow">FormIQ</span>.
+
+        <p className="max-w-2xl mb-4 text-lg text-slate-300">
+          Discover, customize, and even print 3D models all in one place.
         </p>
-        
-        <div className="flex flex-col sm:flex-row gap-8 pt-12">
-          <Button size="lg" className="elegant-button bg-gradient-to-r from-white/10 to-white/5 border-white/20 text-white hover:from-white/20 hover:to-white/10 hover:border-white/30 text-lg px-10 py-5 rounded-2xl" asChild>
-            <Link to="/dashboard">
-              <span className="matrix-text font-medium">Start Creating</span>
-            </Link>
-          </Button>
-          
-          <Button variant="outline" size="lg" className="elegant-button bg-gradient-to-r from-cyber-blue/10 to-cyber-purple/10 border-white/15 text-white/90 hover:from-cyber-blue/20 hover:to-cyber-purple/20 hover:border-white/25 text-lg px-10 py-5 rounded-2xl" asChild>
-            <Link to="/discover">
-              <span className="matrix-text font-medium">Browse Models</span>
-            </Link>
-          </Button>
-          
-          <Button variant="outline" size="lg" className="elegant-button bg-gradient-to-r from-cyber-purple/10 to-cyber-pink/10 border-white/15 text-white/90 hover:from-cyber-purple/20 hover:to-cyber-pink/20 hover:border-white/25 text-lg px-10 py-5 rounded-2xl" asChild>
-            <Link to="/services">
-              <span className="matrix-text font-medium">Hire Creators</span>
-            </Link>
-          </Button>
-        </div>
-        
-        <div className="relative w-full h-[500px] md:h-[700px] mt-24">
-          <div className="absolute inset-0 mx-auto w-full max-w-7xl">
-            <div className="relative w-full h-full">
-              <div className="absolute inset-0 bg-gradient-to-r from-white/5 via-transparent to-cyber-blue/5 rounded-3xl blur-3xl animate-glow-pulse"></div>
-              <div className="relative w-full h-full elegant-glass rounded-3xl border-2 border-white/20 shadow-2xl overflow-hidden elegant-glow">
-                <div className="w-full h-full bg-gradient-to-br from-cyber-dark/80 via-black/60 to-cyber-darker/80 flex items-center justify-center relative">
-                  {/* Video Background with better error handling */}
-                  <iframe
-                    ref={iframeRef}
-                    src={`https://www.youtube.com/embed/wI-bfQNbKrI?autoplay=1&mute=1&loop=1&playlist=wI-bfQNbKrI&controls=0&showinfo=0&rel=0&modestbranding=1&enablejsapi=1&iv_load_policy=3&disablekb=1&fs=0`}
-                    className="absolute inset-0 w-full h-full"
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowFullScreen
-                    title="FormVerse Explainer Video"
-                    onLoad={() => setVideoLoaded(true)}
-                    onError={() => console.log('Video failed to load')}
-                  />
-                  
-                  {/* Fallback content if video doesn't load */}
-                  {!videoLoaded && (
-                    <div className="absolute inset-0 bg-gradient-to-br from-cyber-dark via-black to-cyber-darker flex items-center justify-center">
-                      <div className="text-center space-y-4">
-                        <div className="w-16 h-16 border-4 border-white/20 border-t-white/60 rounded-full animate-spin mx-auto"></div>
-                        <p className="text-white/60 text-lg">Loading video...</p>
-                        <Button 
-                          onClick={reloadVideo}
-                          variant="outline" 
-                          className="mt-4 border-white/20 text-white/80 hover:bg-white/10"
-                        >
-                          <Play className="w-4 h-4 mr-2" />
-                          Click to load video
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Video Controls */}
-                  <div className="absolute top-4 right-4 z-20 flex gap-2">
-                    <button
-                      onClick={toggleMute}
-                      className="p-3 rounded-full elegant-glass border border-white/20 bg-black/50 hover:bg-black/70 transition-all duration-300 backdrop-blur-sm"
-                      aria-label={isMuted ? "Unmute video" : "Mute video"}
-                    >
-                      {isMuted ? (
-                        <VolumeX className="w-5 h-5 text-white" />
-                      ) : (
-                        <Volume2 className="w-5 h-5 text-white" />
-                      )}
-                    </button>
-                    
-                    <button
-                      onClick={reloadVideo}
-                      className="p-3 rounded-full elegant-glass border border-white/20 bg-black/50 hover:bg-black/70 transition-all duration-300 backdrop-blur-sm"
-                      aria-label="Reload video"
-                    >
-                      <Play className="w-5 h-5 text-white" />
-                    </button>
-                  </div>
-                  
-                  {/* Subtle overlay */}
-                  <div className="absolute inset-0 z-10 pointer-events-none">
-                    <div className="absolute inset-0 opacity-5">
-                      <div className="w-full h-full" style={{
-                        backgroundImage: `
-                          linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
-                          linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px)
-                        `,
-                        backgroundSize: '50px 50px'
-                      }}></div>
-                    </div>
-                  </div>
-                  
-                </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-black/5"></div>
-                <div className="absolute inset-0 elegant-scan-line"></div>
-              </div>
-            </div>
-          </div>
+
+        <Button>Explore Now</Button>
+        <div
+          className="flex justify-center items-center mt-20"
+          style={{
+            perspective: "1000px",
+            transformStyle: "preserve-3d",
+          }}
+        >
+          {imageCarousel.map((item, index) => (
+            <img
+              key={index}
+              src={item.image}
+              alt="Dashboard"
+              className="w-48 h-60 object-cover rounded-xl object-center cursor-pointer"
+              style={{
+                transform: transforms[index],
+                transition: "transform 0.3s ease-out",
+                willChange: "transform",
+                backfaceVisibility: "hidden",
+              }}
+              onMouseOver={() => setCenterIndex(index)}
+            />
+          ))}
         </div>
       </div>
     </section>

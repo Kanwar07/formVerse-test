@@ -1,6 +1,5 @@
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -51,7 +50,7 @@
     --formverse-blue: 195 100% 50%;
     --formverse-indigo: 270 100% 36%;
     --formverse-teal: 187 85% 53%;
-    
+
     /* FormIQ specific colors */
     --formiq-blue: 195 100% 50%;
     --formiq-purple: 270 100% 36%;
@@ -104,17 +103,30 @@
 
   body {
     @apply bg-background text-foreground font-sans;
-    background: radial-gradient(ellipse at top, rgba(0, 212, 255, 0.03) 0%, transparent 50%),
-                radial-gradient(ellipse at bottom, rgba(184, 0, 255, 0.03) 0%, transparent 50%),
-                linear-gradient(135deg, hsl(var(--background)) 0%, rgba(5, 5, 8, 0.98) 100%);
+    background: radial-gradient(
+        ellipse at top,
+        rgba(0, 212, 255, 0.03) 0%,
+        transparent 50%
+      ),
+      radial-gradient(
+        ellipse at bottom,
+        rgba(184, 0, 255, 0.03) 0%,
+        transparent 50%
+      ),
+      linear-gradient(
+        135deg,
+        hsl(var(--background)) 0%,
+        rgba(5, 5, 8, 0.98) 100%
+      );
     min-height: 100vh;
+    overflow-x: hidden;
   }
 
   .elegant-glass {
     @apply bg-black/10 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),
-                0 0 0 1px rgba(255, 255, 255, 0.05),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      0 0 0 1px rgba(255, 255, 255, 0.05),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
   }
 
   .cyber-glass {
@@ -126,7 +138,7 @@
   }
 
   .neon-border::before {
-    content: '';
+    content: "";
     @apply absolute -inset-0.5 bg-gradient-to-r from-cyber-blue/20 via-cyber-purple/20 to-cyber-pink/20 rounded-3xl opacity-50 blur-sm;
   }
 
@@ -134,17 +146,17 @@
     @apply relative overflow-hidden bg-gradient-to-r from-white/5 to-white/10 border border-white/20 rounded-2xl px-8 py-4 text-white/90 font-medium transition-all duration-500 hover:scale-[1.02] hover:shadow-lg;
     backdrop-filter: blur(10px);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
   }
 
   .elegant-button:hover {
     @apply border-white/30 text-white shadow-2xl;
     box-shadow: 0 8px 40px rgba(0, 212, 255, 0.2),
-                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
   }
 
   .elegant-button::before {
-    content: '';
+    content: "";
     @apply absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full transition-transform duration-1000;
   }
 
@@ -157,26 +169,33 @@
   }
 
   .matrix-text {
-    font-family: 'Orbitron', monospace;
+    font-family: "Orbitron", monospace;
     @apply text-white/90 font-medium tracking-wide;
     text-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
   }
 
   .elegant-glow {
     @apply relative;
-    background: linear-gradient(135deg, 
-      rgba(255, 255, 255, 0.03) 0%, 
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.03) 0%,
       rgba(255, 255, 255, 0.01) 25%,
       rgba(0, 212, 255, 0.02) 50%,
       rgba(184, 0, 255, 0.02) 75%,
-      rgba(255, 255, 255, 0.01) 100%);
+      rgba(255, 255, 255, 0.01) 100%
+    );
     background-size: 400% 400%;
     animation: elegantShimmer 8s ease-in-out infinite;
   }
 
   @keyframes elegantShimmer {
-    0%, 100% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
+    0%,
+    100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
   }
 
   .hologram-effect {
@@ -190,27 +209,29 @@
   .dark .glassmorphism {
     @apply bg-black/20 border-white/10;
   }
-  
+
   .formiq-card {
     @apply elegant-glass relative overflow-hidden rounded-3xl p-8;
   }
-  
+
   .formiq-card::before {
     content: "";
     @apply absolute -top-1 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent;
   }
-  
+
   .dark .formiq-card::before {
     @apply via-white/10;
   }
-  
+
   .formiq-pulse {
     @apply animate-glow-pulse bg-gradient-to-r from-white/5 to-white/10;
   }
 
   .elegant-grid {
-    background-image: 
-      linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    background-image: linear-gradient(
+        rgba(255, 255, 255, 0.02) 1px,
+        transparent 1px
+      ),
       linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
     background-size: 80px 80px;
   }
@@ -220,13 +241,28 @@
   }
 
   .elegant-particles::before {
-    content: '';
+    content: "";
     @apply absolute inset-0 pointer-events-none;
-    background-image: 
-      radial-gradient(1px 1px at 30px 40px, rgba(255, 255, 255, 0.1), transparent),
-      radial-gradient(1px 1px at 80px 90px, rgba(0, 212, 255, 0.05), transparent),
-      radial-gradient(1px 1px at 130px 60px, rgba(184, 0, 255, 0.05), transparent),
-      radial-gradient(1px 1px at 180px 120px, rgba(255, 255, 255, 0.08), transparent);
+    background-image: radial-gradient(
+        1px 1px at 30px 40px,
+        rgba(255, 255, 255, 0.1),
+        transparent
+      ),
+      radial-gradient(
+        1px 1px at 80px 90px,
+        rgba(0, 212, 255, 0.05),
+        transparent
+      ),
+      radial-gradient(
+        1px 1px at 130px 60px,
+        rgba(184, 0, 255, 0.05),
+        transparent
+      ),
+      radial-gradient(
+        1px 1px at 180px 120px,
+        rgba(255, 255, 255, 0.08),
+        transparent
+      );
     background-repeat: repeat;
     background-size: 200px 200px;
     animation: elegantFloat 30s linear infinite;
@@ -237,11 +273,21 @@
   }
 
   @keyframes elegantFloat {
-    0% { transform: translateY(0px) translateX(0px); }
-    25% { transform: translateY(-10px) translateX(5px); }
-    50% { transform: translateY(-5px) translateX(-5px); }
-    75% { transform: translateY(-15px) translateX(3px); }
-    100% { transform: translateY(0px) translateX(0px); }
+    0% {
+      transform: translateY(0px) translateX(0px);
+    }
+    25% {
+      transform: translateY(-10px) translateX(5px);
+    }
+    50% {
+      transform: translateY(-5px) translateX(-5px);
+    }
+    75% {
+      transform: translateY(-15px) translateX(3px);
+    }
+    100% {
+      transform: translateY(0px) translateX(0px);
+    }
   }
 }
 
@@ -249,11 +295,11 @@
   .text-balance {
     text-wrap: balance;
   }
-  
+
   .animate-spin-slow {
     animation: spin 15s linear infinite;
   }
-  
+
   @keyframes spin {
     from {
       transform: rotate(0deg);
@@ -262,25 +308,27 @@
       transform: rotate(360deg);
     }
   }
-  
+
   .formiq-gradient-text {
     @apply bg-gradient-to-r from-white/90 via-cyber-blue/80 to-white/90 bg-clip-text text-transparent;
   }
-  
+
   .formiq-icon-bg {
     @apply flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm;
   }
-  
+
   .formiq-glass {
     @apply elegant-glass;
   }
 
   .elegant-text-glow {
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.1), 0 0 20px rgba(255, 255, 255, 0.05);
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.1),
+      0 0 20px rgba(255, 255, 255, 0.05);
   }
 
   .elegant-glow-effect {
-    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.05)) drop-shadow(0 0 20px rgba(0, 212, 255, 0.03));
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.05))
+      drop-shadow(0 0 20px rgba(0, 212, 255, 0.03));
   }
 
   .elegant-scan-line {
@@ -289,13 +337,18 @@
   }
 
   .elegant-scan-line::after {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: -100%;
     width: 100%;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.3),
+      transparent
+    );
     animation: elegantScan 3s linear infinite;
   }
 
@@ -304,8 +357,12 @@
   }
 
   @keyframes elegantScan {
-    0% { left: -100%; }
-    100% { left: 100%; }
+    0% {
+      left: -100%;
+    }
+    100% {
+      left: 100%;
+    }
   }
 
   .cyber-text-glow {
@@ -318,9 +375,15 @@
 
   /* Loading spinner animations */
   @keyframes loading-progress {
-    0% { transform: translateX(-100%); }
-    50% { transform: translateX(0%); }
-    100% { transform: translateX(100%); }
+    0% {
+      transform: translateX(-100%);
+    }
+    50% {
+      transform: translateX(0%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
   }
 
   /* Hide scrollbar */

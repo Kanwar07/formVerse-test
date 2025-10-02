@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState, Suspense } from 'react';
 import { Canvas, useFrame, useLoader } from '@react-three/fiber';
 import { OrbitControls, Environment, ContactShadows, useProgress, Html } from '@react-three/drei';
@@ -12,7 +11,7 @@ interface AdvancedModelViewerProps {
   onAnalytics?: (event: string, data?: any) => void;
 }
 
-// Loading component
+
 function Loader() {
   const { active, progress, errors, item, loaded, total } = useProgress();
   return (
