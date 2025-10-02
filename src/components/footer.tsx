@@ -1,4 +1,3 @@
-import { Send } from "lucide-react";
 import {
   WhatsappLogo,
   PaperPlaneTilt,
@@ -7,7 +6,7 @@ import {
 
 export function Footer() {
   return (
-    <footer className="relative bg-[#0D0D0D] rounded-t-[80px] py-12 px-40 flex flex-col justify-between gap-40">
+    <footer className="relative bg-[#0D0D0D] rounded-t-[80px] py-12 px-40 flex flex-col justify-between gap-40 subheadingfont">
       <div className="flex flex-row justify-between">
         <div className="flex flex-col items-start gap-4">
           <div className="flex flex-row items-center">

@@ -4,17 +4,19 @@ import CreatorCard from "./components/CreatorCard";
 
 export function CreatorLeaderboardSection() {
   return (
-    <section className="pt-20 pb-16">
+    <section className="pt-20 pb-10">
       <div className="container">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <h2 className="text-3xl font-bold mb-4">Our CAD Creators</h2>
-          <p className="text-muted-foreground">
-            Empower anyone to create production-ready 3D assets from a simple
-            text prompt or reference images in seconds
+        <div className="text-center mb-16">
+          <h2 className="text-[50px] font-bold mb-4 headingfont">
+            Our CAD Creators
+          </h2>
+          <p className="text-muted-foreground text-[18px] subheadingfont">
+            Empower anyone to create production-ready 3D assets from a <br />
+            simple text prompt or reference images in seconds
           </p>
         </div>
 
-        <div className="flex flex-row justify-center gap-10">
+        <div className="flex flex-row justify-center gap-4">
           {[0, 1, 2].map((_, index) => (
             <CreatorCard key={index} />
           ))}

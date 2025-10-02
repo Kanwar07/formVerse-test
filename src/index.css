@@ -96,6 +96,14 @@
   }
 }
 
+.headingfont {
+  font-family: "Phonk", sans-serif;
+}
+
+.subheadingfont {
+  font-family: "Manrope", sans-serif;
+}
+
 @layer base {
   * {
     @apply border-border;

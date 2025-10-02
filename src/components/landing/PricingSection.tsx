@@ -76,7 +76,7 @@ export default function PricingSection() {
   ];
 
   return (
-    <div className="relative bg-[#000000] overflow-hidden rounded-b-[80px] px-40 py-20">
+    <div className="relative bg-[#000000] overflow-hidden rounded-b-[80px] px-20 pt-10 pb-20">
       <div className="absolute inset-0">
         <div
           className="absolute inset-0 flex justify-center items-center z-10"
@@ -101,28 +101,27 @@ export default function PricingSection() {
       <div className="relative z-40 py-12 px-4 container mx-auto">
         {/* Section header */}
         <div className="text-center mb-20">
-          <h2 className="text-4xl md:text-6xl font-bold mb-4 text-white">
+          <h2 className="text-[50px] headingfont font-bold mb-4 text-white">
             Choose Your Plan
           </h2>
-          <p className="text-gray-400 max-w-2xl mx-auto">
+          <p className="text-gray-400 text-[18px] subheadingfont">
             Select the plan that fits your needs and start creating amazing 3D
             prints instantly.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 subheadingfont">
           {plans.map((plan, index) => (
             <div
               key={index}
-              className={`relative rounded-2xl p-6 flex flex-col ${
+              className={`relative rounded-lg pb-4 flex flex-col ${
                 plan.isPopular
-                  ? "bg-gradient-to-b from-blue-600/20 to-purple-600/20 border border-blue-500/50"
-                  : "bg-gray-800/50 border border-gray-700"
+                  ? "bg-gradient-to-b from-blue-600/20 to-purple-600/20"
+                  : "bg-gray-800/50"
               }`}
               style={
                 plan.isFree
                   ? {
-                      borderRadius: "12px",
                       border: "2px solid",
                       borderImage:
                         "linear-gradient(to right, #0a8dd1, #0086e4, #107cf3, #556cfb, #8853fa) 1",
@@ -130,7 +129,7 @@ export default function PricingSection() {
                   : {}
               }
             >
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between py-4 px-6 bg-black/30 backdrop-blur-[108.62px] rounded-lg">
                 <h3 className="text-xl font-bold text-white">{plan.name}</h3>
                 {plan.badge && (
                   <span
@@ -145,41 +144,47 @@ export default function PricingSection() {
                 )}
               </div>
 
-              {plan.isFree && (
-                <div>
-                  <div className="flex items-start gap-2 mb-2">
-                    <div className="w-8 h-6 flex rounded-full bg-blue-500 items-center justify-center">
-                      <span className="text-white text-xs font-bold">%</span>
+              <div className="pt-3 px-6">
+                {plan.isFree && (
+                  <div>
+                    <div className="flex items-start gap-2 mb-1">
+                      <div className="w-8 h-6 flex rounded-full bg-blue-500 items-center justify-center">
+                        <span className="text-white text-xs font-bold">%</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-gray-300 text-sm">
+                          {plan.subtitle}
+                        </span>
+                        <span className="text-gray-300 text-sm mb-2">
+                          {plan.users}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex flex-col">
-                      <span className="text-gray-300 text-sm">
+                  </div>
+                )}
+
+                {plan.price && (
+                  <>
+                    <div className="text-3xl font-bold text-white mb-1">
+                      {plan.price}
+                      <span className="text-lg font-normal text-gray-400">
+                        {" "}
+                        /month{" "}
+                      </span>
+                    </div>
+                    {plan.subtitle && (
+                      <div className="text-gray-400 text-sm">
                         {plan.subtitle}
-                      </span>
-                      <span className="text-gray-300 text-sm mb-2">
-                        {plan.users}
-                      </span>
+                      </div>
+                    )}
+                    <div className="text-gray-400 text-sm mb-2">
+                      {plan.users}
                     </div>
-                  </div>
-                </div>
-              )}
+                  </>
+                )}
+              </div>
 
-              {plan.price && (
-                <>
-                  <div className="text-3xl font-bold text-white mb-1">
-                    {plan.price}
-                    <span className="text-lg font-normal text-gray-400">
-                      {" "}
-                      /month{" "}
-                    </span>
-                  </div>
-                  {plan.subtitle && (
-                    <div className="text-gray-400 text-sm">{plan.subtitle}</div>
-                  )}
-                  <div className="text-gray-400 text-sm mb-4">{plan.users}</div>
-                </>
-              )}
-
-              <div className="mb-6">
+              <div className="mb-2 px-6">
                 <div
                   className={`rounded-lg p-4 ${
                     plan.isPopular ? "bg-gray-800/50" : "bg-gray-700/50"
@@ -201,8 +206,8 @@ export default function PricingSection() {
                 </div>
               </div>
 
-              <div className="flex flex-col justify-between flex-1">
-                <div className="mb-8 space-y-3">
+              <div className="flex flex-col justify-between flex-1 px-6">
+                <div className="mb-4 space-y-2">
                   {plan.features.map((feature, featureIndex) => (
                     <div key={featureIndex} className="flex items-start gap-3">
                       <Check className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />

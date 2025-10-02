@@ -15,7 +15,7 @@ export function CTASection() {
       ></div>
 
       <div className="relative z-10 text-center">
-        <h2 className="text-[50px] font-bold mb-4">
+        <h2 className="text-[36px] font-bold mb-4 headingfont">
           Ready To Bring The Power of <br /> 3D To Your Hands?
         </h2>
 

@@ -34,7 +34,7 @@ const FAQSection = () => {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
-      <div className="border-2 rounded-xl bg-[#0D0D0D99] px-6 py-4 backdrop-blur-md">
+      <div className="border-2 rounded-xl bg-[#0D0D0D99] px-6 py-4 backdrop-blur-md subheadingfont">
         {/* Question */}
         <div
           className="flex justify-between items-center cursor-pointer"
@@ -63,12 +63,12 @@ const FAQSection = () => {
       <div className="relative z-10 max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
+          <h1 className="text-[50px] font-bold mb-6 leading-tight headingfont">
             Everything You Need To Know
             <br />
             Before Getting Started
           </h1>
-          <p className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
+          <p className="text-gray-400 text-[18px] max-w-2xl mx-auto leading-relaxed subheadingfont">
             We've gathered the most common questions
             <br />
             and answered them for you in one place.

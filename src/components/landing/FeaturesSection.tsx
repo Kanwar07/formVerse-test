@@ -61,7 +61,7 @@ export function FeaturesSection() {
 
   return (
     <section className="relative py-16">
-      <div className="absolute top-40 -left-32 -z-10">
+      <div className="absolute top-40 -left-32 -z-10 subheadingfont">
         <svg viewBox="0 0 500 320" className="w-full h-64">
           <defs>
             <path
@@ -98,7 +98,7 @@ export function FeaturesSection() {
         </svg>
       </div>
 
-      <div className="absolute bottom-20 -right-32 -z-10">
+      <div className="absolute bottom-20 -right-32 -z-10 subheadingfont">
         <svg viewBox="0 0 500 320" className="w-full h-64">
           <defs>
             <path
@@ -144,16 +144,16 @@ export function FeaturesSection() {
       ></div>
       <div className="mx-40">
         <div className="text-center mb-20">
-          <h2 className="text-[60px] font-bold mb-2">
+          <h2 className="text-[50px] font-bold mb-2 headingfont">
             Explore AI Optimized 3D Models
           </h2>
-          <p className="text-xl text-muted-foreground font-light leading-relaxed">
+          <p className="text-[18px] text-muted-foreground font-light leading-relaxed subheadingfont">
             Find ready-to-use 3D models, optimized by AI for seamless downloads
             and printing
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           {cards.map((card, i) => (
             <Card
               key={i}
@@ -165,7 +165,7 @@ export function FeaturesSection() {
                     <User />
                     @creator_name
                   </div>
-                  <div className="my-4">{card.icon}</div>
+                  <div>{card.icon}</div>
                 </div>
 
                 {/* Card Bottom Section */}
