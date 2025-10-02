@@ -1,108 +1,45 @@
 {
   "pricing": {
     "image_to_cad": {
-      "credit_costs": {
-        "single_view": 8,
-        "multi_view": 15,
-        "ultra_quality": 30,
-        "revision": 4
-      },
       "plans": [
         {
-          "name": "Starter",
-          "india_price_inr": 499,
-          "global_price_usd": 7,
+          "name": "Free",
+          "india_price_inr": 0,
+          "target": "For individuals getting started",
           "credits": 60,
-          "overage": { "inr_per_credit": 10, "usd_per_credit": 0.18 },
-          "target": "Hobbyists / Testing"
+          "overage": {
+            "inr_per_credit": 9
+          }
+        },
+        {
+          "name": "Starter",
+          "india_price_inr": 1499,
+          "target": "Solo Creators",
+          "credits": 60,
+          "overage": {
+            "inr_per_credit": 9
+          }
         },
         {
           "name": "Indie",
-          "india_price_inr": 1499,
-          "global_price_usd": 20,
-          "credits": 200,
-          "overage": { "inr_per_credit": 9, "usd_per_credit": 0.16 },
-          "target": "Solo Creators"
+          "india_price_inr": 2499,
+          "target": "Freelancers & Creators",
+          "credits": 120,
+          "most_popular": true,
+          "overage": {
+            "inr_per_credit": 8
+          }
         },
         {
           "name": "Pro",
-          "india_price_inr": 3999,
-          "global_price_usd": 49,
-          "credits": 700,
-          "overage": { "inr_per_credit": 8, "usd_per_credit": 0.14 },
-          "target": "Studios / Small Teams"
-        },
-        {
-          "name": "Studio",
-          "india_price_inr": 9999,
-          "global_price_usd": 119,
-          "credits": 2200,
-          "overage": { "inr_per_credit": 7, "usd_per_credit": 0.12 },
-          "target": "Agencies / Production"
-        },
-        {
-          "name": "Enterprise",
-          "india_price_inr": "Custom",
-          "global_price_usd": "Custom",
-          "credits": "Custom",
-          "overage": "Negotiated",
-          "target": "Large-Scale / SLA clients"
-        }
-      ],
-      "rollover_policy": "Credits roll over for 2 months",
-      "api_access": "Included on Pro and above"
-    },
-    "marketplace": {
-      "designers": {
-        "base_share_percent": 88,
-        "exclusive_share_percent": 90,
-        "max_share_percent": 92,
-        "volume_boost": {
-          "tier1_gmv": { "india_inr": 1000000, "global_usd": 12000, "boost_percent": 1 },
-          "tier2_gmv": { "india_inr": 3000000, "global_usd": 36000, "boost_percent": 2 }
-        },
-        "payout_schedule": "Net-15",
-        "payout_thresholds": { "india_inr": 2500, "global_usd": 50 },
-        "listing_fee": 0,
-        "price_floors": {
-          "simple_printable": { "india_inr": 149, "global_usd": 3 },
-          "complex_printable": { "india_inr": 499, "global_usd": 9 },
-          "game_ready_asset": { "india_inr": 1499, "global_usd": 29 },
-          "cad_source_file": { "india_inr": 2499, "global_usd": 49 }
-        }
-      },
-      "users": {
-        "buyer_fees": {
-          "india": 0,
-          "global": 3
-        },
-        "payment_processing_range_percent": "2.7% - 4.2%",
-        "subscriptions": [
-          {
-            "name": "Collector",
-            "india_price_inr": 299,
-            "global_price_usd": 4,
-            "perks": ["5% off all marketplace items", "early access to drops"]
-          },
-          {
-            "name": "Builder",
-            "india_price_inr": 799,
-            "global_price_usd": 10,
-            "perks": ["10% off purchases", "free updates on purchased items"]
-          },
-          {
-            "name": "Studio Access",
-            "india_price_inr": 1999,
-            "global_price_usd": 25,
-            "perks": ["15% off purchases", "team seats (up to 3)"]
+          "india_price_inr": 4999,
+          "target": "Small Teams",
+          "credits": 300,
+          "overage": {
+            "inr_per_credit": 7
           }
-        ]
-      }
-    },
-    "policies": {
-      "licensing": "Royalty-Free by default; creators can choose Editorial Use Only",
-      "refunds": "No refunds once files are downloaded unless defective",
-      "taxes": "GST/VAT applied by region; transparently shown at checkout"
+        }
+      ]
     }
   }
 }

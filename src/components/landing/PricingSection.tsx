@@ -1,128 +1,223 @@
+import { Check } from "lucide-react";
+import Button from "../common/Button";
 
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Check, Zap, Sparkles } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import pricingData from "@/data/pricing.json";
-
-export function PricingSection() {
-  const { image_to_cad } = pricingData.pricing;
+export default function PricingSection() {
+  const plans = [
+    {
+      name: "FREE",
+      badge: "3 Months",
+      price: null,
+      subtitle: "Limited time offer for FIRST 1000 SUBSCRIBERS",
+      users: "Solo Creators",
+      credits: "+60",
+      creditPrice: "₹9/Credit",
+      features: [
+        "Generate up to 50 models/month",
+        "Or 13 multi-view generations",
+      ],
+      buttonText: "Subscribe",
+      isPopular: false,
+      isFree: true,
+    },
+    {
+      name: "Starter",
+      badge: null,
+      price: "₹1,499",
+      subtitle: null,
+      users: "Solo Creators",
+      credits: "+60",
+      creditPrice: "₹9/Credit",
+      features: [
+        "Generate up to 25 single-view models",
+        "Or 13 multi-view generations",
+        "2-month credit rollover",
+        "Priority processing",
+      ],
+      buttonText: "Subscribe",
+      isPopular: false,
+      isFree: false,
+    },
+    {
+      name: "Indie",
+      badge: "Most Popular",
+      price: "₹1,499",
+      subtitle: null,
+      users: "Solo Creators",
+      credits: "+60",
+      creditPrice: "₹9/Credit",
+      features: [
+        "Generate up to 25 single-view models",
+        "Or 13 multi-view generations",
+        "2-month credit rollover",
+        "Priority processing",
+      ],
+      buttonText: "Subscribe",
+      isPopular: true,
+      isFree: false,
+    },
+    {
+      name: "Pro",
+      badge: null,
+      price: "₹1,499",
+      subtitle: null,
+      users: "Solo Creators",
+      credits: "+60",
+      creditPrice: "₹9/Credit",
+      features: [
+        "Generate up to 25 single-view models",
+        "Or 13 multi-view generations",
+        "2-month credit rollover",
+        "Priority processing",
+      ],
+      buttonText: "Subscribe",
+      isPopular: false,
+      isFree: false,
+    },
+  ];
 
   return (
-    <section id="pricing" className="py-20 bg-gradient-to-br from-muted/20 to-background">
-      <div className="container">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <div className="inline-flex items-center gap-2 mb-4">
-            <Zap className="h-5 w-5 text-primary" />
-            <span className="text-sm bg-primary/10 text-primary px-3 py-1 rounded-full font-medium">
-              Credit-Based Pricing
-            </span>
-          </div>
-          <h2 className="text-3xl font-bold mb-4">Image-to-CAD Generation Plans</h2>
-          <p className="text-muted-foreground">
-            Pay only for what you use with our flexible credit system. Perfect for creators of all sizes.
+    <div className="relative bg-[#000000] overflow-hidden rounded-b-[80px] px-40 py-20">
+      <div className="absolute inset-0">
+        <div
+          className="absolute inset-0 flex justify-center items-center z-10"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle, #8853FA66 0%, transparent 80%)",
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "center 300px",
+            backgroundSize: "300px 300px",
+          }}
+        ></div>
+
+        <div
+          className="absolute inset-0 z-0"
+          style={{
+            backgroundImage:
+              "linear-gradient(to top, #051428 0%, #0B111B00 80%, #0B111B00 100%)",
+          }}
+        ></div>
+      </div>
+
+      <div className="relative z-40 py-12 px-4 container mx-auto">
+        {/* Section header */}
+        <div className="text-center mb-20">
+          <h2 className="text-4xl md:text-6xl font-bold mb-4 text-white">
+            Choose Your Plan
+          </h2>
+          <p className="text-gray-400 max-w-2xl mx-auto">
+            Select the plan that fits your needs and start creating amazing 3D
+            prints instantly.
           </p>
         </div>
 
-        {/* Credit Usage Info */}
-        <div className="bg-muted/30 rounded-lg p-6 mb-12 max-w-3xl mx-auto">
-          <h3 className="text-lg font-semibold mb-4 flex items-center justify-center">
-            <Sparkles className="h-5 w-5 text-primary mr-2" />
-            Credit Usage per Generation
-          </h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {Object.entries(image_to_cad.credit_costs).map(([type, cost]) => (
-              <div key={type} className="text-center p-3 bg-background rounded-md">
-                <div className="text-xl font-bold text-primary">{cost}</div>
-                <div className="text-xs text-muted-foreground capitalize">
-                  {type.replace('_', ' ')}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-          {image_to_cad.plans.slice(0, 3).map((plan, index) => (
-            <Card 
-              key={plan.name} 
-              className={`border shadow-sm ${index === 1 ? 'border-primary shadow-lg relative' : ''}`}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {plans.map((plan, index) => (
+            <div
+              key={index}
+              className={`relative rounded-2xl p-6 flex flex-col ${
+                plan.isPopular
+                  ? "bg-gradient-to-b from-blue-600/20 to-purple-600/20 border border-blue-500/50"
+                  : "bg-gray-800/50 border border-gray-700"
+              }`}
+              style={
+                plan.isFree
+                  ? {
+                      borderRadius: "12px",
+                      border: "2px solid",
+                      borderImage:
+                        "linear-gradient(to right, #0a8dd1, #0086e4, #107cf3, #556cfb, #8853fa) 1",
+                    }
+                  : {}
+              }
             >
-              {index === 1 && (
-                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-primary text-primary-foreground text-xs font-medium px-3 py-1 rounded-full">
-                  Most Popular
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-white">{plan.name}</h3>
+                {plan.badge && (
+                  <span
+                    className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      plan.isPopular
+                        ? "bg-blue-500 text-white"
+                        : "bg-gray-700 text-gray-300"
+                    }`}
+                  >
+                    {plan.badge}
+                  </span>
+                )}
+              </div>
+
+              {plan.isFree && (
+                <div>
+                  <div className="flex items-start gap-2 mb-2">
+                    <div className="w-8 h-6 flex rounded-full bg-blue-500 items-center justify-center">
+                      <span className="text-white text-xs font-bold">%</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-gray-300 text-sm">
+                        {plan.subtitle}
+                      </span>
+                      <span className="text-gray-300 text-sm mb-2">
+                        {plan.users}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               )}
-              <CardContent className="pt-6">
-                <div className="mb-4">
-                  <h3 className="text-xl font-semibold">{plan.name}</h3>
-                  <div className="mt-2 text-3xl font-bold">
-                    ₹{typeof plan.india_price_inr === 'number' 
-                      ? plan.india_price_inr.toLocaleString() 
-                      : plan.india_price_inr}
-                    {typeof plan.india_price_inr === 'number' && (
-                      <span className="text-base font-normal text-muted-foreground">/month</span>
-                    )}
-                  </div>
-                  <p className="text-muted-foreground text-sm mt-1">{plan.target}</p>
-                </div>
-                
-                <div className="mb-4 p-3 bg-primary/5 rounded-md">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">Credits Included</span>
-                    <Badge variant="secondary" className="font-bold">{plan.credits}</Badge>
-                  </div>
-                </div>
 
-                <ul className="space-y-2 mb-6">
-                  <li className="flex items-start">
-                    <Check className="h-5 w-5 text-primary shrink-0 mr-2 mt-0.5" />
-                    <p className="text-sm">Generate up to {Math.floor(Number(plan.credits) / 8)} single-view models</p>
-                  </li>
-                  <li className="flex items-start">
-                    <Check className="h-5 w-5 text-primary shrink-0 mr-2 mt-0.5" />
-                    <p className="text-sm">Or {Math.floor(Number(plan.credits) / 15)} multi-view generations</p>
-                  </li>
-                  <li className="flex items-start">
-                    <Check className="h-5 w-5 text-primary shrink-0 mr-2 mt-0.5" />
-                    <p className="text-sm">2-month credit rollover</p>
-                  </li>
-                  {index > 0 && (
-                    <li className="flex items-start">
-                      <Check className="h-5 w-5 text-primary shrink-0 mr-2 mt-0.5" />
-                      <p className="text-sm">Priority processing</p>
-                    </li>
+              {plan.price && (
+                <>
+                  <div className="text-3xl font-bold text-white mb-1">
+                    {plan.price}
+                    <span className="text-lg font-normal text-gray-400">
+                      {" "}
+                      /month{" "}
+                    </span>
+                  </div>
+                  {plan.subtitle && (
+                    <div className="text-gray-400 text-sm">{plan.subtitle}</div>
                   )}
-                  {index > 1 && (
-                    <li className="flex items-start">
-                      <Check className="h-5 w-5 text-primary shrink-0 mr-2 mt-0.5" />
-                      <p className="text-sm">API access included</p>
-                    </li>
-                  )}
-                </ul>
+                  <div className="text-gray-400 text-sm mb-4">{plan.users}</div>
+                </>
+              )}
 
-                {typeof plan.overage !== 'string' && (
-                  <div className="text-xs text-muted-foreground mb-4 p-2 bg-muted/30 rounded">
-                    Overage: ₹{plan.overage.inr_per_credit}/credit
-                  </div>
-                )}
-
-                <Button 
-                  variant={index === 1 ? "default" : "outline"} 
-                  className="w-full"
-                  asChild
+              <div className="mb-6">
+                <div
+                  className={`rounded-lg p-4 ${
+                    plan.isPopular ? "bg-gray-800/50" : "bg-gray-700/50"
+                  }`}
                 >
-                  {plan.name === 'Enterprise' ? (
-                    <a href="mailto:formversedude@gmail.com?subject=Enterprise Plan Inquiry">Contact Sales</a>
-                  ) : (
-                    <span>Get Started</span>
-                  )}
-                </Button>
-              </CardContent>
-            </Card>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-white font-medium">
+                        Credits Included
+                      </div>
+                      <div className="text-gray-400 text-sm">
+                        {plan.creditPrice}
+                      </div>
+                    </div>
+                    <div className="text-2xl font-bold text-white">
+                      {plan.credits}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col justify-between flex-1">
+                <div className="mb-8 space-y-3">
+                  {plan.features.map((feature, featureIndex) => (
+                    <div key={featureIndex} className="flex items-start gap-3">
+                      <Check className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
+                      <span className="text-gray-300 text-sm">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="w-full flex justify-center">
+                  <Button>{plan.buttonText}</Button>
+                </div>
+              </div>
+            </div>
           ))}
         </div>
       </div>
-    </section>
+    </div>
   );
 }

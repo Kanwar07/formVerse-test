@@ -1,26 +1,27 @@
-
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import Button from "../common/Button";
 
 export function CTASection() {
   return (
-    <section className="py-20 bg-gradient-to-br from-primary/5 via-accent/5 to-primary/10 relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-accent/5"></div>
-      <div className="absolute top-0 left-0 w-full h-full">
-        <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-primary/10 rounded-full blur-2xl animate-pulse"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-24 h-24 bg-accent/10 rounded-full blur-xl animate-pulse delay-1000"></div>
-      </div>
-      <div className="relative container text-center max-w-3xl mx-auto">
-        <h2 className="text-3xl font-bold mb-6">Ready to transform your designs into income?</h2>
-        <p className="text-xl text-muted-foreground mb-8">
-          Join thousands of creators already using <span className="font-space-grotesk font-bold bg-gradient-to-r from-purple-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">FormVerse</span> to monetize their CAD models.
-        </p>
-        <div className="flex flex-col sm:flex-row justify-center gap-4">
-          <Button size="lg" asChild>
-            <Link to="/dashboard">Get Started Now</Link>
-          </Button>
-          <Button variant="outline" size="lg" asChild>
-            <Link to="/discover">Explore Models</Link>
+    <section className="py-28 relative">
+      <div
+        className="absolute top-0 left-0 h-full w-full"
+        style={{
+          backgroundImage: `
+        radial-gradient(circle at 50% -300px, #8853fa 0%, #4b1fae 10%, #000000 50%)
+      `,
+          opacity: 0.8,
+        }}
+      ></div>
+
+      <div className="relative z-10 text-center">
+        <h2 className="text-[50px] font-bold mb-4">
+          Ready To Bring The Power of <br /> 3D To Your Hands?
+        </h2>
+
+        <div className="mt-8">
+          <Button>
+            <Link to="/creators">Start for Free Now</Link>
           </Button>
         </div>
       </div>
