@@ -1,5 +1,9 @@
 import { Send } from "lucide-react";
-import { Link } from "react-router-dom";
+import {
+  WhatsappLogo,
+  PaperPlaneTilt,
+  YoutubeLogo,
+} from "@phosphor-icons/react";
 
 export function Footer() {
   return (
@@ -53,11 +57,11 @@ export function Footer() {
         <div>Privacy</div>
       </div>
 
-      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 bg-[#272725] rounded-lg flex flex-row gap-6 px-6 py-3 items-center">
-        <Send />
-        <Send />
+      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 bg-[#272725] rounded-lg flex flex-row gap-6 px-5 py-2 items-center">
+        <WhatsappLogo size={24} />
+        <PaperPlaneTilt size={24} />
         <div className="w-[1px] h-6 bg-[#565551]" />
-        <Send />
+        <YoutubeLogo size={24} />
       </div>
     </footer>
   );
