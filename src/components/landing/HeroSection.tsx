@@ -7,18 +7,9 @@ import carousel4 from "@/assets/landing/heroSection/carousel4.webp";
 import carousel5 from "@/assets/landing/heroSection/carousel5.webp";
 import carousel6 from "@/assets/landing/heroSection/carousel6.webp";
 import carousel7 from "@/assets/landing/heroSection/carousel7.webp";
-import { title } from "process";
 import Button from "../common/Button";
 
 export function HeroSection() {
-  const images = [
-    "https://images.unsplash.com/photo-1638959684318-68dd903ef878?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    "https://images.unsplash.com/photo-1638959684318-68dd903ef878?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    "https://images.unsplash.com/photo-1638959684318-68dd903ef878?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    "https://images.unsplash.com/photo-1638959684318-68dd903ef878?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    "https://images.unsplash.com/photo-1638959684318-68dd903ef878?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-  ];
-
   const imageCarousel = [
     {
       image: carousel1,
@@ -87,7 +78,7 @@ export function HeroSection() {
 
   return (
     <section className="relative">
-      <div className="h-screen w-screen">
+      <div>
         <img
           src={heroBackground}
           alt="heroBackground"
@@ -104,7 +95,7 @@ export function HeroSection() {
           }}
         ></div>
       </div>
-      <div className="absolute inset-0 flex flex-col gap-4 items-center justify-center text-center px-4">
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
         <span
           className="mb-4 rounded-full bg-transparent px-4 py-1 text-sm text-white mt-8"
           style={{
@@ -117,7 +108,7 @@ export function HeroSection() {
         </span>
 
         <h1
-          className="text-[80px] font-extrabold leading-tight bg-clip-text text-transparent"
+          className="text-[72px] font-extrabold leading-tight bg-clip-text text-transparent mb-4"
           style={{
             backgroundImage:
               "linear-gradient(to right, #004fb6, #ffffff, #010056)",
@@ -143,7 +134,7 @@ export function HeroSection() {
               key={index}
               src={item.image}
               alt="Dashboard"
-              className="w-48 h-60 object-cover rounded-xl object-center cursor-pointer"
+              className="w-40 h-52 object-cover rounded-xl object-center cursor-pointer"
               style={{
                 transform: transforms[index],
                 transition: "transform 0.3s ease-out",
