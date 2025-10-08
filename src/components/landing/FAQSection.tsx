@@ -34,8 +34,21 @@ const FAQSection = () => {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
-      <div className="border-2 rounded-xl bg-[#0D0D0D99] px-6 py-4 backdrop-blur-md subheadingfont">
-        {/* Question */}
+      <div
+        className={`rounded-xl px-6 py-4 backdrop-blur-md subheadingfont transition-all duration-300 relative ${
+          isOpen ? "" : "border-2 border-transparent bg-[#0D0D0D99]"
+        }`}
+        style={
+          isOpen
+            ? {
+                background:
+                  "linear-gradient(#0D0D0D99, #0D0D0D99) padding-box, linear-gradient(to right, #0A8DD1, #8853FA) border-box",
+                border: "2px solid transparent",
+                backgroundClip: "padding-box, border-box",
+              }
+            : {}
+        }
+      >
         <div
           className="flex justify-between items-center cursor-pointer"
           onClick={() => setIsOpen(!isOpen)}
@@ -50,7 +63,6 @@ const FAQSection = () => {
           </span>
         </div>
 
-        {/* Answer */}
         {isOpen && (
           <p className="mt-2 text-gray-300 leading-relaxed">{answer}</p>
         )}
@@ -59,40 +71,39 @@ const FAQSection = () => {
   };
 
   return (
-    <section className="relative text-white py-20 px-4">
+    <section className="relative text-white pt-20 pb-40 px-4">
       <div className="relative z-10 max-w-4xl mx-auto">
-        {/* Header */}
         <div className="text-center mb-16">
-          <h1 className="text-[50px] font-bold mb-6 leading-tight headingfont">
+          <h1 className="text-[30px] font-bold mb-6 leading-tight headingfont">
             Everything You Need To Know
             <br />
             Before Getting Started
           </h1>
-          <p className="text-gray-400 text-[18px] max-w-2xl mx-auto leading-relaxed subheadingfont">
+          <p className="font-normal opacity-80 text-[16px] max-w-2xl mx-auto leading-relaxed subheadingfont">
             We've gathered the most common questions
             <br />
             and answered them for you in one place.
           </p>
         </div>
 
-        {/* Accordion with gradient background */}
         <div className="relative w-full space-y-4">
-          {/* Gradient behind FAQ items only */}
           <div className="absolute inset-0 flex z-0">
             <div
-              className="w-1/2 h-full absolute right-96 top-10"
+              className="w-1/2 h-full absolute right-80 top-20"
               style={{
                 backgroundImage:
-                  "radial-gradient(circle at center, #1489D4 0%, transparent 70%)",
-                filter: "blur(100px)",
+                  "radial-gradient(circle at center, #1489D4 50%, transparent 70%)",
+                filter: "blur(80px)",
+                opacity: "30%",
               }}
             />
             <div
-              className="w-1/2 h-full absolute right-20 -top-10"
+              className="w-1/2 h-full absolute right-32 -top-20"
               style={{
                 backgroundImage:
-                  "radial-gradient(circle at center, #8853FA 0%, transparent 70%)",
-                filter: "blur(100px)",
+                  "radial-gradient(circle at center, #8853FA 50%, transparent 70%)",
+                filter: "blur(80px)",
+                opacity: "30%",
               }}
             />
           </div>

@@ -2,31 +2,53 @@ export default function Button({ children, onClick, className, style }) {
   return (
     <button
       onClick={onClick}
-      className={`w-60 font-bold rounded-[10px] px-6 py-2 cursor-pointer transition-all duration-300 ${className}`}
+      className={`font-bold px-6 py-2 cursor-pointer transition-all duration-300 relative ${className}`}
       style={{
-        border: "2px solid",
-        borderImage:
-          "linear-gradient(to right, #0a8dd1, #0086e4, #107cf3, #556cfb, #8853fa) 1",
-        backgroundImage:
-          "linear-gradient(to right, #97dbff, #92d1ff, #99c5ff, #abb7ff, #c2a6ff)",
-        WebkitBackgroundClip: "text",
-        WebkitTextFillColor: "transparent",
+        borderRadius: "10px",
+        background: "transparent",
+        border: "none",
+        position: "relative",
         ...style,
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.backgroundImage =
+        e.currentTarget.style.background =
           "linear-gradient(to right, #0a8dd1, #0086e4, #107cf3, #556cfb, #8853fa)";
         e.currentTarget.style.WebkitBackgroundClip = "unset";
         e.currentTarget.style.WebkitTextFillColor = "white";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.backgroundImage =
-          "linear-gradient(to right, #97dbff, #92d1ff, #99c5ff, #abb7ff, #c2a6ff)";
+        e.currentTarget.style.background = "transparent";
         e.currentTarget.style.WebkitBackgroundClip = "text";
-        e.currentTarget.style.WebkitTextFillColor = "transparent";
+        e.currentTarget.style.WebkitTextFillColor = "white";
       }}
     >
-      {children}
+      {/* Gradient border using pseudo-element */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          padding: "2px",
+          background:
+            "linear-gradient(to right, #0a8dd1, #0086e4, #107cf3, #556cfb, #8853fa)",
+          borderRadius: "10px",
+          WebkitMask:
+            "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
+          WebkitMaskComposite: "xor",
+          maskComposite: "exclude",
+          pointerEvents: "none",
+        }}
+      />
+      <span
+        style={{
+          color: "white",
+          fontSize: "16px",
+          fontWeight: "800",
+          position: "relative",
+          zIndex: 1,
+        }}
+      >
+        {children}
+      </span>
     </button>
   );
 }

@@ -13,39 +13,30 @@ import FAQSection from "@/components/landing/FAQSection";
 
 const Landing = () => {
   return (
-    <div className="min-h-screen flex flex-col ">
+    <div className="min-h-screen flex flex-col bg-[#000000]">
       <Navbar />
       <HeroSection />
       <FeaturesSection />
       <CADGenresSection />
       <UploadDesign />
 
-      <div className="relative bg-[#000000] rounded-b-[80px]">
+      <div className="relative rounded-b-[80px]">
+        <div className="relative z-30">
+          <CreatorLeaderboardSection />
+        </div>
+
         <div
-          className="absolute inset-0 flex justify-center items-start z-10"
+          className="absolute inset-0 z-0 pointer-events-none"
           style={{
+            height: "100%",
             width: "100%",
-            height: "80%",
-            backgroundImage: `
-              linear-gradient(to top, rgba(5,19,40,0.5) 0%, rgba(136,83,250,0.1) 10%),
-              repeating-conic-gradient(
-              from 0deg at 50% 100%,
-            rgba(0,0,0,0.50) 0deg 10deg,
-            rgba(0,0,0,0) 10deg 15deg
-             )
-            `,
-            clipPath: "polygon(50% 100%, -20% 0%, 120% 0%)",
-            WebkitMaskImage:
-              "radial-gradient(circle at 50% 100%, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 70%, rgba(0,0,0,1) 100%)",
-            maskImage:
-              "radial-gradient(circle at 50% 100%, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 50%, rgba(0,0,0,1) 100%)",
-            WebkitMaskRepeat: "no-repeat",
-            maskRepeat: "no-repeat",
+            background:
+              "linear-gradient(to top, rgba(5, 19, 40, 0.21) 0%, rgba(136, 83, 250, 0) 100%)",
+            filter: "blur(17px)",
           }}
         ></div>
 
-        <div className="relative">
-          <CreatorLeaderboardSection />
+        <div className="relative z-20">
           <PricingSection />
         </div>
       </div>
@@ -59,11 +50,11 @@ const Landing = () => {
         ))}
       </div>
 
-      <div className="bg-[#000000]">
+      <div>
         <div
           style={{
             backgroundImage:
-              "linear-gradient(to bottom, #051428 0%, #0B111B00 40%, #0B111B00 100%)",
+              "linear-gradient(to bottom, #051428 0%, #0B111B00 80%, #0D0D0D 100%)",
           }}
           className="rounded-[80px] px-40"
         >

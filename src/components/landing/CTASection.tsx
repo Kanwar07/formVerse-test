@@ -1,5 +1,4 @@
-import { Link } from "react-router-dom";
-import Button from "../common/Button";
+import SecondaryButton from "../common/SecondaryButton";
 
 export function CTASection() {
   return (
@@ -8,21 +7,19 @@ export function CTASection() {
         className="absolute top-0 left-0 h-full w-full"
         style={{
           backgroundImage: `
-        radial-gradient(circle at 50% -300px, #8853fa 0%, #4b1fae 10%, #000000 50%)
+        radial-gradient(circle at 50% -300px, #8853FA66 20%, #11111100 50%)
       `,
           opacity: 0.8,
         }}
       ></div>
 
       <div className="relative z-10 text-center">
-        <h2 className="text-[36px] font-bold mb-4 headingfont">
+        <h2 className="text-[30px] font-bold mb-4 headingfont">
           Ready To Bring The Power of <br /> 3D To Your Hands?
         </h2>
 
         <div className="mt-8">
-          <Button>
-            <Link to="/creators">Start for Free Now</Link>
-          </Button>
+          <SecondaryButton>Start for Free Now</SecondaryButton>
         </div>
       </div>
     </section>

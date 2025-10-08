@@ -20,7 +20,6 @@ export const CADGenresSection = () => {
       const newMutedState = !isMuted;
       setIsMuted(newMutedState);
 
-      // Update iframe src with new mute parameter
       const currentSrc = iframeRef.current.src;
       const newSrc = currentSrc.replace(
         /mute=[01]/,
@@ -43,13 +42,13 @@ export const CADGenresSection = () => {
   };
 
   return (
-    <section className="py-20 relative overflow-hidden bg-[#000000]">
+    <section className="pb-40 pt-10 relative overflow-hidden bg-[#000000]">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-16">
-          <h2 className="text-[50px] font-bold mb-6 headingfont">
+        <div className="text-center mb-5">
+          <h2 className="text-[30px] font-bold mb-5 headingfont">
             Smarter 3D Analysis
           </h2>
-          <p className="text-[18px] text-muted-foreground subheadingfont">
+          <p className="text-[16px] font-normal opacity-80 subheadingfont">
             Instantly analyze models, get print-ready quotations, and order a
             professional print delivered to your <br /> door without leaving the
             platform
@@ -61,10 +60,11 @@ export const CADGenresSection = () => {
             className="absolute inset-0 top-6 rounded-lg"
             style={{
               backgroundImage:
-                "radial-gradient(circle, #1489d8 0%, #1489d8 20%, #000000 90%)",
+                "radial-gradient(circle, #1489D4 0%, #1489d8 40%, #000000 90%)",
               filter: "blur(80px)",
               width: "100%",
               height: "100%",
+              opacity: "50%",
             }}
           ></div>
 

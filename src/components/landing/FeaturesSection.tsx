@@ -60,8 +60,8 @@ export function FeaturesSection() {
   ];
 
   return (
-    <section className="relative py-16">
-      <div className="absolute top-40 -left-32 -z-10 subheadingfont">
+    <section className="relative bg-[#000000] py-16">
+      <div className="absolute top-40 -left-32 z-10 subheadingfont">
         <svg viewBox="0 0 500 320" className="w-full h-64">
           <defs>
             <path
@@ -98,7 +98,7 @@ export function FeaturesSection() {
         </svg>
       </div>
 
-      <div className="absolute bottom-20 -right-32 -z-10 subheadingfont">
+      <div className="absolute bottom-20 -right-32 z-10 subheadingfont">
         <svg viewBox="0 0 500 320" className="w-full h-64">
           <defs>
             <path
@@ -134,26 +134,25 @@ export function FeaturesSection() {
       </div>
 
       <div
-        className="absolute top-0 left-0 h-full w-full -z-20"
+        className="absolute top-0 left-0 h-full w-full z-0"
         style={{
-          backgroundImage: `
-        radial-gradient(circle, #002d6e, #000000, #000000, #000000, #000000)
-      `,
-          opacity: 0.8,
+          backgroundImage: `radial-gradient(circle, #051F47, #000000, #000000, #000000, #000000)`,
+          filter: "blur(80px)",
         }}
       ></div>
-      <div className="mx-40">
+
+      <div className="mx-20 relative z-20">
         <div className="text-center mb-20">
-          <h2 className="text-[50px] font-bold mb-2 headingfont">
+          <h2 className="text-[30px] font-bold mb-2 headingfont">
             Explore AI Optimized 3D Models
           </h2>
-          <p className="text-[18px] text-muted-foreground font-light leading-relaxed subheadingfont">
+          <p className="text-[16px] font-normal opacity-80 leading-relaxed subheadingfont">
             Find ready-to-use 3D models, optimized by AI for seamless downloads
             and printing
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10">
           {cards.map((card, i) => (
             <Card
               key={i}
