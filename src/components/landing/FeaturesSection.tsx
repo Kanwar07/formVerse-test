@@ -1,63 +1,206 @@
 import { Card, CardContent } from "@/components/ui/card";
 import pizza from "@/assets/landing/heroSection/pizza.png";
-import { Download, Star, User } from "lucide-react";
+import { Download, Star, User, Eye, Heart } from "lucide-react";
 import Button from "../common/Button";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
+import { UnifiedCADViewer } from "@/components/preview/UnifiedCADViewer";
+
+// Helper component for individual feature card
+function FeatureCard({ model }: { model: any }) {
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [viewerError, setViewerError] = useState(false);
+  const profile = model.profiles;
+
+  const getModelFileUrl = () => {
+    if (!model.file_path) return "";
+    if (model.file_path.startsWith("http")) return model.file_path;
+    return `https://zqnzxpbthldfqqbzzjct.supabase.co/storage/v1/object/public/3d-models/${model.file_path}`;
+  };
+
+  return (
+    <Card
+      className={`w-full transition-transform duration-300 hover:scale-105 hover:shadow-lg`}
+    >
+      <CardContent className="p-2">
+        <div className="flex flex-col gap-4 justify-between items-center py-4 px-2 rounded-lg bg-[#000000]">
+          <div className="text-white font-medium flex justify-start w-full items-center gap-2 px-2">
+            <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center overflow-hidden">
+              {profile?.avatar_url ? (
+                <img
+                  src={profile.avatar_url}
+                  alt={profile.username}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <User size={16} className="text-white/60" />
+              )}
+            </div>
+            @{profile?.username || "creator"}
+          </div>
+          <div className="w-48 h-48">
+            {model.file_path && !viewerError ? (
+              <UnifiedCADViewer
+                fileUrl={getModelFileUrl()}
+                fileName={model.name || "model"}
+                fileType={model.file_type}
+                width={192}
+                height={192}
+                showControls={false}
+                autoRotate={true}
+                className="border-0"
+              />
+            ) : model.preview_image ? (
+              <img
+                src={model.preview_image}
+                alt={model.name}
+                className="w-full h-full object-contain"
+                onError={() => setViewerError(true)}
+              />
+            ) : (
+              <img
+                src={pizza}
+                alt={model.name}
+                className="w-full h-full object-contain"
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Card Bottom Section */}
+        <div className="flex flex-row justify-between px-2 py-4 items-center">
+          <div className="flex flex-col">
+            <h3 className="font-semibold text-white">{model.name}</h3>
+            <span className="text-gray-400">
+              {model.price > 0 ? `$${model.price.toFixed(2)}` : "Free"}
+            </span>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                setIsFavorited(!isFavorited);
+              }}
+              className="text-gray-400 hover:text-white transition-colors"
+            >
+              <Heart
+                size={20}
+                className={isFavorited ? "fill-red-400 text-red-400" : ""}
+              />
+            </button>
+            <button className="text-gray-400 hover:text-white transition-colors">
+              <Download size={20} />
+            </button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 export function FeaturesSection() {
-  const cards = [
+  const { data: models, isLoading } = useQuery({
+    queryKey: ["featured-models"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("models")
+        .select(
+          `
+          id,
+          name,
+          description,
+          preview_image,
+          price,
+          downloads,
+          view_count,
+          user_id,
+          file_path,
+          file_type,
+          tags,
+          printability_score
+        `
+        )
+        .eq("status", "published")
+        .eq("is_published", true)
+        .order("downloads", { ascending: false })
+        .limit(4);
+
+      if (error) throw error;
+
+      // Fetch profiles for each model
+      const modelsWithProfiles = await Promise.all(
+        (data || []).map(async (model) => {
+          const { data: profileData } = await supabase
+            .from("profiles")
+            .select("username, avatar_url")
+            .eq("id", model.user_id)
+            .single();
+
+          return {
+            ...model,
+            profiles: profileData || null,
+          };
+        })
+      );
+
+      console.log(modelsWithProfiles);
+
+      return modelsWithProfiles;
+    },
+  });
+
+  // Fallback cards if models are not loaded
+  const fallbackCards = [
     {
-      title: "Auto-tagging",
+      id: "fallback-1",
+      name: "Auto-tagging",
       description:
         "AI-powered automatic tagging of your 3D models for better discoverability and enhanced marketplace visibility.",
-      icon: (
-        <img
-          src={pizza}
-          alt="Auto-tagging"
-          className="w-48 h-48 object-contain"
-        />
-      ),
-      price: "$10,000",
+      preview_image: pizza,
+      price: 10000,
+      downloads: 0,
+      view_count: 0,
+      profiles: { username: "creator_name", avatar_url: null },
     },
     {
-      title: "Printability Check",
+      id: "fallback-2",
+      name: "Printability Check",
       description:
         "Validate your designs with our advanced mesh analysis and receive a comprehensive readiness score.",
-      icon: (
-        <img
-          src={pizza}
-          alt="Printability Check"
-          className="w-48 h-48 object-contain"
-        />
-      ),
-      price: "$12,000",
+      preview_image: pizza,
+      price: 12000,
+      downloads: 0,
+      view_count: 0,
+      profiles: { username: "creator_name", avatar_url: null },
     },
     {
-      title: "Smart Licensing",
+      id: "fallback-3",
+      name: "Smart Licensing",
       description:
         "Intelligent pricing suggestions and flexible licensing options tailored to your models and market demand.",
-      icon: (
-        <img
-          src={pizza}
-          alt="Smart Licensing"
-          className="w-48 h-48 object-contain"
-        />
-      ),
-      price: "$8,500",
+      preview_image: pizza,
+      price: 8500,
+      downloads: 0,
+      view_count: 0,
+      profiles: { username: "creator_name", avatar_url: null },
     },
     {
-      title: "Workflow Automation",
+      id: "fallback-4",
+      name: "Workflow Automation",
       description:
         "Automate repetitive tasks in your 3D design workflow to save time and increase productivity.",
-      icon: (
-        <img
-          src={pizza}
-          alt="Workflow Automation"
-          className="w-48 h-48 object-contain"
-        />
-      ),
-      price: "$11,000",
+      preview_image: pizza,
+      price: 11000,
+      downloads: 0,
+      view_count: 0,
+      profiles: { username: "creator_name", avatar_url: null },
     },
   ];
+
+  const displayModels = models && models.length > 0 ? models : fallbackCards;
 
   return (
     <section className="relative bg-[#000000] py-16">
@@ -153,41 +296,39 @@ export function FeaturesSection() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10">
-          {cards.map((card, i) => (
-            <Card
-              key={i}
-              className={`w-full transition-transform duration-300 hover:scale-105 hover:shadow-lg`}
-            >
-              <CardContent className="p-2">
-                <div className="flex flex-col gap-4 justify-between items-center py-4 px-2 rounded-lg bg-[#000000]">
-                  <div className="text-white font-medium flex justify-start w-full items-center gap-2 px-2">
-                    <User />
-                    @creator_name
-                  </div>
-                  <div>{card.icon}</div>
-                </div>
-
-                {/* Card Bottom Section */}
-                <div className="flex flex-row justify-between px-2 py-4 items-center">
-                  <div className="flex flex-col">
-                    <h3 className="font-semibold text-white">{card.title}</h3>
-                    <span className="text-gray-400">{card.price}</span>
-                  </div>
-                  <div className="flex gap-3">
-                    <button className="text-gray-400 hover:text-white transition-colors">
-                      <Star size={20} />
-                    </button>
-                    <button className="text-gray-400 hover:text-white transition-colors">
-                      <Download size={20} />
-                    </button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+          {isLoading
+            ? // Loading skeleton
+              Array.from({ length: 4 }).map((_, i) => (
+                <Card key={`skeleton-${i}`} className="w-full animate-pulse">
+                  <CardContent className="p-2">
+                    <div className="flex flex-col gap-4 justify-between items-center py-4 px-2 rounded-lg bg-[#000000]">
+                      <div className="text-white font-medium flex justify-start w-full items-center gap-2 px-2">
+                        <div className="w-6 h-6 rounded-full bg-white/10" />
+                        <div className="h-4 bg-white/10 rounded w-24" />
+                      </div>
+                      <div className="w-48 h-48 bg-white/10 rounded" />
+                    </div>
+                    <div className="flex flex-row justify-between px-2 py-4 items-center">
+                      <div className="flex flex-col gap-2">
+                        <div className="h-4 bg-white/10 rounded w-32" />
+                        <div className="h-3 bg-white/10 rounded w-16" />
+                      </div>
+                      <div className="flex gap-3">
+                        <div className="w-5 h-5 bg-white/10 rounded" />
+                        <div className="w-5 h-5 bg-white/10 rounded" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            : displayModels.map((model) => (
+                <FeatureCard key={model.id} model={model} />
+              ))}
         </div>
         <div className="rounded-[10px] flex w-full justify-center mt-10">
-          <Button>See more</Button>
+          <Button onClick={() => {}} className="" style={{}}>
+            See more
+          </Button>
         </div>
       </div>
     </section>
