@@ -8,6 +8,7 @@ import carousel5 from "@/assets/landing/heroSection/carousel5.webp";
 import carousel6 from "@/assets/landing/heroSection/carousel6.webp";
 import carousel7 from "@/assets/landing/heroSection/carousel7.webp";
 import Button from "../common/Button";
+import SecondaryButton from "../common/SecondaryButton";
 
 export function HeroSection() {
   const imageCarousel = [
@@ -97,18 +98,37 @@ export function HeroSection() {
       </div>
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
         <span
-          className="mb-4 subheadingfont rounded-full bg-transparent px-4 py-1 text-sm text-white mt-8"
+          className="mb-4 subheadingfont rounded-full bg-transparent px-4 py-1 text-sm text-white mt-8 relative"
           style={{
-            border: "2px solid",
-            borderImage:
-              "linear-gradient(to right, #0a8dd1, #0086e4, #107cf3, #556cfb, #8853fa) 1",
+            borderRadius: "10px",
           }}
         >
-          Made with ❤️ by creators for creators.
+          {/* Gradient border using pseudo-element */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              padding: "2px",
+              background:
+                "linear-gradient(to right, #0a8dd1, #0086e4, #107cf3, #556cfb, #8853fa)",
+              borderRadius: "10px",
+              WebkitMask:
+                "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
+              WebkitMaskComposite: "xor",
+              maskComposite: "exclude",
+              pointerEvents: "none",
+            }}
+          />
+          <span
+            style={{ position: "relative", zIndex: 1 }}
+            className="opacity-40"
+          >
+            Made with ❤️ by creators for creators.
+          </span>
         </span>
 
         <h1
-          className="text-[68px] headingfont font-extrabold leading-tight bg-clip-text text-transparent mb-4"
+          className="text-[51.45px] headingfont font-bold leading-tight bg-clip-text text-transparent mb-4"
           style={{
             backgroundImage:
               "linear-gradient(to right, #004fb6, #ffffff, #010056)",
@@ -117,11 +137,11 @@ export function HeroSection() {
           Your AI Powered Hub <br /> For Everything 3D
         </h1>
 
-        <p className="max-w-2xl mb-4 text-[18px] subheadingfont text-slate-300">
+        <p className="max-w-2xl mb-4 text-[16px] subheadingfont opacity-60 font-normal">
           Discover, customize, and even print 3D models all in one place.
         </p>
 
-        <Button>Explore Now</Button>
+        <SecondaryButton className={`px-8`}>Explore Now</SecondaryButton>
         <div
           className="flex justify-center items-center mt-20"
           style={{

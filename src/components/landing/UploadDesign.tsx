@@ -1,13 +1,30 @@
 import upload1 from "@/assets/landing/uploadSection/upload1.webp";
 import upload2 from "@/assets/landing/uploadSection/upload2.webp";
 import Button from "../common/Button";
+import { useState, useEffect } from "react";
 
 export function UploadDesign() {
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setProgress((prevProgress) => {
+        if (prevProgress >= 100) {
+          clearInterval(interval);
+          return 100;
+        }
+        return prevProgress + 1;
+      });
+    }, 50); // Update every 50ms for smooth animation
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <section id="tabs" className="pt-40 pb-20 bg-[#000000]">
       <div className="container flex flex-row gap-4 px-10">
-        <div className="flex flex-col justify-center px-16 py-20 w-2/5">
-          <h1 className="text-[50px] mb-8 leading-tight headingfont">
+        <div className="flex flex-col justify-center pl-16 py-20 w-2/5">
+          <h1 className="text-[30px] mb-8 leading-tight headingfont font-bold">
             Upload
             <br />
             Share
@@ -15,12 +32,14 @@ export function UploadDesign() {
             Earn.
           </h1>
 
-          <p className="text-[16px] subheadingfont text-gray-300 mb-8 leading-relaxed w-1/2">
+          <p className="text-[16px] subheadingfont font-normal text-[#ffffff] opacity-80 mb-8 leading-relaxed w-1/2">
             Turn your designs into income. Upload models, Get price quotations,
             and start earning every time your work gets downloaded or printed
           </p>
 
-          <Button>Start Uploading</Button>
+          <Button className={`w-fit`} onClick={() => {}} style={{}}>
+            Start Uploading
+          </Button>
         </div>
 
         <div className="relative flex w-3/5">
@@ -47,15 +66,18 @@ export function UploadDesign() {
                 >
                   Uploading
                 </span>
-                <span>100%</span>
+                <span>{progress}%</span>
               </div>
-              <div
-                className="h-[2px] w-full"
-                style={{
-                  backgroundImage:
-                    "linear-gradient(to right, #0a8dd1, #0086e4, #107cf3, #556cfb, #8853fa)",
-                }}
-              ></div>
+              <div className="h-[2px] w-full bg-gray-700 rounded-full overflow-hidden">
+                <div
+                  className="h-full transition-all duration-75 ease-out rounded-full"
+                  style={{
+                    width: `${progress}%`,
+                    backgroundImage:
+                      "linear-gradient(to right, #0a8dd1, #0086e4, #107cf3, #556cfb, #8853fa)",
+                  }}
+                ></div>
+              </div>
             </div>
           </div>
 
