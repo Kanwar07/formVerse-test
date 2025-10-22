@@ -1,8 +1,21 @@
 import SecondaryButton from "../common/SecondaryButton";
+import { Link } from "react-router-dom";
+import { useRef } from "react";
+import { motion, useInView } from "framer-motion";
 
 export function CTASection() {
+  const sectionRef = useRef(null);
+  const isInView = useInView(sectionRef, { once: true, amount: 0.3 });
+
   return (
-    <section className="py-28 relative">
+    <motion.section
+      ref={sectionRef}
+      className="py-28 relative"
+      initial={{ opacity: 0, y: 50 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8, ease: "easeOut" }}
+      viewport={{ once: true, amount: 0.3 }}
+    >
       <div
         className="absolute top-0 left-0 h-full w-full"
         style={{
@@ -19,9 +32,13 @@ export function CTASection() {
         </h2>
 
         <div className="mt-8">
-          <SecondaryButton>Start for Free Now</SecondaryButton>
+          <Link to="/dashboard">
+            <SecondaryButton onClick={() => {}} className="" style={{}}>
+              Start for Free Now
+            </SecondaryButton>
+          </Link>
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 }

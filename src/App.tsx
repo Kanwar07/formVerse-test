@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -10,7 +9,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import Index from "./pages/Index";
 import Landing from "./pages/Landing";
-import Upload from "./pages/Upload";
+import UploadImageToCAD from "./components/promptToCAD/UploadPromptToCAD";
 import Discover from "./pages/Discover";
 import Dashboard from "./pages/Dashboard";
 import FormIQ from "./pages/FormIQ";
@@ -68,7 +67,10 @@ function App() {
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/landing" element={<Landing />} />
-                <Route path="/upload" element={<Upload />} />
+                <Route
+                  path="/uploadImageToCAD"
+                  element={<UploadImageToCAD />}
+                />
                 <Route path="/discover" element={<Discover />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/formiq" element={<FormIQ />} />
@@ -77,13 +79,22 @@ function App() {
                 <Route path="/studio" element={<FormverseStudio />} />
                 <Route path="/creators" element={<Creators />} />
                 <Route path="/creator/:id" element={<CreatorDashboard />} />
-                <Route path="/creator-profile/:id" element={<CreatorProfile />} />
+                <Route
+                  path="/creator-profile/:id"
+                  element={<CreatorProfile />}
+                />
                 <Route path="/buyer/:id" element={<BuyerInterface />} />
                 <Route path="/model/:id" element={<ModelDetails />} />
                 <Route path="/services" element={<Services />} />
                 <Route path="/pricing" element={<Pricing />} />
-                <Route path="/printability/:id" element={<PrintabilityReport />} />
-                <Route path="/version-history/:id" element={<VersionHistory />} />
+                <Route
+                  path="/printability/:id"
+                  element={<PrintabilityReport />}
+                />
+                <Route
+                  path="/version-history/:id"
+                  element={<VersionHistory />}
+                />
                 <Route path="/image-to-cad" element={<ImageToCAD />} />
                 <Route path="/formverse-upload" element={<FormVerseUpload />} />
                 <Route path="/auth" element={<Auth />} />

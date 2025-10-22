@@ -1,11 +1,14 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Volume2, VolumeX, Play, Pause } from "lucide-react";
+import { motion, useInView } from "framer-motion";
 
 export const CADGenresSection = () => {
   const [isMuted, setIsMuted] = useState(true);
   const [videoLoaded, setVideoLoaded] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const sectionRef = useRef(null);
+  const isInView = useInView(sectionRef, { once: true, amount: 0.2 });
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -42,7 +45,14 @@ export const CADGenresSection = () => {
   };
 
   return (
-    <section className="pb-40 pt-10 relative overflow-hidden bg-[#000000]">
+    <motion.section
+      ref={sectionRef}
+      className="pb-40 pt-10 relative overflow-hidden bg-[#000000]"
+      initial={{ opacity: 0, y: 50 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8, ease: "easeOut" }}
+      viewport={{ once: true, amount: 0.2 }}
+    >
       <div className="container mx-auto px-4">
         <div className="text-center mb-5">
           <h2 className="text-[30px] font-bold mb-5 headingfont">
@@ -154,6 +164,6 @@ export const CADGenresSection = () => {
           </div>
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 };

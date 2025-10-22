@@ -3,24 +3,22 @@ import {
   PaperPlaneTilt,
   YoutubeLogo,
 } from "@phosphor-icons/react";
+import logo from "@/assets/landing/logo.png";
 
 export function Footer() {
   return (
     <footer className="relative bg-[#0D0D0D] rounded-t-[80px] py-8 px-40 flex flex-col justify-between gap-40 subheadingfont">
       <div className="flex flex-row justify-between">
         <div className="flex flex-col items-start gap-4">
-          <div className="flex flex-row items-center">
+          <div className="flex flex-row items-center gap-1">
             <img
-              src="/lovable-uploads/02a4ca94-e61c-4f7c-9ef0-942b8abb8bb3.png"
+              src={logo}
               alt="FormVerse Logo"
-              className="h-16 w-16"
+              className="size-10 transition-transform duration-200 group-hover:scale-105"
             />
-            <div className="font-bold text-lg tracking-tight">
-              <span className="text-white">FORM</span>
-              <span className="bg-gradient-to-r from-purple-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">
-                VERSE
-              </span>
-            </div>
+            <span className="text-[20px] font-bold bg-gradient-to-r from-[#ffffff] to-[#6433dd] bg-clip-text text-transparent">
+              FORMVERSE
+            </span>
           </div>
           <div className="flex flex-col items-start">
             <span>+1 891 989-11-91</span>

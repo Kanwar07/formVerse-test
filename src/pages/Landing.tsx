@@ -35,6 +35,28 @@ const Landing = () => {
             filter: "blur(17px)",
           }}
         ></div>
+        <div
+          className="absolute inset-0 z-50 pointer-events-none"
+          style={{
+            background: `
+      conic-gradient(
+        from 180deg at 50% 70%,
+        rgba(136, 83, 250, 0.45) 0deg,
+        rgba(63, 94, 251, 0.2) 60deg,
+        rgba(136, 83, 250, 0.05) 120deg,
+        rgba(5, 19, 40, 0.2) 180deg,
+        rgba(136, 83, 250, 0.05) 240deg,
+        rgba(63, 94, 251, 0.2) 300deg,
+        rgba(136, 83, 250, 0.45) 360deg
+      )
+    `,
+            maskImage: "linear-gradient(to top, black 60%, transparent 100%)",
+            WebkitMaskImage:
+              "linear-gradient(to top, black 60%, transparent 100%)",
+            filter: "blur(10px)",
+            opacity: 0.1,
+          }}
+        ></div>
 
         <div className="relative z-20">
           <PricingSection />

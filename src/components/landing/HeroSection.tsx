@@ -1,16 +1,18 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import heroBackground from "@/assets/landing/heroSection/heroBackground.webp";
 import carousel1 from "@/assets/landing/heroSection/carousel1.webp";
 import carousel2 from "@/assets/landing/heroSection/carousel2.webp";
 import carousel3 from "@/assets/landing/heroSection/carousel3.webp";
 import carousel4 from "@/assets/landing/heroSection/carousel4.webp";
 import carousel5 from "@/assets/landing/heroSection/carousel5.webp";
-import carousel6 from "@/assets/landing/heroSection/carousel6.webp";
-import carousel7 from "@/assets/landing/heroSection/carousel7.webp";
-import Button from "../common/Button";
+import { Link } from "react-router-dom";
 import SecondaryButton from "../common/SecondaryButton";
+import { motion } from "framer-motion";
+import { useModelProgressStore } from "@/store/store";
 
 export function HeroSection() {
+  const { isProcessing } = useModelProgressStore();
+
   const imageCarousel = [
     {
       image: carousel1,
@@ -37,16 +39,6 @@ export function HeroSection() {
       title: "HIRE A CREATOR",
       description: "Coming soon",
     },
-    {
-      image: carousel6,
-      title: "AUTOPILOT CAD EDITOR",
-      description: "Coming soon",
-    },
-    {
-      image: carousel7,
-      title: "ON DEMAND 3D PRINT",
-      description: "Coming soon",
-    },
   ];
 
   const [centerIndex, setCenterIndex] = useState(
@@ -54,7 +46,7 @@ export function HeroSection() {
   );
 
   const maxAngle = 60;
-  const maxTranslateZ = 120;
+  const maxTranslateZ = 80;
   const overlap = 10;
 
   const getTransform = (index: number) => {
@@ -77,8 +69,16 @@ export function HeroSection() {
     return imageCarousel.map((_, index) => getTransform(index));
   }, [centerIndex, imageCarousel]);
 
+  console.log(isProcessing);
+
   return (
-    <section className="relative">
+    <motion.section
+      className="relative"
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8, ease: "easeOut" }}
+      viewport={{ once: true, amount: 0.2 }}
+    >
       <div>
         <img
           src={heroBackground}
@@ -96,6 +96,13 @@ export function HeroSection() {
           }}
         ></div>
       </div>
+      <div className="fixed bottom-10 left-1/2 -translate-x-1/2 rounded-[26px] p-[1px] bg-gradient-to-r from-[#0A8DD1] to-[#8853FA]">
+        <div className="bg-[#011124] rounded-[26px] px-6 py-2 text-white text-[16px] flex flex-row gap-6">
+          <span className="font-normal">Model in progress</span>
+          <span className="font-bold">00:04</span>
+        </div>
+      </div>
+
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
         <span
           className="mb-4 subheadingfont rounded-full bg-transparent px-4 py-1 text-sm text-white mt-8 relative"
@@ -141,7 +148,11 @@ export function HeroSection() {
           Discover, customize, and even print 3D models all in one place.
         </p>
 
-        <SecondaryButton className={`px-8`}>Explore Now</SecondaryButton>
+        <Link to="/discover">
+          <SecondaryButton className={`px-8`} onClick={() => {}} style={{}}>
+            Explore Now
+          </SecondaryButton>
+        </Link>
         <div
           className="flex justify-center items-center mt-20"
           style={{
@@ -150,11 +161,9 @@ export function HeroSection() {
           }}
         >
           {imageCarousel.map((item, index) => (
-            <img
+            <div
               key={index}
-              src={item.image}
-              alt="Dashboard"
-              className="w-40 h-52 object-cover rounded-xl object-center cursor-pointer"
+              className="relative w-40 h-52 cursor-pointer"
               style={{
                 transform: transforms[index],
                 transition: "transform 0.3s ease-out",
@@ -162,10 +171,23 @@ export function HeroSection() {
                 backfaceVisibility: "hidden",
               }}
               onMouseOver={() => setCenterIndex(index)}
-            />
+            >
+              <img
+                src={item.image}
+                alt="Dashboard"
+                className="w-full h-full object-cover rounded-xl object-center"
+              />
+              <div
+                className="absolute inset-0 rounded-xl pointer-events-none"
+                style={{
+                  background:
+                    "radial-gradient(ellipse at center, transparent 30%, rgba(0, 0, 0, 0.6) 100%)",
+                }}
+              />
+            </div>
           ))}
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 }

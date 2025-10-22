@@ -1,7 +1,13 @@
 import { Star } from "lucide-react";
 import Button from "../common/Button";
+import { Link } from "react-router-dom";
+import { useRef } from "react";
+import { motion, useInView } from "framer-motion";
 
 export default function Testimonials() {
+  const sectionRef = useRef(null);
+  const isInView = useInView(sectionRef, { once: true, amount: 0.2 });
+
   const testimonials = [
     {
       id: 1,
@@ -60,7 +66,14 @@ export default function Testimonials() {
   ];
 
   return (
-    <div className="text-white flex py-20 flex flex-row gap-20">
+    <motion.div
+      ref={sectionRef}
+      className="text-white flex py-20 flex flex-row gap-20"
+      initial={{ opacity: 0, y: 50 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8, ease: "easeOut" }}
+      viewport={{ once: true, amount: 0.2 }}
+    >
       {/* Left Side - Header Content */}
       <div className="flex-1 flex flex-col justify-center w-2/5">
         <h1 className="text-[30px] font-bold mb-8 leading-tight headingfont">
@@ -72,9 +85,9 @@ export default function Testimonials() {
           We truly listen to our users and continuously improve to meet their
           needs.
         </p>
-        <Button className={`w-fit`} onClick={() => {}} style={{}}>
-          Start for Free Now
-        </Button>
+        <Link to="/signup">
+          <Button className={`w-fit`}>Start for Free Now</Button>
+        </Link>
       </div>
 
       {/* Right Side - Testimonials */}
@@ -207,6 +220,6 @@ export default function Testimonials() {
           }
         `}</style>
       </div>
-    </div>
+    </motion.div>
   );
 }

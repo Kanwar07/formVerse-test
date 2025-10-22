@@ -402,6 +402,26 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  /* Custom checkbox styling */
+  .custom-checkbox .ant-checkbox-checked .ant-checkbox-inner {
+    background-color: #7a5af8;
+    border-color: #7a5af8;
+  }
+
+  .custom-checkbox .ant-checkbox-checked::after {
+    border-color: #7a5af8;
+  }
+
+  .custom-checkbox .ant-checkbox:hover .ant-checkbox-inner,
+  .custom-checkbox .ant-checkbox-input:focus + .ant-checkbox-inner {
+    border-color: #7a5af8;
+  }
+
+  .custom-checkbox .ant-checkbox-checked:hover .ant-checkbox-inner {
+    background-color: #8d6cf9;
+    border-color: #8d6cf9;
+  }
 }
 
 @keyframes gradientRotate {

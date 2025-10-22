@@ -1,8 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { motion, useInView } from "framer-motion";
 
 const FAQSection = () => {
+  const sectionRef = useRef(null);
+  const isInView = useInView(sectionRef, { once: true, amount: 0.2 });
+
   const faqData = [
     {
       id: "item-1",
@@ -71,7 +75,14 @@ const FAQSection = () => {
   };
 
   return (
-    <section className="relative text-white pt-20 pb-40 px-4">
+    <motion.section
+      ref={sectionRef}
+      className="relative text-white pt-20 pb-40 px-4"
+      initial={{ opacity: 0, y: 50 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8, ease: "easeOut" }}
+      viewport={{ once: true, amount: 0.2 }}
+    >
       <div className="relative z-10 max-w-4xl mx-auto">
         <div className="text-center mb-16">
           <h1 className="text-[30px] font-bold mb-6 leading-tight headingfont">
@@ -120,7 +131,7 @@ const FAQSection = () => {
           </div>
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 };
 

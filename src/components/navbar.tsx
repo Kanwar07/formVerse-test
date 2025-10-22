@@ -3,7 +3,6 @@ import { useAuth } from "@/context/AuthContext";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import {
-  ArrowLeft,
   CircleUserRound,
   HandCoins,
   Image,
@@ -14,6 +13,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import Button from "./common/Button";
 import { DiscordLogoIcon } from "@phosphor-icons/react";
+import logo from "@/assets/landing/logo.png";
 
 export function Navbar() {
   const navigate = useNavigate();
@@ -26,6 +26,7 @@ export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isPricingHovered, setIsPricingHovered] = useState(false);
   const [isFormIQHovered, setIsFormIQHovered] = useState(false);
+  const [isAboutHovered, setIsAboutHovered] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -71,41 +72,34 @@ export function Navbar() {
     return "bg-transparent";
   };
 
-  const handleBack = () => {
-    window.history.back();
-  };
-
-  const navLinks = [
-    { path: "/discover", label: "Features" },
-    { path: "/creators", label: "Community" },
-    { path: "/studio", label: "Pricing" },
-    { path: "/formiq-landing", label: "FormIQ" },
-  ];
-
   const features = [
     {
       icon: <Image className="w-6 h-6 text-white" />,
       title: "Image to 3D",
       description: "Turn your concepts into fully ready to use models.",
       comingSoon: false,
+      path: "/image-to-cad",
     },
     {
       icon: <Type className="w-6 h-6 text-white" />,
       title: "Text to 3D",
       description: "Turn your ideas into fully ready to use models.",
       comingSoon: false,
+      path: "/formiq-landing",
     },
     {
       icon: <CircleUserRound className="w-6 h-6 text-white" />,
       title: "Hire a Creator",
       description: "Create a custom order for any requirements.",
       comingSoon: true,
+      path: "/formiq-landing",
     },
     {
       icon: <Settings className="w-6 h-6 text-white" />,
       title: "Autopilot CAD Editor",
       description: "Make AI generated models and customize them.",
       comingSoon: true,
+      path: "/formiq-landing",
     },
   ];
   const community = [
@@ -114,25 +108,36 @@ export function Navbar() {
       title: "Browse Models",
       description: "Browse through 1000+ AI optimised model library.",
       comingSoon: false,
+      path: "/discover",
     },
     {
       icon: <HandCoins className="w-6 h-6 text-primary" />,
       title: "Upload & Earn",
       description: "Upload your models and earn each time someone uses it.",
       comingSoon: false,
+      path: "/upload",
     },
     {
       icon: <CircleUserRound className="w-6 h-6 text-primary" />,
       title: "Creators",
       description: "Browse through our creators to look for that unique style.",
       comingSoon: false,
+      path: "/creators",
     },
     {
       icon: <DiscordLogoIcon className="w-6 h-6 text-primary" />,
       title: "Discord",
       description: "Join our discord channel to stay updated on the latest.",
       comingSoon: false,
+      path: "https://discord.gg/formverse",
+      external: true,
     },
+  ];
+
+  const navLinks = [
+    { path: "/pricing", label: "Pricing" },
+    { path: "/formiq-landing", label: "FormIQ" },
+    { path: "/about", label: "About" },
   ];
 
   return (
@@ -147,28 +152,16 @@ export function Navbar() {
           )}
         >
           <div className="flex items-center justify-between py-5 px-40">
-            <div className="flex items-center space-x-4 min-w-0">
-              {!isHomePage && (
-                <Button
-                  onClick={handleBack}
-                  variant="ghost"
-                  size="sm"
-                  className="text-white/60 hover:text-white hover:bg-white/5 transition-all duration-200 rounded-full"
-                >
-                  <ArrowLeft size={18} />
-                </Button>
-              )}
-              <Link to="/" className="flex items-center group">
-                <img
-                  src="/lovable-uploads/02a4ca94-e61c-4f7c-9ef0-942b8abb8bb3.png"
-                  alt="FormVerse Logo"
-                  className="h-9 w-9 transition-transform duration-200 group-hover:scale-105"
-                />
-                <span className="text-2xl font-bold text-white tracking-tight">
-                  FORMVERSE
-                </span>
-              </Link>
-            </div>
+            <Link to="/" className="flex items-center gap-1 group">
+              <img
+                src={logo}
+                alt="FormVerse Logo"
+                className="size-10 transition-transform duration-200 group-hover:scale-105"
+              />
+              <span className="text-[20px] font-bold bg-gradient-to-r from-[#ffffff] to-[#6433dd] bg-clip-text text-transparent">
+                FORMVERSE
+              </span>
+            </Link>
 
             <div className="flex items-center gap-8">
               <div
@@ -267,10 +260,33 @@ export function Navbar() {
                   }}
                 />
                 <Link
-                  to="/formio"
+                  to="/formiq-landing"
                   className="text-foreground/80 hover:text-foreground transition-colors duration-200 font-medium"
                 >
                   FormIQ
+                </Link>
+              </div>
+
+              <div
+                className="relative"
+                onMouseEnter={() => setIsAboutHovered(true)}
+                onMouseLeave={() => setIsAboutHovered(false)}
+              >
+                <div
+                  className={`absolute -top-14 left-1/2 transform -translate-x-1/2 w-28 h-10 rounded-full transition-opacity duration-300 ${
+                    isAboutHovered ? "opacity-100" : "opacity-0"
+                  }`}
+                  style={{
+                    background:
+                      "radial-gradient(circle, #2A81FF 40%, #2A81FF80 40%, #11111100 100%)",
+                    filter: "blur(12px)",
+                  }}
+                />
+                <Link
+                  to="/about"
+                  className="text-foreground/80 hover:text-foreground transition-colors duration-200 font-medium"
+                >
+                  About
                 </Link>
               </div>
             </div>
@@ -297,7 +313,9 @@ export function Navbar() {
                   </span>
                 </div>
               </div>
-              <Button className={`px-8`}>Login</Button>
+              <Link to="/signin">
+                <Button className={`px-8`}>Login</Button>
+              </Link>
             </div>
           </div>
 
@@ -313,8 +331,10 @@ export function Navbar() {
             <div className="w-full p-4">
               <div className="grid grid-cols-4 gap-6">
                 {features.map((feature, index) => (
-                  <div
+                  <Link
                     key={index}
+                    to={feature.path}
+                    onClick={() => setIsFeaturesDropdownOpen(false)}
                     className="relative rounded-[28px] px-6 pt-6 pb-4 border border-[#0A8DD166] hover:border-[#0A8DD1] transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 cursor-pointer group/card overflow-hidden"
                   >
                     <div
@@ -355,7 +375,7 @@ export function Navbar() {
                     <p className="relative z-10 text-sm text-[#FFFFFF99] leading-5 w-2/3">
                       {feature.description}
                     </p>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </div>
@@ -372,15 +392,66 @@ export function Navbar() {
           >
             <div className="w-full p-4">
               <div className="grid grid-cols-4 gap-6">
-                {community.map((feature, index) => (
-                  <div
-                    key={index}
-                    className="relative rounded-[28px] px-6 pt-6 pb-4 border border-[#0A8DD166] hover:border-[#0A8DD1] transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 cursor-pointer group/card overflow-hidden"
-                  >
-                    <div
-                      className="absolute inset-0 opacity-0 group-hover/card:opacity-100 transition-opacity duration-500"
-                      style={{
-                        background: `
+                {community.map((feature, index) =>
+                  feature.external ? (
+                    <a
+                      key={index}
+                      href={feature.path}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setIsCommunityDropdownOpen(false)}
+                      className="relative rounded-[28px] px-6 pt-6 pb-4 border border-[#0A8DD166] hover:border-[#0A8DD1] transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 cursor-pointer group/card overflow-hidden"
+                    >
+                      <div
+                        className="absolute inset-0 opacity-0 group-hover/card:opacity-100 transition-opacity duration-500"
+                        style={{
+                          background: `
+                          linear-gradient(
+                          to top left,
+                        #0A8DD199 0%,
+                        #0A8DD180 10%,
+                        #086CA660 25%,
+                        #04325733 40%,
+                        rgba(2,16,33,0) 50%,
+                          transparent 100%
+                          )
+                          `,
+                          backgroundRepeat: "no-repeat",
+                          backgroundSize: "150% 150%",
+                          backgroundPosition: "bottom right",
+                          zIndex: 0,
+                        }}
+                      ></div>
+
+                      {feature.comingSoon && (
+                        <div className="absolute top-5 right-0 text-xs bg-[#03202F] text-[#ffffff] px-3 py-1.5 rounded-[6px] font-medium z-10">
+                          Coming Soon
+                        </div>
+                      )}
+
+                      <div className="relative z-10 mb-6 transition-transform duration-200 text-white">
+                        {feature.icon}
+                      </div>
+
+                      <h3 className="relative z-10 font-semibold text-lg text-foreground mb-2">
+                        {feature.title}
+                      </h3>
+
+                      <p className="relative z-10 text-sm text-[#FFFFFF99] leading-5 w-2/3">
+                        {feature.description}
+                      </p>
+                    </a>
+                  ) : (
+                    <Link
+                      key={index}
+                      to={feature.path}
+                      onClick={() => setIsCommunityDropdownOpen(false)}
+                      className="relative rounded-[28px] px-6 pt-6 pb-4 border border-[#0A8DD166] hover:border-[#0A8DD1] transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 cursor-pointer group/card overflow-hidden"
+                    >
+                      <div
+                        className="absolute inset-0 opacity-0 group-hover/card:opacity-100 transition-opacity duration-500"
+                        style={{
+                          background: `
                         linear-gradient(
                         to top left,
                       #0A8DD199 0%,
@@ -391,32 +462,33 @@ export function Navbar() {
                         transparent 100%
                         )
                         `,
-                        backgroundRepeat: "no-repeat",
-                        backgroundSize: "150% 150%",
-                        backgroundPosition: "bottom right",
-                        zIndex: 0,
-                      }}
-                    ></div>
+                          backgroundRepeat: "no-repeat",
+                          backgroundSize: "150% 150%",
+                          backgroundPosition: "bottom right",
+                          zIndex: 0,
+                        }}
+                      ></div>
 
-                    {feature.comingSoon && (
-                      <div className="absolute top-5 right-0 text-xs bg-[#03202F] text-[#ffffff] px-3 py-1.5 rounded-[6px] font-medium z-10">
-                        Coming Soon
+                      {feature.comingSoon && (
+                        <div className="absolute top-5 right-0 text-xs bg-[#03202F] text-[#ffffff] px-3 py-1.5 rounded-[6px] font-medium z-10">
+                          Coming Soon
+                        </div>
+                      )}
+
+                      <div className="relative z-10 mb-6 transition-transform duration-200 text-white">
+                        {feature.icon}
                       </div>
-                    )}
 
-                    <div className="relative z-10 mb-6 transition-transform duration-200 text-white">
-                      {feature.icon}
-                    </div>
+                      <h3 className="relative z-10 font-semibold text-lg text-foreground mb-2">
+                        {feature.title}
+                      </h3>
 
-                    <h3 className="relative z-10 font-semibold text-lg text-foreground mb-2">
-                      {feature.title}
-                    </h3>
-
-                    <p className="relative z-10 text-sm text-[#FFFFFF99] leading-5 w-2/3">
-                      {feature.description}
-                    </p>
-                  </div>
-                ))}
+                      <p className="relative z-10 text-sm text-[#FFFFFF99] leading-5 w-2/3">
+                        {feature.description}
+                      </p>
+                    </Link>
+                  )
+                )}
               </div>
             </div>
           </div>

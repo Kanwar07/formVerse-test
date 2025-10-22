@@ -1,8 +1,15 @@
-import Upload from "./Upload";
+import { Footer } from "@/components/footer";
+import UploadImageToCAD from "@/components/promptToCAD/UploadPromptToCAD";
+import { Navbar } from "@/components/navbar";
 
 const ImageToCAD = () => {
-  // Both /upload and /image-to-cad routes now show the same Upload UI
-  return <Upload />;
+  return (
+    <>
+      <Navbar />
+      <UploadImageToCAD />
+      <Footer />
+    </>
+  );
 };
 
 export default ImageToCAD;

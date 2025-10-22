@@ -1,7 +1,12 @@
-import { Calendar, CalendarHeart, Check, Tag } from "lucide-react";
+import { Calendar, Check, Tag } from "lucide-react";
 import Button from "../common/Button";
+import { useRef } from "react";
+import { motion, useInView } from "framer-motion";
 
 export default function PricingSection() {
+  const sectionRef = useRef(null);
+  const isInView = useInView(sectionRef, { once: true, amount: 0.2 });
+
   const plans = [
     {
       name: "FREE",
@@ -22,11 +27,11 @@ export default function PricingSection() {
     {
       name: "Starter",
       badge: null,
-      price: "₹1,499",
+      price: "₹499",
       subtitle: null,
-      users: "Solo Creators",
+      users: "Hobbyists / Testing",
       credits: "+60",
-      creditPrice: "₹9/Credit",
+      creditPrice: "₹10/Credit",
       features: [
         "Generate up to 25 single-view models",
         "Or 13 multi-view generations",
@@ -43,7 +48,7 @@ export default function PricingSection() {
       price: "₹1,499",
       subtitle: null,
       users: "Solo Creators",
-      credits: "+60",
+      credits: "+200",
       creditPrice: "₹9/Credit",
       features: [
         "Generate up to 25 single-view models",
@@ -58,11 +63,11 @@ export default function PricingSection() {
     {
       name: "Pro",
       badge: null,
-      price: "₹1,499",
+      price: "₹3,499",
       subtitle: null,
-      users: "Solo Creators",
-      credits: "+60",
-      creditPrice: "₹9/Credit",
+      users: "Studios / Small Teams",
+      credits: "+700",
+      creditPrice: "₹8/Credit",
       features: [
         "Generate up to 25 single-view models",
         "Or 13 multi-view generations",
@@ -76,7 +81,14 @@ export default function PricingSection() {
   ];
 
   return (
-    <div className="relative overflow-hidden rounded-b-[80px] px-20 pb-20 z-30">
+    <motion.div
+      ref={sectionRef}
+      className="relative overflow-hidden rounded-b-[80px] px-20 pb-20 z-30"
+      initial={{ opacity: 0, y: 50 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8, ease: "easeOut" }}
+      viewport={{ once: true, amount: 0.2 }}
+    >
       <div className="absolute inset-0">
         <div
           className="absolute -top-32 inset-0 flex justify-center items-center"
@@ -127,7 +139,7 @@ export default function PricingSection() {
                       "radial-gradient(circle, #0997F6, transparent 75%)",
                     backgroundRepeat: "no-repeat",
                     backgroundPosition: "center 225px",
-                    backgroundSize: "250px 250px",
+                    backgroundSize: "300px 300px",
                     filter: "blur(60px)",
                   }}
                 ></div>
@@ -251,6 +263,6 @@ export default function PricingSection() {
           ))}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

@@ -1,21 +1,18 @@
-
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { supabase } from '@/integrations/supabase/client';
-import { Brain } from "lucide-react";
+import { useState } from "react";
+import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { Checkbox } from "antd";
+import SecondaryButton from "../common/SecondaryButton";
+import Input from "../common/Input";
+import googleIcon from "@/assets/LogIn/googleIcon.svg";
+import { useNavigate, Link } from "react-router-dom";
 
 export function SignUpForm() {
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [isCreator, setIsCreator] = useState('false');
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isCreator, setIsCreator] = useState("false");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -28,7 +25,7 @@ export function SignUpForm() {
       toast({
         variant: "destructive",
         title: "Password mismatch",
-        description: "Passwords do not match. Please try again."
+        description: "Passwords do not match. Please try again.",
       });
       setLoading(false);
       return;
@@ -41,32 +38,32 @@ export function SignUpForm() {
         options: {
           emailRedirectTo: `${window.location.origin}/dashboard`,
           data: {
-            role: isCreator === 'true' ? 'creator' : 'user'
-          }
-        }
+            role: isCreator === "true" ? "creator" : "user",
+          },
+        },
       });
-      
+
       if (error) {
         toast({
           variant: "destructive",
           title: "Sign up failed",
-          description: error.message
+          description: error.message,
         });
         return;
       }
-      
+
       toast({
         title: "Account created!",
-        description: "Check your email to confirm your registration."
+        description: "Check your email to confirm your registration.",
       });
-      
-      navigate('/signin');
+
+      navigate("/signin");
     } catch (error) {
-      console.error('Sign up error:', error);
+      console.error("Sign up error:", error);
       toast({
         variant: "destructive",
         title: "Sign up failed",
-        description: "An unexpected error occurred. Please try again."
+        description: "An unexpected error occurred. Please try again.",
       });
     } finally {
       setLoading(false);
@@ -74,108 +71,63 @@ export function SignUpForm() {
   };
 
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader>
-        <div className="flex items-center justify-center mb-4">
-          <div className="relative h-16 w-16 mr-2">
-            <img 
-              src="/lovable-uploads/02a4ca94-e61c-4f7c-9ef0-942b8abb8bb3.png" 
-              alt="FormVerse Logo" 
-              className="h-16 w-16"
-            />
-          </div>
-          <span className="font-space-grotesk font-bold text-lg tracking-tight">
-            <span className="text-foreground">FORM</span>
-            <span className="bg-gradient-to-r from-purple-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">VERSE</span>
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-2 mb-6">
+        <span className="text-[32px] font-semibold">Welcome Back</span>
+        <span className="text-[16px] font-normal text-[#8692A6]">
+          We are happy to have you back
+        </span>
+      </div>
+      <div className="flex flex-col gap-2">
+        <label className="text-[16px] font-medium text-[#9794AA]">
+          Full Name
+        </label>
+        <Input placeholder="Enter your full name"></Input>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label className="text-[16px] font-medium text-[#9794AA]">
+          Email Address*
+        </label>
+        <Input placeholder="Enter your email address"></Input>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label className="text-[16px] font-medium text-[#9794AA]">
+          Password
+        </label>
+        <Input placeholder="Enter your password"></Input>
+      </div>
+
+      <div className="flex flex-row gap-4 mb-1">
+        <Checkbox defaultChecked className="custom-checkbox" />
+        <label className="text-[16px] font-medium text-[#CBCAD7]">
+          I agree to terms & conditions
+        </label>
+      </div>
+      <SecondaryButton className="py-4">Register Account</SecondaryButton>
+
+      <div className="flex flex-row items-center gap-2 w-full">
+        <div className="w-full h-[1px] bg-[#686677]"></div>
+        <span className="text-[12px] font-norml text-[#CBCAD7]">or</span>
+        <div className="w-full h-[1px] bg-[#686677]"></div>
+      </div>
+
+      <div className="flex flex-row gap-2 w-full bg-[#100F14] rounded-[6px] px-4 py-3 items-center justify-center cursor-pointer hover:bg-[#1a1920] transition-colors">
+        <img src={googleIcon} alt="Google" className="w-5 h-5" />
+        <span className="text-[16px] font-medium text-[#CBCAD7]">
+          Register with Google
+        </span>
+      </div>
+
+      <div className="text-[16px] font-normal text-[#8692A6]">
+        Already have an account?{" "}
+        <Link to="/signin">
+          <span className="text-[#ffffff] underline cursor-pointer">
+            Log in
           </span>
-        </div>
-        <CardTitle className="text-xl text-center">Create an Account</CardTitle>
-        <CardDescription className="text-center">
-          Join <span className="font-space-grotesk bg-gradient-to-r from-purple-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">FormVerse</span> to buy, sell, and share 3D models
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="fullName">Full Name</Label>
-            <Input
-              id="fullName"
-              type="text"
-              placeholder="John Doe"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="email@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              minLength={6}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
-            <Input
-              id="confirmPassword"
-              type="password"
-              placeholder="••••••••"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              minLength={6}
-              required
-            />
-          </div>
-          <div className="space-y-3">
-            <Label className="text-sm font-medium text-foreground">Are you a creator?</Label>
-            <RadioGroup value={isCreator} onValueChange={setIsCreator} className="flex flex-col space-y-2">
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="false" id="user" />
-                <Label htmlFor="user" className="text-sm font-normal cursor-pointer text-foreground">
-                  Browse & Buy Models
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="true" id="creator" />
-                <Label htmlFor="creator" className="text-sm font-normal cursor-pointer text-foreground">
-                  Sell My Creations (Creator)
-                </Label>
-              </div>
-            </RadioGroup>
-          </div>
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Creating account..." : "Sign Up"}
-          </Button>
-        </form>
-      </CardContent>
-      <CardFooter className="flex flex-col">
-        <div className="text-center text-sm mb-4">
-          Already have an account?{" "}
-          <Button variant="link" className="p-0" onClick={() => navigate('/signin')}>
-            Sign In
-          </Button>
-        </div>
-        <div className="flex items-center mt-2 text-xs text-center text-muted-foreground">
-          <Brain className="h-3 w-3 text-[#9b87f5] mr-1" />
-          <span>Powered by FormIQ - The Brain of <span className="font-space-grotesk font-bold bg-gradient-to-r from-purple-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">FormVerse</span></span>
-        </div>
-      </CardFooter>
-    </Card>
+        </Link>
+      </div>
+    </div>
   );
 }

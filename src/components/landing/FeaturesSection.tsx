@@ -1,15 +1,13 @@
 import { Card, CardContent } from "@/components/ui/card";
-import pizza from "@/assets/landing/heroSection/pizza.png";
-import { Download, Star, User, Eye, Heart } from "lucide-react";
+import { Download, User, Heart, Box } from "lucide-react";
 import Button from "../common/Button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link } from "react-router-dom";
-import { Badge } from "@/components/ui/badge";
 import { UnifiedCADViewer } from "@/components/preview/UnifiedCADViewer";
+import { motion, useInView } from "framer-motion";
 
-// Helper component for individual feature card
 function FeatureCard({ model }: { model: any }) {
   const [isFavorited, setIsFavorited] = useState(false);
   const [viewerError, setViewerError] = useState(false);
@@ -61,11 +59,9 @@ function FeatureCard({ model }: { model: any }) {
                 onError={() => setViewerError(true)}
               />
             ) : (
-              <img
-                src={pizza}
-                alt={model.name}
-                className="w-full h-full object-contain"
-              />
+              <div className="w-full h-full flex items-center justify-center bg-white/5 rounded">
+                <Box size={48} className="text-white/40" />
+              </div>
             )}
           </div>
         </div>
@@ -130,7 +126,6 @@ export function FeaturesSection() {
 
       if (error) throw error;
 
-      // Fetch profiles for each model
       const modelsWithProfiles = await Promise.all(
         (data || []).map(async (model) => {
           const { data: profileData } = await supabase
@@ -146,20 +141,17 @@ export function FeaturesSection() {
         })
       );
 
-      console.log(modelsWithProfiles);
-
       return modelsWithProfiles;
     },
   });
 
-  // Fallback cards if models are not loaded
   const fallbackCards = [
     {
       id: "fallback-1",
       name: "Auto-tagging",
       description:
         "AI-powered automatic tagging of your 3D models for better discoverability and enhanced marketplace visibility.",
-      preview_image: pizza,
+      preview_image: Box,
       price: 10000,
       downloads: 0,
       view_count: 0,
@@ -170,7 +162,7 @@ export function FeaturesSection() {
       name: "Printability Check",
       description:
         "Validate your designs with our advanced mesh analysis and receive a comprehensive readiness score.",
-      preview_image: pizza,
+      preview_image: Box,
       price: 12000,
       downloads: 0,
       view_count: 0,
@@ -181,7 +173,7 @@ export function FeaturesSection() {
       name: "Smart Licensing",
       description:
         "Intelligent pricing suggestions and flexible licensing options tailored to your models and market demand.",
-      preview_image: pizza,
+      preview_image: Box,
       price: 8500,
       downloads: 0,
       view_count: 0,
@@ -192,7 +184,7 @@ export function FeaturesSection() {
       name: "Workflow Automation",
       description:
         "Automate repetitive tasks in your 3D design workflow to save time and increase productivity.",
-      preview_image: pizza,
+      preview_image: Box,
       price: 11000,
       downloads: 0,
       view_count: 0,
@@ -202,8 +194,18 @@ export function FeaturesSection() {
 
   const displayModels = models && models.length > 0 ? models : fallbackCards;
 
+  const sectionRef = useRef(null);
+  const isInView = useInView(sectionRef, { once: true, amount: 0.2 });
+
   return (
-    <section className="relative bg-[#000000] py-16">
+    <motion.section
+      ref={sectionRef}
+      className="relative bg-[#000000] py-16"
+      initial={{ opacity: 0, y: 50 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8, ease: "easeOut" }}
+      viewport={{ once: true, amount: 0.2 }}
+    >
       <div className="absolute top-40 -left-32 z-10 subheadingfont">
         <svg viewBox="0 0 500 320" className="w-full h-64">
           <defs>
@@ -326,11 +328,13 @@ export function FeaturesSection() {
               ))}
         </div>
         <div className="rounded-[10px] flex w-full justify-center mt-10">
-          <Button onClick={() => {}} className="" style={{}}>
-            See more
-          </Button>
+          <Link to="/discover">
+            <Button onClick={() => {}} className="" style={{}}>
+              See more
+            </Button>
+          </Link>
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 }

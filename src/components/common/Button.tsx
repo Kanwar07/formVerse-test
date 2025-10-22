@@ -1,22 +1,41 @@
-export default function Button({ children, onClick, className, style }) {
+interface ButtonProps {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  style?: React.CSSProperties;
+  disabled?: boolean;
+}
+
+export default function Button({
+  children,
+  onClick,
+  className = "",
+  style = {},
+  disabled = false,
+}: ButtonProps) {
   return (
     <button
-      onClick={onClick}
-      className={`font-bold px-6 py-2 cursor-pointer transition-all duration-300 relative ${className}`}
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
+      className={`font-bold px-6 py-2 cursor-pointer transition-all duration-300 relative ${
+        disabled ? "opacity-50 cursor-not-allowed" : ""
+      } ${className}`}
       style={{
         borderRadius: "10px",
-        background: "transparent",
+        background: disabled ? undefined : "transparent",
         border: "none",
         position: "relative",
         ...style,
       }}
       onMouseEnter={(e) => {
+        if (disabled) return;
         e.currentTarget.style.background =
           "linear-gradient(to right, #0a8dd1, #0086e4, #107cf3, #556cfb, #8853fa)";
         e.currentTarget.style.WebkitBackgroundClip = "unset";
         e.currentTarget.style.WebkitTextFillColor = "white";
       }}
       onMouseLeave={(e) => {
+        if (disabled) return;
         e.currentTarget.style.background = "transparent";
         e.currentTarget.style.WebkitBackgroundClip = "text";
         e.currentTarget.style.WebkitTextFillColor = "white";
@@ -36,6 +55,7 @@ export default function Button({ children, onClick, className, style }) {
           WebkitMaskComposite: "xor",
           maskComposite: "exclude",
           pointerEvents: "none",
+          opacity: disabled ? 0.3 : 1,
         }}
       />
       <span
